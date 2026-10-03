@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b5532f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Recettes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Mon livre de recettes</title>
+<style>
+:root{
+  --bg:#fbf6ee; --card:#fffdf9; --ink:#2e2520; --muted:#8a7b70; --line:#eadfce;
+  --accent:#b5532f; --accent-ink:#fff; --accent-soft:#f6e3d8; --ok:#4f7a4a;
+  --radius:16px; --shadow:0 2px 10px rgba(80,50,20,.08);
+  --serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#1d1814; --card:#272019; --ink:#f1e7da; --muted:#a69686; --line:#3a3027; --accent:#e0805a; --accent-ink:#1d1814; --accent-soft:#3b2a20; --shadow:0 2px 10px rgba(0,0,0,.4)}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+header.top{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(12px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+header.top h1{font-family:var(--serif);font-size:1.35rem;margin:0;flex:1;font-weight:700}
+header.top h1 a{color:inherit;text-decoration:none}
+.icon-btn{background:none;border:0;color:var(--ink);font-size:1.4rem;width:40px;height:40px;border-radius:50%;cursor:pointer}
+.icon-btn:active{background:var(--accent-soft)}
+main{max-width:900px;margin:0 auto;padding:14px 16px}
+.search{width:100%;padding:12px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1rem}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:999px;font:inherit;font-size:.9rem;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:10px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);text-decoration:none;color:inherit;display:flex;flex-direction:column;position:relative}
+.card .ph{aspect-ratio:4/3;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:2.4rem}
+.card .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.card .body{padding:10px 12px 12px}
+.card h3{font-family:var(--serif);font-size:1rem;margin:0 0 2px;line-height:1.25}
+.card small{color:var(--muted)}
+.card .star{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.45);color:#ffd36b;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.empty{text-align:center;color:var(--muted);padding:56px 20px}
+.empty .big{font-size:3rem}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 22px;font:inherit;font-weight:600;font-size:1rem;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;text-decoration:none}
+/* detail */
+.gallery{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:var(--radius);margin-bottom:14px}
+.gallery img{flex:none;width:100%;max-height:420px;object-fit:cover;scroll-snap-align:center;border-radius:var(--radius);cursor:zoom-in}
+.gallery.multi img{width:88%}
+h2.title{font-family:var(--serif);font-size:1.8rem;margin:4px 0 6px;line-height:1.2}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 16px}
+.tag{background:var(--accent-soft);color:var(--accent);padding:4px 12px;border-radius:999px;font-size:.85rem}
+section.block{background:var(--card);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow)}
+section.block h3{font-family:var(--serif);margin:0 0 10px;font-size:1.2rem}
+ul.ing{list-style:none;margin:0;padding:0}
+ul.ing li{padding:8px 0;border-bottom:1px dashed var(--line);display:flex;gap:10px;cursor:pointer}
+ul.ing li:last-child{border:0}
+ul.ing li::before{content:"○";color:var(--accent)}
+ul.ing li.done{color:var(--muted);text-decoration:line-through}
+ul.ing li.done::before{content:"●"}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;display:flex;gap:12px;padding:8px 0}
+ol.steps li::before{content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;margin-top:1px}
+.notes{white-space:pre-wrap}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;border-radius:12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.danger{color:#c0392b}
+/* form */
+form label{display:block;font-weight:600;margin:16px 0 6px;font-size:.95rem}
+form label small{font-weight:400;color:var(--muted)}
+form input[type=text],form input[type=number],form select,form textarea{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1rem}
+form textarea{min-height:130px;resize:vertical}
+.row{display:flex;gap:12px}.row>div{flex:1}
+.thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.thumb{position:relative;width:92px;height:92px;border-radius:12px;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb button{position:absolute;top:4px;right:4px;border:0;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;width:24px;height:24px;cursor:pointer}
+.thumb.cover::after{content:"Couverture";position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);color:#fff;font-size:.65rem;text-align:center;padding:2px}
+.addphoto{width:92px;height:92px;border-radius:12px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;font-size:.75rem;gap:2px}
+.addphoto b{font-size:1.6rem;color:var(--accent);line-height:1}
+.formbar{display:flex;gap:10px;margin-top:24px}
+.formbar .btn{flex:1;text-align:center}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:50}
+.lightbox img{max-width:96vw;max-height:92vh;border-radius:8px}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:60;font-size:.9rem}
+dialog{border:0;border-radius:var(--radius);background:var(--card);color:var(--ink);padding:20px;max-width:420px;width:calc(100% - 32px);box-shadow:0 10px 40px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog h3{font-family:var(--serif);margin:0 0 8px}
+dialog p{color:var(--muted);margin:0 0 14px}
+dialog .col{display:flex;flex-direction:column;gap:10px}
+.icon-btn{position:relative}
+.badge{position:absolute;top:1px;right:-1px;background:var(--accent);color:var(--accent-ink);font-size:.65rem;font-weight:700;border-radius:999px;min-width:17px;height:17px;line-height:17px;text-align:center;padding:0 4px}
+.muted{color:var(--muted)}
+.hint{color:var(--muted);font-size:.85rem;margin:0 0 10px}
+ul.pick,ul.shop{list-style:none;margin:0;padding:0}
+ul.pick li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+ul.pick li:last-child,ul.shop li:last-child{border:0}
+.step{display:flex;align-items:center;gap:6px;flex:none}
+.step button{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:1.1rem;cursor:pointer;padding:0}
+.step b{min-width:22px;text-align:center}
+.step small{color:var(--muted)}
+ul.shop li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+ul.shop .cb{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--accent)}
+ul.shop li.done .cb{background:var(--accent);box-shadow:inset 0 0 0 4px var(--card)}
+ul.shop .it{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
+ul.shop .nm{font-weight:600}
+ul.shop .qt{color:var(--accent)}
+ul.shop .fr{flex-basis:100%;color:var(--muted);font-size:.78rem}
+ul.shop li.done .it{opacity:.5;text-decoration:line-through}
+ul.shop .x{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;width:32px;height:32px;flex:none}
+.addrow{display:flex;gap:8px;margin-top:14px}
+.addrow input{flex:1;min-width:0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1rem}
+.card .cl{display:flex;flex-direction:column;color:inherit;text-decoration:none;flex:1}
+.card .body{padding-right:52px}
+.cardcart{position:absolute;right:8px;bottom:8px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:1rem;cursor:pointer;box-shadow:var(--shadow);padding:0}
+.cardcart.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+ul.pick .pt{flex:1;min-width:0;color:inherit;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ul.pick .x{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;width:32px;height:32px;flex:none;padding:0}
+.dot{position:absolute;top:6px;right:5px;width:11px;height:11px;border-radius:50%;border:2px solid var(--bg);background:var(--muted)}
+.dot.green{background:#3f9d55}.dot.orange{background:#e0a030}.dot.red{background:#d64545}
+dialog{max-height:88vh;overflow:auto}
+.syncbox{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.syncbox .hint{margin:0 0 10px}
+.syncbox input{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1rem;margin-bottom:8px}
+.autherr{color:#c0392b;font-size:.85rem;min-height:1.2em;margin:0 0 6px}
+.row2{display:flex;gap:8px}.row2 .btn{flex:1;text-align:center}
+@media print{header.top,.fab,.actions{display:none}body{background:#fff;color:#000}section.block{box-shadow:none;border:1px solid #ccc}}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="icon-btn" id="back" hidden aria-label="Retour">←</button>
+  <h1><a href="#/">📖 Mon livre de recettes</a></h1>
+  <button class="icon-btn" id="cartbtn" aria-label="Liste de courses">🛒<span class="badge" id="badge" hidden></span></button>
+  <button class="icon-btn" id="menu" aria-label="Synchronisation et sauvegarde">⋯<span class="dot" id="dot" hidden></span></button>
+</header>
+<main id="view"></main>
+<a class="fab" id="fab" href="#/new">＋ Nouvelle recette</a>
+
+<dialog id="dlg">
+  <h3>Synchronisation</h3>
+  <div class="syncbox">
+    <p class="hint" id="syncmsg" aria-live="polite"></p>
+    <form id="authf" hidden>
+      <input type="email" id="aemail" placeholder="E-mail du compte partagé" autocomplete="username" required>
+      <input type="password" id="apass" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password" minlength="6" required>
+      <p class="autherr" id="autherr" role="alert"></p>
+      <div class="row2"><button class="btn primary" type="submit">Se connecter</button><button class="btn" type="button" id="signup">Créer le compte</button></div>
+    </form>
+    <button class="btn" type="button" id="signout" hidden>Se déconnecter</button>
+  </div>
+  <h3>Sauvegarde</h3>
+  <p>Copie de secours dans un fichier (photos comprises), à garder ou à importer sur un autre téléphone.</p>
+  <div class="col">
+    <button class="btn primary" id="exp">⬇ Exporter mes recettes</button>
+    <label class="btn" style="text-align:center;margin:0">⬆ Importer une sauvegarde<input type="file" id="imp" accept=".json,application/json" hidden></label>
+    <button class="btn" id="dlgclose">Fermer</button>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+const CATS=["Entrée","Plat","Dessert","Gâteau & pâtisserie","Boisson","Autre"];
+const EMOJI={"Entrée":"🥗","Plat":"🍲","Dessert":"🍮","Gâteau & pâtisserie":"🎂","Boisson":"🍹","Autre":"🍴"};
+
+/* ---------- IndexedDB ---------- */
+let dbp;
+function db(){
+  return dbp||(dbp=new Promise((res,rej)=>{
+    const r=indexedDB.open("livre-recettes",1);
+    r.onupgradeneeded=()=>r.result.createObjectStore("recipes",{keyPath:"id"});
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  }));
+}
+async function tx(mode,fn){
+  const d=await db();
+  return new Promise((res,rej)=>{
+    const t=d.transaction("recipes",mode);
+    const out=fn(t.objectStore("recipes"));
+    t.oncomplete=()=>res(out&&out.result!==undefined?out.result:undefined);
+    t.onerror=()=>rej(t.error);
+  });
+}
+const allRecipes=()=>tx("readonly",s=>s.getAll());
+const getRecipe=id=>tx("readonly",s=>s.get(id));
+const putRecipeLocal=r=>tx("readwrite",s=>s.put(r));
+const delRecipeLocal=id=>tx("readwrite",s=>s.delete(id));
+const syncHooks={push:null,remove:null,pushShop:null};
+async function putRecipe(r){
+  await putRecipeLocal(r);
+  if(syncHooks.push)syncHooks.push(r);
+}
+async function delRecipe(id){
+  await delRecipeLocal(id);
+  if(syncHooks.remove)syncHooks.remove(id);
+  if(shop.sel[id]){delete shop.sel[id];saveShop();updateBadge()}
+}
+
+/* ---------- utils ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const lines=t=>String(t||"").split("\n").map(l=>l.trim()).filter(Boolean);
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+function resizeImage(file,max=1024,q=.75){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file),img=new Image();
+    img.onload=()=>{
+      const k=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement("canvas");
+      c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL("image/jpeg",q));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("Image illisible"))};
+    img.src=url;
+  });
+}
+function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
+
+/* ---------- state ---------- */
+let filter={q:"",cat:"all"};
+
+/* ---------- views ---------- */
+const view=$("#view");
+function chrome(isHome){
+  $("#back").hidden=isHome;
+  $("#fab").hidden=!isHome;
+  updateBadge();
+}
+function updateBadge(){
+  const n=Object.keys(shop.sel).length,b=$("#badge");
+  b.hidden=!n;b.textContent=n;
+}
+
+async function viewList(){
+  chrome(true);
+  const rs=(await allRecipes()).sort((a,b)=>b.updated-a.updated);
+  view.innerHTML=`
+    <input class="search" id="q" type="search" placeholder="Rechercher une recette, un ingrédient…" value="${esc(filter.q)}">
+    <div class="chips" id="chips"></div>
+    <div id="results"></div>`;
+  const chips=[["all","Toutes"],["fav","★ Favoris"],...CATS.map(c=>[c,c])];
+  $("#chips").innerHTML=chips.map(([k,l])=>`<button class="chip ${filter.cat===k?"on":""}" data-k="${esc(k)}">${esc(l)}</button>`).join("");
+  $("#chips").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;filter.cat=b.dataset.k;viewList()};
+  const draw=()=>{
+    const q=norm(filter.q);
+    const list=rs.filter(r=>{
+      if(filter.cat==="fav"&&!r.fav)return false;
+      if(filter.cat!=="all"&&filter.cat!=="fav"&&r.category!==filter.cat)return false;
+      if(!q)return true;
+      return norm([r.title,r.ingredients,r.steps,r.notes,r.category].join(" ")).includes(q);
+    });
+    if(!rs.length){
+      $("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>Ton livre est vide pour l’instant.</b><br>Ajoute ta première recette avec le bouton ci-dessous.</p></div>`;return;
+    }
+    if(!list.length){$("#results").innerHTML=`<div class="empty"><div class="big">🔍</div><p>Aucune recette ne correspond.</p></div>`;return}
+    $("#results").innerHTML=`<div class="grid">${list.map(r=>`
+      <div class="card">
+        <a class="cl" href="#/r/${r.id}">
+          <div class="ph">${r.photos&&r.photos[0]?`<img src="${r.photos[0]}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}</div>
+          <div class="body"><h3>${esc(r.title)}</h3><small>${esc(r.category||"")}${r.time?" · "+esc(r.time):""}</small></div>
+        </a>
+        ${r.fav?'<span class="star">★</span>':""}
+        <button type="button" class="cardcart ${shop.sel[r.id]?"on":""}" data-id="${r.id}" aria-label="${shop.sel[r.id]?"Retirer des courses":"Ajouter aux courses"}">${shop.sel[r.id]?"✓":"🛒"}</button>
+      </div>`).join("")}</div>`;
+  };
+  draw();
+  $("#results").onclick=e=>{
+    const b=e.target.closest(".cardcart");
+    if(!b)return;
+    const r=rs.find(x=>x.id===b.dataset.id);
+    if(!r)return;
+    if(shop.sel[r.id]){delete shop.sel[r.id];toast("Retirée des courses")}
+    else{shop.sel[r.id]=Number(r.servings)||1;toast("Ajoutée aux courses")}
+    saveShop();updateBadge();
+    const on=!!shop.sel[r.id];
+    b.classList.toggle("on",on);
+    b.textContent=on?"✓":"🛒";
+    b.setAttribute("aria-label",on?"Retirer des courses":"Ajouter aux courses");
+  };
+  $("#q").oninput=e=>{filter.q=e.target.value;draw()};
+}
+
+async function viewDetail(id){
+  chrome(false);
+  const r=await getRecipe(id);
+  if(!r){location.hash="#/";return}
+  const ph=r.photos||[];
+  view.innerHTML=`
+    ${ph.length?`<div class="gallery ${ph.length>1?"multi":""}">${ph.map((p,i)=>`<img src="${p}" alt="Photo ${i+1}" data-i="${i}">`).join("")}</div>`:""}
+    <h2 class="title">${esc(r.title)}</h2>
+    <div class="meta">
+      ${r.category?`<span class="tag">${EMOJI[r.category]||""} ${esc(r.category)}</span>`:""}
+      ${r.time?`<span class="tag">⏱ ${esc(r.time)}</span>`:""}
+      ${r.servings?`<span class="tag">👥 ${esc(r.servings)} pers.</span>`:""}
+    </div>
+    ${lines(r.ingredients).length?`<section class="block"><h3>Ingrédients</h3><ul class="ing">${lines(r.ingredients).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></section>`:""}
+    ${lines(r.steps).length?`<section class="block"><h3>Préparation</h3><ol class="steps">${lines(r.steps).map(l=>`<li><span>${esc(l)}</span></li>`).join("")}</ol></section>`:""}
+    ${r.notes?`<section class="block"><h3>Notes</h3><div class="notes">${esc(r.notes)}</div></section>`:""}
+    <div class="actions">
+      <button class="btn" id="fav">${r.fav?"★ Retirer des favoris":"☆ Favori"}</button>
+      <button class="btn primary" id="cart">${shop.sel[r.id]?"✓ Dans les courses":"🛒 Ajouter aux courses"}</button>
+      <a class="btn" href="#/edit/${r.id}">✎ Modifier</a>
+      <button class="btn" onclick="window.print()">🖨 Imprimer</button>
+      <button class="btn danger" id="del">🗑 Supprimer</button>
+    </div>`;
+  view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=()=>li.classList.toggle("done"));
+  view.querySelectorAll(".gallery img").forEach(im=>im.onclick=()=>{
+    const lb=document.createElement("div");lb.className="lightbox";lb.innerHTML=`<img src="${im.src}" alt="">`;
+    lb.onclick=()=>lb.remove();document.body.appendChild(lb);
+  });
+  $("#fav").onclick=async()=>{r.fav=!r.fav;await putRecipe(r);viewDetail(id)};
+  $("#cart").onclick=()=>{
+    if(shop.sel[r.id]){location.hash="#/courses";return}
+    shop.sel[r.id]=Number(r.servings)||1;saveShop();updateBadge();
+    $("#cart").textContent="✓ Dans les courses";toast("Ajoutée à la liste de courses");
+  };
+  $("#del").onclick=async()=>{
+    if(confirm(`Supprimer « ${r.title} » ? Cette action est définitive.`)){await delRecipe(id);toast("Recette supprimée");location.hash="#/"}
+  };
+}
+
+async function viewForm(id){
+  chrome(false);
+  const r=id?await getRecipe(id):null;
+  if(id&&!r){location.hash="#/";return}
+  const rec=r||{id:uid(),title:"",category:"Plat",time:"",servings:"",ingredients:"",steps:"",notes:"",photos:[],fav:false,created:Date.now()};
+  let photos=[...(rec.photos||[])];
+  view.innerHTML=`
+  <h2 class="title">${r?"Modifier la recette":"Nouvelle recette"}</h2>
+  <form id="f" autocomplete="off">
+    <label for="title">Nom de la recette</label>
+    <input type="text" id="title" required maxlength="120" value="${esc(rec.title)}" placeholder="Ex. Tarte aux pommes de mamie">
+    <div class="row">
+      <div><label for="cat">Catégorie</label>
+        <select id="cat">${CATS.map(c=>`<option ${c===rec.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+      <div><label for="servings">Personnes</label>
+        <input type="number" id="servings" min="1" inputmode="numeric" value="${esc(rec.servings)}" placeholder="4"></div>
+    </div>
+    <label for="time">Temps <small>(préparation + cuisson)</small></label>
+    <input type="text" id="time" value="${esc(rec.time)}" placeholder="Ex. 20 min + 35 min de cuisson">
+    <label>Photos</label>
+    <div class="thumbs" id="thumbs"></div>
+    <input type="file" id="file" accept="image/*" multiple hidden>
+    <label for="ing">Ingrédients <small>(un par ligne)</small></label>
+    <textarea id="ing" placeholder="250 g de farine&#10;3 œufs&#10;1 pincée de sel">${esc(rec.ingredients)}</textarea>
+    <label for="steps">Préparation <small>(une étape par ligne)</small></label>
+    <textarea id="steps" placeholder="Préchauffer le four à 180 °C.&#10;Mélanger la farine et les œufs.">${esc(rec.steps)}</textarea>
+    <label for="notes">Notes <small>(astuces, origine de la recette…)</small></label>
+    <textarea id="notes" style="min-height:90px">${esc(rec.notes)}</textarea>
+    <div class="formbar">
+      <a class="btn" href="${r?"#/r/"+rec.id:"#/"}">Annuler</a>
+      <button class="btn primary" type="submit">Enregistrer</button>
+    </div>
+  </form>`;
+  const drawThumbs=()=>{
+    $("#thumbs").innerHTML=photos.map((p,i)=>`<div class="thumb ${i===0?"cover":""}"><img src="${p}" alt=""><button type="button" data-i="${i}" aria-label="Retirer">✕</button></div>`).join("")+
+      `<div class="addphoto" id="add"><b>＋</b>Photo</div>`;
+    $("#add").onclick=()=>$("#file").click();
+    $("#thumbs").querySelectorAll("button").forEach(b=>b.onclick=()=>{photos.splice(+b.dataset.i,1);drawThumbs()});
+  };
+  drawThumbs();
+  $("#file").onchange=async e=>{
+    const files=[...e.target.files];e.target.value="";
+    for(const f of files){
+      if(photos.length>=MAX_PHOTOS){toast(MAX_PHOTOS+" photos maximum par recette");break}
+      try{photos.push(await resizeImage(f))}catch(err){toast("Photo illisible : "+f.name)}
+    }
+    drawThumbs();
+  };
+  $("#f").onsubmit=async e=>{
+    e.preventDefault();
+    photos=await fitPhotos(photos);
+    Object.assign(rec,{
+      title:$("#title").value.trim(),category:$("#cat").value,servings:$("#servings").value,
+      time:$("#time").value.trim(),ingredients:$("#ing").value,steps:$("#steps").value,
+      notes:$("#notes").value.trim(),photos,updated:Date.now()
+    });
+    if(!rec.title){$("#title").focus();return}
+    try{await putRecipe(rec)}catch(err){alert("Impossible d’enregistrer (espace plein ?). "+err.message);return}
+    toast("Recette enregistrée ✓");
+    location.hash="#/r/"+rec.id;
+  };
+}
+
+/*PURE-START*/
+const nrm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const stripAcc=s=>nrm(s).replace(/œ/g,"oe").replace(/[’]/g,"'");
+const escRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+const FRACS={"½":.5,"¼":.25,"¾":.75,"⅓":1/3,"⅔":2/3};
+const UNIT_DEFS=[
+  {fam:"mass",f:1,u:"g",al:["g","gr","gramme"]},
+  {fam:"mass",f:1000,u:"kg",al:["kg","kilo"]},
+  {fam:"vol",f:1,u:"ml",al:["ml","millilitre"]},
+  {fam:"vol",f:10,u:"cl",al:["cl","centilitre"]},
+  {fam:"vol",f:100,u:"dl",al:["dl","decilitre"]},
+  {fam:"vol",f:1000,u:"l",al:["l","litre"]},
+  {fam:"cas",f:1,u:"c. à soupe",al:["cuillere a soupe","c. a soupe","c a soupe","c.a.s","cas","cs"]},
+  {fam:"cac",f:1,u:"c. à café",al:["cuillere a cafe","c. a cafe","c a cafe","c.a.c","cac","cc"]}
+];
+const DISCRETE=["pincée","sachet","boîte","gousse","tranche","verre","brin","botte","bûche","pot","paquet","morceau","feuille","brique","barquette","tablette","tasse","bol","poignée","branche","rondelle","filet"];
+
+function parseNumber(s){
+  s=s.replace(/^\s+/,"");
+  let m;
+  if((m=s.match(/^(\d+)\s+(\d+)\/(\d+)\s*/)))return{n:+m[1]+m[2]/m[3],rest:s.slice(m[0].length)};
+  if((m=s.match(/^(\d+)\/(\d+)\s*/)))return{n:m[1]/m[2],rest:s.slice(m[0].length)};
+  if((m=s.match(/^(\d+)\s*(?:-|–|à)\s*(\d+)\s*/)))return{n:+m[2],rest:s.slice(m[0].length)};
+  m=s.match(/^(\d+(?:[.,]\d+)?)?\s*([½¼¾⅓⅔])?\s*/);
+  if(m&&(m[1]||m[2])){
+    return{n:(m[1]?parseFloat(m[1].replace(",",".")):0)+(m[2]?FRACS[m[2]]:0),rest:s.slice(m[0].length)};
+  }
+  return null;
+}
+function matchUnit(nr,alias){
+  const m=nr.match(new RegExp("^"+escRe(alias)+"(?:s|x)?(?=[\\s.,;)]|$)"));
+  return m?m[0].length:0;
+}
+function parseIngredient(line){
+  const t=String(line||"").replace(/^[\-•*·]\s*/,"").trim();
+  if(!t)return null;
+  const pn=parseNumber(t);
+  let n=null,rest=t,fam="n",f=1,u="";
+  if(pn){n=pn.n;rest=pn.rest.trim()}
+  if(n!==null&&rest){
+    const nr=nrm(rest);
+    let hit=null;
+    for(const d of UNIT_DEFS)for(const a of d.al){
+      const len=matchUnit(nr,a);
+      if(len&&(!hit||len>hit.len))hit={len,fam:d.fam,f:d.f,u:d.u};
+    }
+    if(!hit)for(const d of DISCRETE){
+      const len=matchUnit(nr,nrm(d));
+      if(len&&(!hit||len>hit.len))hit={len,fam:"u:"+nrm(d),f:1,u:d};
+    }
+    if(hit){
+      let after=rest.slice(hit.len).replace(/^[.\s]+/,"");
+      const dm=nrm(after).match(/^(de la |de l['’]|du |des |de |d['’])/);
+      if(dm)after=after.slice(dm[0].length);
+      after=after.trim();
+      if(after){rest=after;fam=hit.fam;f=hit.f;u=hit.u}
+    }
+  }
+  const name=rest.replace(/[.\s]+$/,"").trim();
+  if(!name)return null;
+  return{v:n===null?null:n*f,fam,u,name};
+}
+function nameKey(name){
+  let s=stripAcc(name).split(",")[0].replace(/\([^)]*\)/g,"").replace(/[^a-z0-9' ]/g," ");
+  s=s.split(/\s+/).filter(Boolean).map(w=>w.length>3&&/[sx]$/.test(w)?w.slice(0,-1):w).join(" ");
+  return s||stripAcc(name);
+}
+function fmtNum(v){return String(Math.round(v*100)/100).replace(".",",")}
+function fmtQty(fam,v,u){
+  if(fam==="mass")return v>=1000?fmtNum(v/1000)+" kg":fmtNum(v)+" g";
+  if(fam==="vol"){
+    if(v>=1000)return fmtNum(v/1000)+" l";
+    return v%10===0?fmtNum(v/10)+" cl":fmtNum(v)+" ml";
+  }
+  if(fam==="n")return fmtNum(v);
+  return fmtNum(v)+" "+(fam.startsWith("u:")&&v>=2?u+"s":u);
+}
+function fmtQtyAll(q){
+  const order=["mass","vol","cas","cac"];
+  const fams=Object.keys(q).sort((a,b)=>{
+    const ia=order.indexOf(a),ib=order.indexOf(b);
+    const ra=a==="n"?99:ia<0?50:ia,rb=b==="n"?99:ib<0?50:ib;
+    return ra-rb;
+  });
+  return fams.map(k=>fmtQty(k,q[k].v,q[k].u)).join(" + ");
+}
+const capFirst=s=>s.charAt(0).toUpperCase()+s.slice(1);
+function buildList(recipes,sel){
+  const map=new Map();
+  for(const r of recipes){
+    const base=Number(r.servings)||1,want=Number(sel[r.id])||base,factor=want/base;
+    for(const line of String(r.ingredients||"").split("\n")){
+      const p=parseIngredient(line);
+      if(!p)continue;
+      const key=nameKey(p.name);
+      const e=map.get(key)||{key,name:capFirst(p.name),qty:{},from:new Set()};
+      if(p.v!==null){
+        const q=e.qty[p.fam]||(e.qty[p.fam]={v:0,u:p.u});
+        q.v+=p.v*factor;
+      }
+      e.from.add(r.title);
+      map.set(key,e);
+    }
+  }
+  return [...map.values()]
+    .map(e=>({key:e.key,name:e.name,qty:fmtQtyAll(e.qty),from:[...e.from]}))
+    .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+}
+/*PURE-END*/
+
+/* ---------- liste de courses ---------- */
+const SHOP_KEY="livre-courses";
+let shop={sel:{},have:{},extra:[]};
+try{
+  const s=JSON.parse(localStorage.getItem(SHOP_KEY)||"null");
+  if(s&&typeof s==="object")shop=Object.assign(shop,s);
+}catch(e){}
+function saveShop(){
+  try{localStorage.setItem(SHOP_KEY,JSON.stringify(shop))}catch(e){}
+  if(syncHooks.pushShop)syncHooks.pushShop();
+}
+function applyRemoteShop(s){
+  shop=Object.assign({sel:{},have:{},extra:[]},s);
+  try{localStorage.setItem(SHOP_KEY,JSON.stringify(shop))}catch(e){}
+  updateBadge();refreshView();
+}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true}catch(e){}
+  try{
+    const ta=document.createElement("textarea");
+    ta.value=t;ta.style.cssText="position:fixed;opacity:0";
+    document.body.appendChild(ta);ta.select();
+    const ok=document.execCommand("copy");ta.remove();return ok;
+  }catch(e){return false}
+}
+
+async function viewCourses(){
+  chrome(false);
+  const rs=(await allRecipes()).sort((a,b)=>norm(a.title).localeCompare(norm(b.title),"fr"));
+  updateBadge();
+  view.innerHTML=`<div id="cw"></div>`;
+  const cw=$("#cw");
+
+  const draw=()=>{
+    const y=window.scrollY;
+    const selected=rs.filter(r=>shop.sel[r.id]);
+    const items=buildList(selected,shop.sel);
+    const extras=shop.extra.map((t,i)=>({key:"x:"+norm(t),name:t,qty:"",from:["Ajouté à la main"],extra:i}));
+    const all=[...items,...extras];
+    const todo=all.filter(i=>!shop.have[i.key]);
+    cw.innerHTML=`
+      <h2 class="title">🛒 Liste de courses</h2>
+      <section class="block">
+        <h3>Recettes sélectionnées <small class="muted">· ${selected.length}</small></h3>
+        ${selected.length?`<ul class="pick">${selected.map(r=>{
+          const base=Number(r.servings)||0;
+          return `<li data-id="${r.id}">
+            <a class="pt" href="#/r/${r.id}">${esc(r.title)}</a>
+            <span class="step"><button type="button" data-d="-1" aria-label="Moins">–</button><b>${esc(shop.sel[r.id])}</b><button type="button" data-d="1" aria-label="Plus">+</button><small>${base?"pers.":"×"}</small></span>
+            <button type="button" class="x" data-rm aria-label="Retirer la recette">✕</button>
+          </li>`}).join("")}</ul>`
+          :`<div class="empty" style="padding:24px 8px"><div class="big">🛒</div><p>Aucune recette sélectionnée.<br>Ajoute-en depuis l’accueil (bouton 🛒 sur chaque recette) ou depuis la page d’une recette.</p><a class="btn primary" href="#/">Voir mes recettes</a></div>`}
+      </section>
+      <section class="block">
+        <h3>2. Ma liste <small class="muted">· ${todo.length} article${todo.length>1?"s":""} à acheter</small></h3>
+        ${all.length?`<p class="hint">Touche un article que tu as déjà à la maison : il ne sera pas copié ni partagé.</p>
+        <ul class="shop">${all.map(i=>`
+          <li data-k="${esc(i.key)}" class="${shop.have[i.key]?"done":""}">
+            <span class="cb"></span>
+            <div class="it"><span class="nm">${esc(i.name)}</span>${i.qty?`<span class="qt">${esc(i.qty)}</span>`:""}<span class="fr">${esc(i.from.join(" · "))}</span></div>
+            ${i.extra!==undefined?`<button type="button" class="x" data-x="${i.extra}" aria-label="Supprimer">✕</button>`:""}
+          </li>`).join("")}</ul>`
+          :`<p class="muted">Ajoute des recettes à ton panier pour voir ici leurs ingrédients regroupés.</p>`}
+        <form class="addrow" id="addf" autocomplete="off">
+          <input type="text" id="addi" placeholder="Ajouter un article (ex. papier toilette)" maxlength="80">
+          <button class="btn" type="submit">Ajouter</button>
+        </form>
+        <div class="actions" style="margin-top:16px">
+          <button class="btn primary" type="button" id="copy" ${todo.length?"":"disabled"}>📋 Copier la liste</button>
+          ${navigator.share?`<button class="btn" type="button" id="share" ${todo.length?"":"disabled"}>↗ Partager</button>`:""}
+          <button class="btn" type="button" id="uncheck" ${Object.keys(shop.have).length?"":"disabled"}>Tout décocher</button>
+          <button class="btn danger" type="button" id="clear" ${selected.length||shop.extra.length?"":"disabled"}>Vider</button>
+        </div>
+      </section>`;
+    window.scrollTo(0,y);
+    const text=()=>todo.map(i=>i.qty?`${i.name} (${i.qty})`:i.name).join("\n");
+
+    cw.querySelectorAll("ul.pick li").forEach(li=>{
+      const id=li.dataset.id;
+      li.querySelectorAll(".step button").forEach(b=>b.onclick=()=>{
+        shop.sel[id]=Math.max(1,(Number(shop.sel[id])||1)+Number(b.dataset.d));
+        saveShop();draw();
+      });
+      li.querySelector("[data-rm]").onclick=()=>{
+        delete shop.sel[id];saveShop();updateBadge();draw();
+      };
+    });
+    cw.querySelectorAll("ul.shop li").forEach(li=>li.onclick=e=>{
+      const x=e.target.closest(".x");
+      if(x){shop.extra.splice(+x.dataset.x,1);saveShop();draw();return}
+      const k=li.dataset.k;
+      if(shop.have[k])delete shop.have[k];else shop.have[k]=true;
+      saveShop();draw();
+    });
+    $("#addf").onsubmit=e=>{
+      e.preventDefault();
+      const t=$("#addi").value.trim();if(!t)return;
+      if(!shop.extra.some(x=>norm(x)===norm(t)))shop.extra.push(t);
+      saveShop();draw();
+    };
+    $("#copy").onclick=async()=>{toast(await copyText(text())?"Liste copiée ✓":"Copie impossible")};
+    const sh=$("#share");
+    if(sh)sh.onclick=()=>navigator.share({title:"Liste de courses",text:text()}).catch(()=>{});
+    $("#uncheck").onclick=()=>{shop.have={};saveShop();draw()};
+    $("#clear").onclick=()=>{
+      if(!confirm("Vider la liste de courses ?"))return;
+      shop={sel:{},have:{},extra:[]};saveShop();updateBadge();draw();
+    };
+  };
+  draw();
+}
+
+/* ---------- photos : rester sous la limite de 1 Mo par recette ---------- */
+const MAX_PHOTOS=6;
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src})}
+async function reencode(src,max,q){
+  const img=await loadImg(src);
+  const k=Math.min(1,max/Math.max(img.width,img.height));
+  const c=document.createElement("canvas");
+  c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+  c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+  return c.toDataURL("image/jpeg",q);
+}
+async function fitPhotos(photos,budget=800000){
+  let ph=[...(photos||[])];
+  const size=()=>ph.reduce((a,p)=>a+p.length,0);
+  let max=1024,q=.72;
+  try{
+    while(size()>budget&&max>=400){
+      max=Math.round(max*.8);q=Math.max(.5,q-.04);
+      ph=await Promise.all(ph.map(p=>reencode(p,max,q)));
+    }
+  }catch(e){}
+  return ph;
+}
+
+/* ---------- synchronisation ---------- */
+let syncState={state:"off"},syncApi=null,refreshT=null;
+function refreshView(){
+  clearTimeout(refreshT);
+  refreshT=setTimeout(()=>{
+    const h=location.hash||"#/";
+    if(/^#\/(new|edit)/.test(h))return;
+    const a=document.activeElement;
+    if(a&&["INPUT","TEXTAREA","SELECT"].includes(a.tagName))return;
+    if(document.querySelector(".lightbox"))return;
+    const y=window.scrollY;
+    route().then(()=>window.scrollTo(0,y));
+  },200);
+}
+function setStatus(st){syncState=st;renderSync()}
+function renderSync(){
+  const s=syncState,em=s.email?" · "+s.email:"";
+  const tones={
+    off:["","Synchronisation non configurée : les recettes restent sur cet appareil."],
+    unavailable:["red","Service de synchronisation injoignable (réseau ?). L’app reste utilisable en local."],
+    signedout:["red","Connecte-toi avec le compte partagé pour synchroniser vos recettes et votre panier."],
+    syncing:["orange","Connexion en cours…"+em],
+    ok:["green","Synchronisé"+em],
+    pending:["orange","Envoi des modifications…"+em],
+    offline:["orange","Hors ligne : les modifications seront envoyées au retour du réseau."+em],
+    error:["red","Problème : "+(s.message||"inconnu")+em]
+  };
+  const [tone,text]=tones[s.state]||tones.off;
+  const dot=$("#dot"),msg=$("#syncmsg");
+  dot.className="dot "+tone;dot.hidden=!tone;
+  msg.textContent=text;
+  $("#authf").hidden=s.state!=="signedout";
+  $("#signout").hidden=!["syncing","ok","pending","offline","error"].includes(s.state);
+}
+function authMsg(code=""){
+  if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(code))return"E-mail ou mot de passe incorrect.";
+  if(code.includes("email-already-in-use"))return"Ce compte existe déjà : utilise « Se connecter ».";
+  if(code.includes("weak-password"))return"Mot de passe trop court (6 caractères minimum).";
+  if(code.includes("invalid-email"))return"Adresse e-mail invalide.";
+  if(code.includes("network"))return"Pas de réseau, réessaie plus tard.";
+  if(code.includes("operation-not-allowed"))return"La connexion par e-mail n’est pas activée dans Firebase.";
+  if(code.includes("too-many-requests"))return"Trop d’essais, patiente quelques minutes.";
+  return"Connexion impossible ("+(code||"erreur")+").";
+}
+async function doAuth(kind){
+  if(!syncApi)return;
+  $("#autherr").textContent="";
+  try{
+    await syncApi[kind]($("#aemail").value.trim(),$("#apass").value);
+    $("#apass").value="";toast("Connecté ✓");
+  }catch(err){$("#autherr").textContent=authMsg(err&&err.code)}
+}
+$("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
+$("#signup").onclick=()=>{if($("#authf").reportValidity())doAuth("signUp")};
+$("#signout").onclick=async()=>{
+  if(syncApi&&confirm("Se déconnecter ? Les recettes restent sur cet appareil."))await syncApi.signOut();
+};
+async function bootSync(){
+  renderSync();
+  try{
+    const mod=await import("./sync.js");
+    syncApi=await mod.initSync({
+      hooks:syncHooks,listLocal:allRecipes,getLocal:getRecipe,
+      putLocal:putRecipeLocal,delLocal:delRecipeLocal,
+      getShop:()=>shop,setShop:applyRemoteShop,fitPhotos,refresh:refreshView,setStatus
+    });
+  }catch(e){setStatus({state:"off"})}
+}
+
+/* ---------- router ---------- */
+async function route(){
+  window.scrollTo(0,0);
+  const h=location.hash||"#/";
+  let m;
+  try{
+    if((m=h.match(/^#\/r\/(.+)$/)))await viewDetail(m[1]);
+    else if(h==="#/new")await viewForm();
+    else if(h==="#/courses")await viewCourses();
+    else if((m=h.match(/^#\/edit\/(.+)$/)))await viewForm(m[1]);
+    else await viewList();
+  }catch(err){
+    view.innerHTML=`<div class="empty"><div class="big">⚠️</div><p>Un souci est survenu : ${esc(err.message)}</p></div>`;
+  }
+}
+window.addEventListener("hashchange",route);
+$("#back").onclick=()=>{ if(history.length>1)history.back(); else location.hash="#/" };
+$("#cartbtn").onclick=()=>{location.hash="#/courses"};
+
+/* ---------- backup ---------- */
+$("#menu").onclick=()=>$("#dlg").showModal();
+$("#dlgclose").onclick=()=>$("#dlg").close();
+$("#exp").onclick=async()=>{
+  const data={app:"livre-recettes",version:1,exported:new Date().toISOString(),recipes:await allRecipes()};
+  const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="mes-recettes-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast(`${data.recipes.length} recette(s) exportée(s)`);
+};
+$("#imp").onchange=async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(!data||!Array.isArray(data.recipes))throw new Error("Fichier non reconnu");
+    let n=0;
+    for(const r of data.recipes){if(r&&r.id&&r.title){await putRecipe(r);n++}}
+    $("#dlg").close();toast(`${n} recette(s) importée(s) ✓`);route();
+  }catch(err){alert("Import impossible : "+err.message)}
+};
+
+/* ---------- boot ---------- */
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+route();
+bootSync();
+</script>
+</body>
+</html>
