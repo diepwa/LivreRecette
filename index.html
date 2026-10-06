@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#b5532f">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Recettes">
+<meta name="apple-mobile-web-app-title" content="NoutBook">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<title>Mon livre de recettes</title>
+<title>NoutBook</title>
 <style>
 :root{
   --bg:#fbf6ee; --card:#fffdf9; --ink:#2e2520; --muted:#8a7b70; --line:#eadfce;
@@ -88,7 +88,9 @@ form textarea{min-height:130px;resize:vertical}
 .formbar .btn{flex:1;text-align:center}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:50}
 .lightbox img{max-width:96vw;max-height:92vh;border-radius:8px}
-.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:60;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:60;font-size:.9rem;display:flex;align-items:center;gap:14px;max-width:92vw;white-space:nowrap}
+.toast span{overflow:hidden;text-overflow:ellipsis}
+.toast button{background:none;border:0;color:#ffd36b;font:inherit;font-weight:700;cursor:pointer;padding:0}
 dialog{border:0;border-radius:var(--radius);background:var(--card);color:var(--ink);padding:20px;max-width:420px;width:calc(100% - 32px);box-shadow:0 10px 40px rgba(0,0,0,.35)}
 dialog::backdrop{background:rgba(0,0,0,.5)}
 dialog h3{font-family:var(--serif);margin:0 0 8px}
@@ -130,18 +132,52 @@ dialog{max-height:88vh;overflow:auto}
 .syncbox input{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1rem;margin-bottom:8px}
 .autherr{color:#c0392b;font-size:.85rem;min-height:1.2em;margin:0 0 6px}
 .row2{display:flex;gap:8px}.row2 .btn{flex:1;text-align:center}
+:root{--buy:#e0555d;--cat:#4f8f85}
+@media (prefers-color-scheme:dark){:root{--buy:#c94a52;--cat:#3f7a71}}
+.tsec h3{font-family:var(--serif);font-size:1.15rem;margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+.tsec:first-of-type h3{margin-top:6px}
+.cnt{background:var(--buy);color:#fff;border-radius:999px;font-size:.75rem;padding:1px 10px;font-family:var(--sans);font-weight:700}
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(min-width:560px){.tgrid{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:760px){.tgrid{grid-template-columns:repeat(5,1fr)}}
+.tile{position:relative;aspect-ratio:1/1;border:0;border-radius:14px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;font:inherit;cursor:pointer;box-shadow:var(--shadow);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.tile:active{transform:scale(.96)}
+.tile.buy{background:var(--buy)}
+.tile.cat{background:var(--cat)}
+.tile.add{background:transparent;border:2px dashed var(--cat);color:var(--ink);box-shadow:none}
+.tile .te{font-size:2.1rem;line-height:1}
+.tile .tn{font-weight:600;font-size:.82rem;line-height:1.15;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;max-width:100%}
+.tile .tq{font-size:.74rem;opacity:.95;font-weight:600}
+.tile .tb{position:absolute;top:5px;left:5px;font-size:.58rem;background:rgba(0,0,0,.3);padding:1px 6px;border-radius:999px}
+.hint.box{background:var(--card);border-radius:12px;padding:14px;text-align:center;margin:0}
+.searchbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(0,0,0,.12)}
+.searchbar form{max-width:900px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.sbox{flex:1;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:0 14px;margin:0}
+.sbox input{flex:1;min-width:0;border:0;background:none;color:var(--ink);font:inherit;font-size:1rem;padding:12px 0;outline:none}
+.sbtn{width:46px;height:46px;border-radius:50%;border:0;background:var(--cat);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;flex:none;padding:0}
+@media print{.searchbar{display:none}}
 @media print{header.top,.fab,.actions{display:none}body{background:#fff;color:#000}section.block{box-shadow:none;border:1px solid #ccc}}
 </style>
 </head>
 <body>
 <header class="top">
   <button class="icon-btn" id="back" hidden aria-label="Retour">←</button>
-  <h1><a href="#/">📖 Mon livre de recettes</a></h1>
+  <h1><a href="#/">NoutBook</a></h1>
   <button class="icon-btn" id="cartbtn" aria-label="Liste de courses">🛒<span class="badge" id="badge" hidden></span></button>
   <button class="icon-btn" id="menu" aria-label="Synchronisation et sauvegarde">⋯<span class="dot" id="dot" hidden></span></button>
 </header>
 <main id="view"></main>
 <a class="fab" id="fab" href="#/new">＋ Nouvelle recette</a>
+
+<dialog id="tiledlg">
+  <h3 id="tdt"></h3>
+  <p>Options pour ce produit.</p>
+  <div class="col">
+    <button class="btn" type="button" id="tdskip" hidden>Retirer sans compter comme un achat (déjà à la maison)</button>
+    <button class="btn" type="button" id="tdbasic"></button>
+    <button class="btn" type="button" id="tdclose">Fermer</button>
+  </div>
+</dialog>
 
 <dialog id="dlg">
   <h3>Synchronisation</h3>
@@ -151,7 +187,7 @@ dialog{max-height:88vh;overflow:auto}
       <input type="email" id="aemail" placeholder="E-mail du compte partagé" autocomplete="username" required>
       <input type="password" id="apass" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password" minlength="6" required>
       <p class="autherr" id="autherr" role="alert"></p>
-      <div class="row2"><button class="btn primary" type="submit">Se connecter</button><button class="btn" type="button" id="signup">Créer le compte</button></div>
+      <button class="btn primary" type="submit" style="width:100%">Se connecter</button>
     </form>
     <button class="btn" type="button" id="signout" hidden>Se déconnecter</button>
   </div>
@@ -200,7 +236,7 @@ async function putRecipe(r){
 async function delRecipe(id){
   await delRecipeLocal(id);
   if(syncHooks.remove)syncHooks.remove(id);
-  if(shop.sel[id]){delete shop.sel[id];saveShop();updateBadge()}
+  if(shop.sel[id]){removeRecipeFromCart(shop,id);saveShop();updateBadge()}
 }
 
 /* ---------- utils ---------- */
@@ -279,8 +315,8 @@ async function viewList(){
     if(!b)return;
     const r=rs.find(x=>x.id===b.dataset.id);
     if(!r)return;
-    if(shop.sel[r.id]){delete shop.sel[r.id];toast("Retirée des courses")}
-    else{shop.sel[r.id]=Number(r.servings)||1;toast("Ajoutée aux courses")}
+    if(shop.sel[r.id]){removeRecipeFromCart(shop,r.id);toast("Retirée des courses")}
+    else{addRecipeToCart(shop,r.id,Number(r.servings)||1);toast("Ajoutée aux courses")}
     saveShop();updateBadge();
     const on=!!shop.sel[r.id];
     b.classList.toggle("on",on);
@@ -321,7 +357,7 @@ async function viewDetail(id){
   $("#fav").onclick=async()=>{r.fav=!r.fav;await putRecipe(r);viewDetail(id)};
   $("#cart").onclick=()=>{
     if(shop.sel[r.id]){location.hash="#/courses";return}
-    shop.sel[r.id]=Number(r.servings)||1;saveShop();updateBadge();
+    addRecipeToCart(shop,r.id,Number(r.servings)||1);saveShop();updateBadge();
     $("#cart").textContent="✓ Dans les courses";toast("Ajoutée à la liste de courses");
   };
   $("#del").onclick=async()=>{
@@ -454,10 +490,12 @@ function parseIngredient(line){
   if(!name)return null;
   return{v:n===null?null:n*f,fam,u,name};
 }
+// clé sûre (utilisable comme nom de champ Firestore) : uniquement a-z, 0-9, apostrophe, espace, "_"
+const fk=k=>String(k).replace(/[^a-z0-9' ]/gu,c=>"_"+c.codePointAt(0).toString(16)).trim()||"x";
 function nameKey(name){
   let s=stripAcc(name).split(",")[0].replace(/\([^)]*\)/g,"").replace(/[^a-z0-9' ]/g," ");
   s=s.split(/\s+/).filter(Boolean).map(w=>w.length>3&&/[sx]$/.test(w)?w.slice(0,-1):w).join(" ");
-  return s||stripAcc(name);
+  return s||fk(stripAcc(name));
 }
 function fmtNum(v){return String(Math.round(v*100)/100).replace(".",",")}
 function fmtQty(fam,v,u){
@@ -500,23 +538,180 @@ function buildList(recipes,sel){
     .map(e=>({key:e.key,name:e.name,qty:fmtQtyAll(e.qty),from:[...e.from]}))
     .sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
 }
+
+/* ---- tuiles de courses : produits, fréquence d'achat, produits de base ---- */
+const BASIC_WORDS=new Set(["sel","poivre","huile","vinaigre","sucre","farine","levure","bicarbonate","maizena","fecule","moutarde","epice","herbe","thym","laurier","paprika","cumin","curry","cannelle","muscade","piment","origan","eau"]);
+const defaultBasic=key=>String(key).split(" ").some(w=>BASIC_WORDS.has(w));
+function isBasic(shop,key){
+  const o=shop.basics&&shop.basics[key];
+  return typeof o==="boolean"?o:defaultBasic(key);
+}
+const BUILTIN_PRODUCTS=["Lait","Pain","Œufs","Beurre","Crème fraîche","Yaourts","Fromage râpé","Fromage","Jambon","Lardons","Poulet","Steak haché","Saucisses","Poisson","Saumon","Crevettes","Riz","Pâtes","Semoule","Farine","Sucre","Sel","Poivre","Huile d'olive","Vinaigre","Moutarde","Ketchup","Mayonnaise","Café","Thé","Eau","Jus d'orange","Soda","Vin","Bière","Pommes","Bananes","Oranges","Citrons","Fraises","Raisin","Tomates","Carottes","Oignons","Ail","Pommes de terre","Salade","Courgettes","Poivrons","Concombre","Champignons","Brocoli","Avocat","Chocolat","Biscuits","Céréales","Confiture","Miel","Compote","Glace","Chips","Papier toilette","Essuie-tout","Liquide vaisselle","Lessive","Savon","Dentifrice","Shampooing","Sacs poubelle","Éponges","Piles","Ampoules"];
+const EMOJI_MAP=[["oeuf","🥚"],["lait","🥛"],["beurre","🧈","🧀"],["fromage","🧀"],["chevre","🧀"],["gruyere","🧀"],["mozzarella","🧀"],["parmesan","🧀"],["comte","🧀"],["creme","🥛"],["yaourt","🥛"],["baguette","🥖"],["pain","🍞"],["pate brisee","🥧"],["pate feuilletee","🥧"],["pate a","🥧"],["pate sablee","🥧"],["farine","🌾"],["semoule","🌾"],["sucre","🍬"],["sel","🧂"],["poivre","🧂"],["huile","🫒","🍶"],["olive","🫒","🥗"],["vinaigre","🍶"],["moutarde","🥫"],["ketchup","🥫"],["de terre","🥔"],["patate","🥔"],["tomate","🍅"],["pomme","🍎"],["poire","🍐"],["banane","🍌"],["orange","🍊"],["citron","🍋"],["fraise","🍓"],["framboise","🍓"],["raisin","🍇"],["peche","🍑"],["abricot","🍑"],["cerise","🍒"],["ananas","🍍"],["melon","🍈"],["pasteque","🍉"],["kiwi","🥝"],["avocat","🥑"],["carotte","🥕"],["oignon","🧅","🥗"],["echalote","🧅","🥗"],["poulet","🍗"],["dinde","🍗"],["ail","🧄","🥗"],["aubergine","🍆"],["courgette","🥒"],["concombre","🥒"],["poivron","🫑","🌶️"],["piment","🌶️"],["salade","🥬","🥗"],["epinard","🥬","🥗"],["chou","🥬","🥗"],["brocoli","🥦"],["champignon","🍄"],["mais","🌽"],["haricot","🫘","🌱"],["lentille","🫘","🌱"],["pois","🫘","🌱"],["boeuf","🥩"],["viande","🥩"],["steak","🥩"],["porc","🥩"],["jambon","🥓"],["lardon","🥓"],["bacon","🥓"],["saucisse","🌭"],["poisson","🐟"],["saumon","🐟"],["thon","🐟"],["crevette","🦐"],["riz","🍚"],["spaghetti","🍝"],["pate","🍝"],["nouille","🍜"],["chocolat","🍫"],["biscuit","🍪"],["cereale","🥣"],["cafe","☕"],["the","🍵"],["eau","💧"],["jus","🧃","🥤"],["soda","🥤"],["vin","🍷"],["biere","🍺"],["miel","🍯"],["confiture","🍯"],["compote","🍎"],["noix","🥜"],["amande","🥜"],["noisette","🥜"],["cacahuete","🥜"],["glace","🍨"],["chips","🥔"],["levure","🧁"],["vanille","🍦"],["menthe","🌿"],["basilic","🌿"],["persil","🌿"],["thym","🌿"],["herbe","🌿"],["papier","🧻"],["essuie","🧻"],["lessive","🧴"],["vaisselle","🧴"],["shampooing","🧴"],["savon","🧼"],["dentifrice","🪥","🧼"],["poubelle","🗑️"],["eponge","🧽"],["pile","🔋"],["ampoule","💡"]].map(([k,e,f])=>[new RegExp("(?:^| )"+k+"[a-z]{0,2}(?= |$)"),f?[e,f]:[e]]);
+// émojis possibles pour un produit (le 1er, puis un plus ancien si l'appareil ne sait pas afficher le 1er)
+function emojiCandidates(name){
+  const s=stripAcc(name).replace(/[^a-z0-9' ]/g," ").replace(/\s+/g," ").trim();
+  for(const [re,list] of EMOJI_MAP)if(re.test(s))return list;
+  return["🛒"];
+}
+const emojiFor=name=>emojiCandidates(name)[0];
+function normalizeShop(s){
+  const o=Object.assign({sel:{},have:{},extra:[],freq:{},basics:{}},s||{});
+  const obj=v=>v&&typeof v==="object"&&!Array.isArray(v);
+  if(!obj(o.sel))o.sel={};
+  if(!obj(o.have))o.have={};
+  if(!obj(o.freq))o.freq={};
+  if(!obj(o.basics))o.basics={};
+  if(!Array.isArray(o.extra))o.extra=[];
+  // ancien format : article ajouté à la main puis « coché » (clé x:…) = déjà pris → on l'enlève de la liste
+  const keep=[];
+  for(const t of o.extra){
+    if(typeof t!=="string"||!t.trim())continue;
+    const old="x:"+nrm(t);
+    if(o.have[old]){delete o.have[old];continue}
+    keep.push(t);
+  }
+  o.extra=keep;
+  for(const k of Object.keys(o.have))if(k.startsWith("x:"))delete o.have[k];
+  return o;
+}
+function mergeFreq(a,b){
+  const out={};
+  for(const src of [a||{},b||{}])for(const [k,v] of Object.entries(src)){
+    if(!v||typeof v!=="object")continue;
+    const cur=out[k];
+    if(!cur||(Number(v.n)||0)>(Number(cur.n)||0)||((Number(v.n)||0)===(Number(cur.n)||0)&&(Number(v.last)||0)>(Number(cur.last)||0)))out[k]={n:Number(v.n)||0,last:Number(v.last)||0,name:v.name||(cur&&cur.name)||""};
+  }
+  return out;
+}
+// La liste « à acheter » : ingrédients des recettes choisies (hors déjà pris et hors produits de base) + articles ajoutés
+function shopList(selected,shop){
+  const out=[],seen=new Set();
+  for(const it of buildList(selected,shop.sel)){
+    if(shop.have[it.key]||isBasic(shop,it.key))continue;
+    out.push({key:it.key,name:it.name,qty:it.qty,from:it.from,kind:"recipe"});seen.add(it.key);
+  }
+  for(const t of shop.extra){
+    const k=nameKey(t);
+    if(seen.has(k))continue;
+    seen.add(k);
+    out.push({key:k,name:t,qty:"",from:[],kind:"extra"});
+  }
+  return out.sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+}
+function bumpFreq(shop,key,name){
+  const e=shop.freq[key]||{n:0,last:0,name:name};
+  e.n=(Number(e.n)||0)+1;e.last=Date.now();if(!e.name)e.name=name;
+  shop.freq[key]=e;
+}
+// Toucher une tuile rouge = acheté (compte pour la fréquence) ; count=false = déjà à la maison
+function buyItem(shop,item,count=true){
+  if(item.kind==="recipe")shop.have[item.key]=true;
+  shop.extra=shop.extra.filter(t=>nameKey(t)!==item.key);
+  if(count)bumpFreq(shop,item.key,item.name);
+}
+// Toucher une tuile du catalogue = l'ajouter à la liste
+function addToList(shop,name,derivedKeys){
+  const key=nameKey(name);
+  if(derivedKeys.has(key)&&!isBasic(shop,key)&&shop.have[key]){delete shop.have[key];return"recipe"}
+  if(!shop.extra.some(t=>nameKey(t)===key))shop.extra.push(capFirst(String(name).trim()));
+  return"extra";
+}
+function toggleBasic(shop,key){shop.basics[key]=!isBasic(shop,key)}
+// Nouvelle série de courses : si le panier était vide, on oublie ce qui avait été « pris » la fois d'avant
+function addRecipeToCart(shop,id,servings){
+  if(!Object.keys(shop.sel).length)shop.have={};
+  shop.sel[id]=servings;
+}
+function removeRecipeFromCart(shop,id){
+  delete shop.sel[id];
+  if(!Object.keys(shop.sel).length)shop.have={};
+}
+function buildCatalog(recipes,shop,onList,query){
+  const m=new Map();
+  const get=(key,name)=>{
+    let e=m.get(key);
+    if(!e){e={key,name,n:0,last:0,from:[],recipe:false,basic:isBasic(shop,key)};m.set(key,e)}
+    return e;
+  };
+  for(const r of recipes)for(const line of String(r.ingredients||"").split("\n")){
+    const p=parseIngredient(line);if(!p)continue;
+    const e=get(nameKey(p.name),capFirst(p.name));
+    e.recipe=true;if(!e.from.includes(r.title))e.from.push(r.title);
+  }
+  for(const [k,f] of Object.entries(shop.freq||{})){
+    if(!f||typeof f!=="object")continue;
+    const e=get(k,f.name||capFirst(k));
+    e.n=Number(f.n)||0;e.last=Number(f.last)||0;if(f.name)e.name=f.name;
+  }
+  const q=stripAcc(query||"").replace(/[^a-z0-9' ]/g," ").replace(/\s+/g," ").trim();
+  if(q)for(const n of BUILTIN_PRODUCTS)get(nameKey(n),n);
+  const byFreq=(a,b)=>b.n-a.n||b.last-a.last||a.name.localeCompare(b.name,"fr",{sensitivity:"base"});
+  let list=[...m.values()].filter(e=>!onList.has(e.key));
+  if(q){
+    const qk=nameKey(query);
+    const exists=m.has(qk)||onList.has(qk);
+    list=list.filter(e=>stripAcc(e.name).includes(q)).sort((a,b)=>{
+      const pa=stripAcc(a.name).startsWith(q)?0:1,pb=stripAcc(b.name).startsWith(q)?0:1;
+      return pa-pb||byFreq(a,b);
+    });
+    return{results:list,exists};
+  }
+  const top=list.filter(e=>e.n>0).sort(byFreq).slice(0,15);
+  const topKeys=new Set(top.map(e=>e.key));
+  const rest=list.filter(e=>!topKeys.has(e.key)).sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+  return{top,rest};
+}
 /*PURE-END*/
+
+/* ---------- émojis : repli si l'appareil ne sait pas afficher un émoji récent (carré vide) ---------- */
+const _emojiOk=new Map();
+function emojiOk(e){
+  if(_emojiOk.has(e))return _emojiOk.get(e);
+  let ok=true;
+  try{
+    const c=document.createElement("canvas");c.width=c.height=32;
+    const g=c.getContext("2d",{willReadFrequently:true});
+    const draw=t=>{g.clearRect(0,0,32,32);g.font="24px sans-serif";g.textBaseline="top";g.fillText(t,2,2);return g.getImageData(0,0,32,32).data};
+    const ref=draw("\u{FFFFD}"),cur=draw(e);
+    let same=true,any=false;
+    for(let i=0;i<cur.length;i++){if(ref[i]!==cur[i])same=false;if(i%4===3&&cur[i])any=true}
+    ok=any&&!same;
+  }catch(err){ok=true}
+  _emojiOk.set(e,ok);
+  return ok;
+}
+function shownEmoji(name){
+  for(const e of emojiCandidates(name))if(emojiOk(e))return e;
+  return"🛒";
+}
 
 /* ---------- liste de courses ---------- */
 const SHOP_KEY="livre-courses";
-let shop={sel:{},have:{},extra:[]};
+let shop=normalizeShop(null);
 try{
   const s=JSON.parse(localStorage.getItem(SHOP_KEY)||"null");
-  if(s&&typeof s==="object")shop=Object.assign(shop,s);
+  if(s&&typeof s==="object")shop=normalizeShop(s);
 }catch(e){}
 function saveShop(){
   try{localStorage.setItem(SHOP_KEY,JSON.stringify(shop))}catch(e){}
   if(syncHooks.pushShop)syncHooks.pushShop();
 }
 function applyRemoteShop(s){
-  shop=Object.assign({sel:{},have:{},extra:[]},s);
+  const r=normalizeShop(s);
+  r.freq=mergeFreq(shop.freq,r.freq);   // on ne perd jamais un compteur d'achats
+  shop=r;
   try{localStorage.setItem(SHOP_KEY,JSON.stringify(shop))}catch(e){}
   updateBadge();refreshView();
+}
+function toastUndo(msg,fn){
+  document.querySelectorAll(".toast").forEach(t=>t.remove());
+  const t=document.createElement("div");t.className="toast";
+  const s=document.createElement("span");s.textContent=msg;
+  const b=document.createElement("button");b.type="button";b.textContent="Annuler";
+  b.onclick=()=>{t.remove();fn()};
+  t.append(s,b);document.body.appendChild(t);
+  setTimeout(()=>t.remove(),4500);
 }
 async function copyText(t){
   try{await navigator.clipboard.writeText(t);return true}catch(e){}
@@ -532,84 +727,147 @@ async function viewCourses(){
   chrome(false);
   const rs=(await allRecipes()).sort((a,b)=>norm(a.title).localeCompare(norm(b.title),"fr"));
   updateBadge();
-  view.innerHTML=`<div id="cw"></div>`;
-  const cw=$("#cw");
+  view.innerHTML=`<div id="cw"></div>
+    <div class="searchbar"><form id="sf" autocomplete="off">
+      <label class="sbox"><span aria-hidden="true">🔍</span><input id="sq" type="search" placeholder="Il me faut…" enterkeyhint="done" maxlength="60"></label>
+      <button class="sbtn" type="submit" aria-label="Ajouter à la liste">＋</button>
+    </form></div>`;
+  const cw=$("#cw"),sq=$("#sq");
+  let cur={selected:[],items:[],keys:new Set(),derived:new Set()};
+
+  const compute=()=>{
+    const selected=rs.filter(r=>shop.sel[r.id]);
+    const items=shopList(selected,shop);
+    cur={selected,items,keys:new Set(items.map(i=>i.key)),derived:new Set(buildList(selected,shop.sel).map(i=>i.key))};
+  };
+  const tile=(cls,i)=>`<button type="button" class="tile ${cls}" data-k="${esc(i.key)}" data-n="${esc(i.name)}">
+      ${cls==="cat"&&i.basic?'<span class="tb">de base</span>':""}
+      <span class="te">${shownEmoji(i.name)}</span><span class="tn">${esc(i.name)}</span>${i.qty?`<span class="tq">${esc(i.qty)}</span>`:""}
+    </button>`;
+  const restore=snap=>{shop=normalizeShop(JSON.parse(snap));saveShop();updateBadge();draw()};
+
+  const drawCat=()=>{
+    const box=$("#cat");if(!box)return;
+    const q=sq.value.trim();
+    const c=buildCatalog(rs,shop,cur.keys,q);
+    if(q){
+      const addTile=c.exists?"":`<button type="button" class="tile add" data-add="${esc(q)}"><span class="te">＋</span><span class="tn">Ajouter « ${esc(q)} »</span></button>`;
+      box.innerHTML=`<section class="tsec"><h3>Résultats</h3>
+        <div class="tgrid">${addTile}${c.results.map(e=>tile("cat",e)).join("")}</div>
+        ${!c.results.length&&c.exists?'<p class="hint">Ce produit est déjà dans ta liste.</p>':""}</section>`;
+      return;
+    }
+    box.innerHTML=`<section class="tsec"><h3>Souvent achetés</h3>${
+      c.top.length?`<div class="tgrid">${c.top.map(e=>tile("cat",e)).join("")}</div>`
+      :`<p class="hint box">Les produits que tu achètes le plus remonteront ici, en tête. Touche une tuile rouge quand tu l’as mise dans ton chariot : elle compte comme un achat.</p>`}</section>`+
+      (c.rest.length?`<section class="tsec"><h3>Dans vos recettes</h3><div class="tgrid">${c.rest.map(e=>tile("cat",e)).join("")}</div></section>`:"");
+  };
 
   const draw=()=>{
     const y=window.scrollY;
-    const selected=rs.filter(r=>shop.sel[r.id]);
-    const items=buildList(selected,shop.sel);
-    const extras=shop.extra.map((t,i)=>({key:"x:"+norm(t),name:t,qty:"",from:["Ajouté à la main"],extra:i}));
-    const all=[...items,...extras];
-    const todo=all.filter(i=>!shop.have[i.key]);
+    compute();
+    const {selected,items}=cur;
     cw.innerHTML=`
-      <h2 class="title">🛒 Liste de courses</h2>
-      <section class="block">
+      <h2 class="title">Liste de courses</h2>
+      <section class="tsec">
+        <h3>À acheter <span class="cnt">${items.length}</span></h3>
+        ${items.length?`<div class="tgrid">${items.map(i=>tile("buy",i)).join("")}</div>
+          <p class="hint">Touche une tuile quand c’est dans ton chariot. Appui long : options.</p>`
+          :`<p class="hint box">${selected.length?"Tout est dans le chariot 🎉":"Ta liste est vide. Touche un produit ci-dessous, cherche-le avec « Il me faut… », ou ajoute une recette depuis l’accueil."}</p>`}
+        <div class="actions" style="margin-top:10px">
+          <button class="btn primary" type="button" id="copy" ${items.length?"":"disabled"}>📋 Copier la liste</button>
+          ${navigator.share?`<button class="btn" type="button" id="share" ${items.length?"":"disabled"}>↗ Partager</button>`:""}
+          <button class="btn danger" type="button" id="clear" ${selected.length||shop.extra.length||Object.keys(shop.have).length?"":"disabled"}>Vider</button>
+        </div>
+      </section>
+      ${selected.length?`<section class="block">
         <h3>Recettes sélectionnées <small class="muted">· ${selected.length}</small></h3>
-        ${selected.length?`<ul class="pick">${selected.map(r=>{
+        <ul class="pick">${selected.map(r=>{
           const base=Number(r.servings)||0;
           return `<li data-id="${r.id}">
             <a class="pt" href="#/r/${r.id}">${esc(r.title)}</a>
             <span class="step"><button type="button" data-d="-1" aria-label="Moins">–</button><b>${esc(shop.sel[r.id])}</b><button type="button" data-d="1" aria-label="Plus">+</button><small>${base?"pers.":"×"}</small></span>
             <button type="button" class="x" data-rm aria-label="Retirer la recette">✕</button>
-          </li>`}).join("")}</ul>`
-          :`<div class="empty" style="padding:24px 8px"><div class="big">🛒</div><p>Aucune recette sélectionnée.<br>Ajoute-en depuis l’accueil (bouton 🛒 sur chaque recette) ou depuis la page d’une recette.</p><a class="btn primary" href="#/">Voir mes recettes</a></div>`}
-      </section>
-      <section class="block">
-        <h3>2. Ma liste <small class="muted">· ${todo.length} article${todo.length>1?"s":""} à acheter</small></h3>
-        ${all.length?`<p class="hint">Touche un article que tu as déjà à la maison : il ne sera pas copié ni partagé.</p>
-        <ul class="shop">${all.map(i=>`
-          <li data-k="${esc(i.key)}" class="${shop.have[i.key]?"done":""}">
-            <span class="cb"></span>
-            <div class="it"><span class="nm">${esc(i.name)}</span>${i.qty?`<span class="qt">${esc(i.qty)}</span>`:""}<span class="fr">${esc(i.from.join(" · "))}</span></div>
-            ${i.extra!==undefined?`<button type="button" class="x" data-x="${i.extra}" aria-label="Supprimer">✕</button>`:""}
-          </li>`).join("")}</ul>`
-          :`<p class="muted">Ajoute des recettes à ton panier pour voir ici leurs ingrédients regroupés.</p>`}
-        <form class="addrow" id="addf" autocomplete="off">
-          <input type="text" id="addi" placeholder="Ajouter un article (ex. papier toilette)" maxlength="80">
-          <button class="btn" type="submit">Ajouter</button>
-        </form>
-        <div class="actions" style="margin-top:16px">
-          <button class="btn primary" type="button" id="copy" ${todo.length?"":"disabled"}>📋 Copier la liste</button>
-          ${navigator.share?`<button class="btn" type="button" id="share" ${todo.length?"":"disabled"}>↗ Partager</button>`:""}
-          <button class="btn" type="button" id="uncheck" ${Object.keys(shop.have).length?"":"disabled"}>Tout décocher</button>
-          <button class="btn danger" type="button" id="clear" ${selected.length||shop.extra.length?"":"disabled"}>Vider</button>
-        </div>
-      </section>`;
+          </li>`}).join("")}</ul>
+      </section>`:""}
+      <div id="cat"></div>`;
+    drawCat();
     window.scrollTo(0,y);
-    const text=()=>todo.map(i=>i.qty?`${i.name} (${i.qty})`:i.name).join("\n");
 
+    const text=()=>items.map(i=>i.qty?`${i.name} (${i.qty})`:i.name).join("\n");
     cw.querySelectorAll("ul.pick li").forEach(li=>{
       const id=li.dataset.id;
       li.querySelectorAll(".step button").forEach(b=>b.onclick=()=>{
         shop.sel[id]=Math.max(1,(Number(shop.sel[id])||1)+Number(b.dataset.d));
         saveShop();draw();
       });
-      li.querySelector("[data-rm]").onclick=()=>{
-        delete shop.sel[id];saveShop();updateBadge();draw();
-      };
+      li.querySelector("[data-rm]").onclick=()=>{removeRecipeFromCart(shop,id);saveShop();updateBadge();draw()};
     });
-    cw.querySelectorAll("ul.shop li").forEach(li=>li.onclick=e=>{
-      const x=e.target.closest(".x");
-      if(x){shop.extra.splice(+x.dataset.x,1);saveShop();draw();return}
-      const k=li.dataset.k;
-      if(shop.have[k])delete shop.have[k];else shop.have[k]=true;
-      saveShop();draw();
-    });
-    $("#addf").onsubmit=e=>{
-      e.preventDefault();
-      const t=$("#addi").value.trim();if(!t)return;
-      if(!shop.extra.some(x=>norm(x)===norm(t)))shop.extra.push(t);
-      saveShop();draw();
-    };
     $("#copy").onclick=async()=>{toast(await copyText(text())?"Liste copiée ✓":"Copie impossible")};
     const sh=$("#share");
     if(sh)sh.onclick=()=>navigator.share({title:"Liste de courses",text:text()}).catch(()=>{});
-    $("#uncheck").onclick=()=>{shop.have={};saveShop();draw()};
     $("#clear").onclick=()=>{
-      if(!confirm("Vider la liste de courses ?"))return;
-      shop={sel:{},have:{},extra:[]};saveShop();updateBadge();draw();
+      if(!confirm("Vider la liste de courses ? Ton historique d’achats est conservé."))return;
+      shop=normalizeShop({freq:shop.freq,basics:shop.basics});
+      saveShop();updateBadge();draw();
     };
+  };
+
+  // --- appui long sur une tuile : options ---
+  let lpTimer=null,lpFired=false;
+  const dlg=$("#tiledlg");
+  const openMenu=t=>{
+    const key=t.dataset.k,name=t.dataset.n,isBuy=t.classList.contains("buy");
+    $("#tdt").textContent=shownEmoji(name)+" "+name;
+    const skip=$("#tdskip"),bas=$("#tdbasic");
+    skip.hidden=!isBuy;
+    skip.onclick=()=>{
+      const it=cur.items.find(i=>i.key===key);
+      if(it){const snap=JSON.stringify(shop);buyItem(shop,it,false);saveShop();dlg.close();draw();toastUndo("Retiré : "+name,()=>restore(snap))}
+    };
+    bas.textContent=isBasic(shop,key)?"Ne plus le considérer comme produit de base":"Le considérer comme produit de base (ex. sel, huile)";
+    bas.onclick=()=>{toggleBasic(shop,key);saveShop();dlg.close();draw()};
+    $("#tdclose").onclick=()=>dlg.close();
+    dlg.showModal();
+  };
+  const stop=()=>clearTimeout(lpTimer);
+  cw.addEventListener("pointerdown",e=>{
+    lpFired=false;stop();
+    const t=e.target.closest(".tile[data-k]");if(!t)return;
+    lpTimer=setTimeout(()=>{lpFired=true;openMenu(t)},520);
+  });
+  ["pointerup","pointercancel","pointerleave"].forEach(ev=>cw.addEventListener(ev,stop));
+  cw.addEventListener("contextmenu",e=>{if(e.target.closest(".tile"))e.preventDefault()});
+
+  cw.addEventListener("click",e=>{
+    const t=e.target.closest(".tile");if(!t)return;
+    if(lpFired){lpFired=false;return}
+    const snap=JSON.stringify(shop);
+    if(t.classList.contains("buy")){
+      const it=cur.items.find(i=>i.key===t.dataset.k);if(!it)return;
+      buyItem(shop,it,true);saveShop();draw();
+      toastUndo("Acheté : "+it.name,()=>restore(snap));
+      return;
+    }
+    const name=t.dataset.add||t.dataset.n;
+    addToList(shop,name,cur.derived);saveShop();
+    if(t.dataset.add)sq.value="";
+    draw();
+    toastUndo("Ajouté : "+name,()=>restore(snap));
+  });
+
+  // --- barre « Il me faut… » ---
+  sq.addEventListener("input",drawCat);
+  $("#sf").onsubmit=e=>{
+    e.preventDefault();
+    const t=sq.value.trim();if(!t)return;
+    const key=nameKey(t);
+    if(cur.keys.has(key)){toast("Déjà dans la liste");sq.value="";drawCat();return}
+    const hit=buildCatalog(rs,shop,new Set(),t).results.find(x=>x.key===key);
+    const snap=JSON.stringify(shop);
+    const name=hit?hit.name:capFirst(t);
+    addToList(shop,name,cur.derived);saveShop();sq.value="";draw();
+    toastUndo("Ajouté : "+name,()=>restore(snap));
   };
   draw();
 }
@@ -674,11 +932,10 @@ function renderSync(){
 }
 function authMsg(code=""){
   if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(code))return"E-mail ou mot de passe incorrect.";
-  if(code.includes("email-already-in-use"))return"Ce compte existe déjà : utilise « Se connecter ».";
   if(code.includes("weak-password"))return"Mot de passe trop court (6 caractères minimum).";
   if(code.includes("invalid-email"))return"Adresse e-mail invalide.";
+  if(code.includes("admin-restricted")||code.includes("operation-not-allowed"))return"Les inscriptions sont fermées : utilise le compte existant.";
   if(code.includes("network"))return"Pas de réseau, réessaie plus tard.";
-  if(code.includes("operation-not-allowed"))return"La connexion par e-mail n’est pas activée dans Firebase.";
   if(code.includes("too-many-requests"))return"Trop d’essais, patiente quelques minutes.";
   return"Connexion impossible ("+(code||"erreur")+").";
 }
@@ -691,7 +948,6 @@ async function doAuth(kind){
   }catch(err){$("#autherr").textContent=authMsg(err&&err.code)}
 }
 $("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
-$("#signup").onclick=()=>{if($("#authf").reportValidity())doAuth("signUp")};
 $("#signout").onclick=async()=>{
   if(syncApi&&confirm("Se déconnecter ? Les recettes restent sur cet appareil."))await syncApi.signOut();
 };
@@ -733,7 +989,7 @@ $("#exp").onclick=async()=>{
   const data={app:"livre-recettes",version:1,exported:new Date().toISOString(),recipes:await allRecipes()};
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-  a.download="mes-recettes-"+new Date().toISOString().slice(0,10)+".json";
+  a.download="noutbook-"+new Date().toISOString().slice(0,10)+".json";
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   toast(`${data.recipes.length} recette(s) exportée(s)`);
 };

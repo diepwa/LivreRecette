@@ -1,7 +1,7 @@
 {
-  "name": "Mon livre de recettes",
-  "short_name": "Recettes",
-  "description": "Mes recettes de cuisine, avec photos, disponibles hors ligne.",
+  "name": "NoutBook",
+  "short_name": "NoutBook",
+  "description": "Nos recettes de cuisine et notre liste de courses, avec photos, disponibles hors ligne.",
   "lang": "fr",
   "start_url": "./index.html",
   "scope": "./",

@@ -30,7 +30,7 @@ export async function initSync(app) {
   }
 
   const { initializeApp } = appMod;
-  const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } = authMod;
+  const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } = authMod;
   const { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot } = fsMod;
 
   const fb = initializeApp(cfg);
@@ -84,12 +84,16 @@ export async function initSync(app) {
     shopTimer = setTimeout(async () => {
       const s = app.getShop();
       try {
+        // merge:true => un téléphone qui n'a pas encore la dernière version de l'app
+        // n'efface jamais les champs qu'il ne connaît pas (freq, basics…).
         await setDoc(shopRef(), {
           sel: Object.entries(s.sel || {}).map(([id, n]) => ({ id, n: Number(n) || 1 })),
           have: Object.keys(s.have || {}).filter((k) => s.have[k]),
           extra: s.extra || [],
+          freq: s.freq || {},
+          basics: s.basics || {},
           updated: Date.now(),
-        });
+        }, { merge: true });
       } catch (e) { fail(e); }
     }, 400);
   };
@@ -154,6 +158,8 @@ export async function initSync(app) {
           sel: Object.fromEntries((d.sel || []).map((x) => [x.id, x.n])),
           have: Object.fromEntries((d.have || []).map((k) => [k, true])),
           extra: Array.isArray(d.extra) ? d.extra : [],
+          freq: d.freq && typeof d.freq === "object" ? d.freq : {},
+          basics: d.basics && typeof d.basics === "object" ? d.basics : {},
         });
       },
       fail
@@ -178,7 +184,6 @@ export async function initSync(app) {
 
   return {
     signIn: (e, p) => signInWithEmailAndPassword(auth, e, p),
-    signUp: (e, p) => createUserWithEmailAndPassword(auth, e, p),
     signOut: () => signOut(auth),
   };
 }

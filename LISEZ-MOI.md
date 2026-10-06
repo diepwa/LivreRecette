@@ -1,4 +1,4 @@
-# Mon livre de recettes — mise en route de la synchronisation
+# NoutBook — mise en route de la synchronisation
 
 L'app fonctionne déjà seule (recettes stockées sur le téléphone). Pour partager le même livre
 et le même panier entre deux téléphones, il faut connecter un projet Firebase gratuit.
@@ -27,12 +27,16 @@ Ouvrir `firebase-config.js` et remplacer les valeurs par celles copiées à l'é
 Déposer tout le dossier sur un hébergement gratuit (Netlify Drop, GitHub Pages, Cloudflare Pages…).
 Sur iPhone : ouvrir l'adresse dans Safari → Partager → « Sur l'écran d'accueil ».
 
-## 4. Premier lancement
+## 4. Comptes et premier lancement
 
-1. Sur le premier téléphone : bouton « ⋯ » → Synchronisation → saisir un e-mail et un mot de passe
-   → **Créer le compte**. Les recettes déjà présentes sur ce téléphone sont envoyées.
-2. Sur le deuxième téléphone : « ⋯ » → même e-mail et même mot de passe → **Se connecter**.
-   Les recettes et le panier apparaissent.
+L'app ne propose volontairement **pas** de créer un compte : les inscriptions sont fermées côté Firebase
+(Authentication → Paramètres → Actions des utilisateurs → « Activer la création (inscription) » décoché).
+Le compte partagé se crée donc dans la console : Authentication → Utilisateurs → « Ajouter un utilisateur »
+(si besoin, on peut temporairement rouvrir les inscriptions, puis les refermer).
+
+1. Sur chaque téléphone : bouton « ⋯ » → Synchronisation → saisir l'e-mail et le mot de passe
+   du compte partagé → **Se connecter**.
+2. Le premier téléphone connecté envoie ses recettes ; le second les reçoit, ainsi que le panier.
 
 Utilisez bien **le même compte** sur les deux téléphones : c'est ce qui vous fait partager le même livre.
 
@@ -43,3 +47,12 @@ Utilisez bien **le même compte** sur les deux téléphones : c'est ce qui vous 
 - En cas de modification simultanée de la même recette, la dernière enregistrée l'emporte.
 - Photos : 6 maximum par recette, réduites automatiquement pour tenir dans la limite de 1 Mo par recette.
 - Le bouton d'export reste utile comme copie de secours.
+
+## Liste de courses (style Bring)
+
+- Bouton 🛒 sur chaque recette (accueil ou page de la recette) pour l'ajouter au panier.
+- Page panier : tuiles rouges = à acheter ; on touche une tuile quand elle est dans le chariot (elle compte comme un achat).
+- Tuiles vertes = produits à ajouter : « Souvent achetés » en tête (classés par nombre d'achats), puis les ingrédients de vos recettes.
+- Barre « Il me faut… » : recherche d'un produit, ou ajout d'un produit libre avec le bouton ＋.
+- Produits de base (sel, poivre, huile…) : jamais ajoutés automatiquement ; appui long sur une tuile pour changer.
+- Les compteurs d'achats et les produits de base sont synchronisés entre vos deux téléphones.
