@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="NoutBook">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <title>NoutBook</title>
 <style>
 :root{
@@ -68,6 +68,7 @@ ol.steps li{counter-increment:s;display:flex;gap:12px;padding:8px 0}
 ol.steps li::before{content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;margin-top:1px}
 .notes{white-space:pre-wrap}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+[hidden]{display:none !important}
 .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;border-radius:12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 .btn.danger{color:#c0392b}
@@ -168,6 +169,16 @@ dialog{max-height:88vh;overflow:auto}
 </header>
 <main id="view"></main>
 <a class="fab" id="fab" href="#/new">＋ Nouvelle recette</a>
+
+<dialog id="pdfdlg">
+  <h3>PDF prêt</h3>
+  <p id="pdfname"></p>
+  <div class="col">
+    <button class="btn primary" type="button" id="pdfshare" hidden>Partager…</button>
+    <a class="btn" id="pdfdl" style="text-align:center">Télécharger / ouvrir le PDF</a>
+    <button class="btn" type="button" id="pdfclose">Fermer</button>
+  </div>
+</dialog>
 
 <dialog id="tiledlg">
   <h3 id="tdt"></h3>
@@ -346,6 +357,7 @@ async function viewDetail(id){
       <button class="btn" id="fav">${r.fav?"★ Retirer des favoris":"☆ Favori"}</button>
       <button class="btn primary" id="cart">${shop.sel[r.id]?"✓ Dans les courses":"🛒 Ajouter aux courses"}</button>
       <a class="btn" href="#/edit/${r.id}">✎ Modifier</a>
+      <button class="btn" id="pdf" type="button">📄 Partager en PDF</button>
       <button class="btn" onclick="window.print()">🖨 Imprimer</button>
       <button class="btn danger" id="del">🗑 Supprimer</button>
     </div>`;
@@ -355,6 +367,7 @@ async function viewDetail(id){
     lb.onclick=()=>lb.remove();document.body.appendChild(lb);
   });
   $("#fav").onclick=async()=>{r.fav=!r.fav;await putRecipe(r);viewDetail(id)};
+  $("#pdf").onclick=()=>shareRecipePdf(r);
   $("#cart").onclick=()=>{
     if(shop.sel[r.id]){location.hash="#/courses";return}
     addRecipeToCart(shop,r.id,Number(r.servings)||1);saveShop();updateBadge();
@@ -704,6 +717,52 @@ function applyRemoteShop(s){
   try{localStorage.setItem(SHOP_KEY,JSON.stringify(shop))}catch(e){}
   updateBadge();refreshView();
 }
+/* ---------- PDF d'une recette (fait sur l'appareil, fonctionne hors ligne) ---------- */
+let pdfLibP=null,pdfUrl=null;
+function loadPdfLib(){
+  if(window.PDFLib)return Promise.resolve(window.PDFLib);
+  return pdfLibP||(pdfLibP=new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="vendor/pdf-lib.min.js";
+    s.onload=()=>window.PDFLib?res(window.PDFLib):rej(new Error("bibliothèque PDF vide"));
+    s.onerror=()=>{pdfLibP=null;rej(new Error("bibliothèque PDF introuvable"))};
+    document.head.appendChild(s);
+  }));
+}
+async function makeRecipePdf(r){
+  const [PDFLib,mod]=await Promise.all([loadPdfLib(),import("./recipe-pdf.js")]);
+  const bytes=await mod.buildRecipePdf(PDFLib,r);
+  return new File([bytes],mod.pdfFileName(r.title),{type:"application/pdf"});
+}
+async function shareRecipePdf(r){
+  const btn=$("#pdf");
+  if(btn){btn.disabled=true;btn.textContent="Création du PDF…"}
+  let file=null;
+  try{file=await makeRecipePdf(r)}
+  catch(e){toast("Impossible de créer le PDF")}
+  if(btn){btn.disabled=false;btn.textContent="📄 Partager en PDF"}
+  if(!file)return;
+  // iPhone / Android : feuille de partage (Messages, WhatsApp, Mail, Fichiers…)
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:r.title});return}
+    catch(e){if(e&&e.name==="AbortError")return}   // annulé par l'utilisateur
+  }
+  openPdfDialog(file);   // ordinateur, ou partage refusé par le navigateur : menu de secours
+}
+function openPdfDialog(file){
+  if(pdfUrl)URL.revokeObjectURL(pdfUrl);
+  pdfUrl=URL.createObjectURL(file);
+  const dl=$("#pdfdl");dl.href=pdfUrl;dl.download=file.name;
+  $("#pdfname").textContent=file.name;
+  const sh=$("#pdfshare");
+  sh.hidden=!(navigator.canShare&&navigator.canShare({files:[file]}));
+  sh.onclick=async()=>{
+    try{await navigator.share({files:[file],title:file.name.replace(/\.pdf$/i,"")});$("#pdfdlg").close()}catch(e){}
+  };
+  $("#pdfclose").onclick=()=>$("#pdfdlg").close();
+  $("#pdfdlg").showModal();
+}
+
 function toastUndo(msg,fn){
   document.querySelectorAll(".toast").forEach(t=>t.remove());
   const t=document.createElement("div");t.className="toast";

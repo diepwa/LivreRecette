@@ -56,3 +56,15 @@ Utilisez bien **le même compte** sur les deux téléphones : c'est ce qui vous 
 - Barre « Il me faut… » : recherche d'un produit, ou ajout d'un produit libre avec le bouton ＋.
 - Produits de base (sel, poivre, huile…) : jamais ajoutés automatiquement ; appui long sur une tuile pour changer.
 - Les compteurs d'achats et les produits de base sont synchronisés entre vos deux téléphones.
+
+## Partager une recette en PDF
+
+- Sur la page d'une recette : bouton « Partager en PDF ». Sur iPhone, la feuille de partage s'ouvre (Messages, WhatsApp, Mail, Fichiers…).
+- Si le partage direct n'est pas possible, une fenêtre propose de télécharger / ouvrir le PDF.
+- Fonctionne hors ligne (bibliothèque `vendor/pdf-lib.min.js` + `recipe-pdf.js`, à déposer avec le reste). Les émojis ne sont pas repris dans le PDF.
+
+## Si l'icône n'apparaît pas sur l'iPhone
+
+iOS récupère l'icône **au moment** de « Sur l'écran d'accueil ». Si la page n'était pas encore à jour à cet instant,
+l'icône reste vide. Supprimer l'icône de l'écran d'accueil, ouvrir l'adresse dans Safari, la recharger, puis refaire
+« Sur l'écran d'accueil ». (Icône utilisée : `icons/apple-touch-icon.png`, 180×180.)

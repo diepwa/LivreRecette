@@ -1,10 +1,13 @@
-const CACHE = "livre-recettes-v5";
+const CACHE = "livre-recettes-v7";
 const ASSETS = [
   "./",
   "./index.html",
   "./sync.js",
+  "./recipe-pdf.js",
+  "./vendor/pdf-lib.min.js",
   "./firebase-config.js",
   "./manifest.json",
+  "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png"
