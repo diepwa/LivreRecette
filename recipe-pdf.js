@@ -6,11 +6,11 @@ const M = 48;                       // marge
 const CW = PAGE[0] - 2 * M;         // largeur utile
 const FOOT = 26;                    // réserve pour le pied de page
 const C = {
-  ink: [0.157, 0.125, 0.227],
-  accent: [0.486, 0.302, 1],
-  muted: [0.49, 0.455, 0.58],
-  line: [0.9, 0.878, 0.953],
-  soft: [0.953, 0.94, 0.99],
+  ink: [0.2, 0.161, 0.122],
+  accent: [0.42, 0.322, 0.22],
+  muted: [0.522, 0.467, 0.373],
+  line: [0.902, 0.863, 0.796],
+  soft: [0.957, 0.937, 0.902],
 };
 
 const SPACES = /[   -   　\t]/g;

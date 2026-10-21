@@ -1,4 +1,4 @@
-const CACHE = "livre-recettes-v8";
+const CACHE = "livre-recettes-v9";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,8 @@ const ASSETS = [
   "./manifest.json",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
+  "./icons/nout.png",
+  "./icons/splash.png",
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png"
 ];
@@ -34,7 +36,7 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   const sameOrigin = url.origin === location.origin;
-  const sdk = url.hostname === "www.gstatic.com" && url.pathname.startsWith("/firebasejs/");
+  const sdk = (url.hostname === "www.gstatic.com" && url.pathname.startsWith("/firebasejs/")) || url.hostname === "fonts.googleapis.com" || (url.hostname === "fonts.gstatic.com" && url.pathname.startsWith("/s/"));
   if (!sameOrigin && !sdk) return;
   e.respondWith(
     caches.match(req).then((cached) => {
