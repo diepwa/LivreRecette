@@ -34,7 +34,7 @@ L'app ne propose volontairement **pas** de créer un compte : les inscriptions s
 Le compte partagé se crée donc dans la console : Authentication → Utilisateurs → « Ajouter un utilisateur »
 (si besoin, on peut temporairement rouvrir les inscriptions, puis les refermer).
 
-1. Sur chaque téléphone : bouton « ⋯ » → Synchronisation → saisir l'e-mail et le mot de passe
+1. Sur chaque téléphone : bouton « ⋯ » (Mon profil) → Connexion → saisir l'e-mail et le mot de passe
    du compte partagé → **Se connecter**.
 2. Le premier téléphone connecté envoie ses recettes ; le second les reçoit, ainsi que le panier.
 
@@ -46,7 +46,7 @@ Utilisez bien **le même compte** sur les deux téléphones : c'est ce qui vous 
 - Hors ligne, tout reste utilisable ; les modifications partent au retour du réseau.
 - En cas de modification simultanée de la même recette, la dernière enregistrée l'emporte.
 - Photos : 6 maximum par recette, réduites automatiquement pour tenir dans la limite de 1 Mo par recette.
-- Le bouton d'export reste utile comme copie de secours.
+- Le bouton d'export (« ⋯ » → Sauvegarde) reste utile comme copie de secours.
 
 ## Mise à jour « listes et amis » : règles Firestore à republier
 
@@ -64,9 +64,10 @@ Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'e
 
 ## Amis et envoi de recettes
 
-- Menu « ⋯ » → **Mes amis**. Choisis d'abord ton nom (celui que tes amis voient).
+- Bouton « ⋯ » → page **Mon profil** : pseudo, connexion / déconnexion, amis et sauvegarde.
+- Choisis d'abord ton **pseudo** : tes amis le voient, et s'il change, il change aussi chez eux.
 - **Inviter** : « Créer un code d'invitation », puis « Envoyer l'invitation » (Messages, WhatsApp…). Le code est valable 7 jours.
-- **Accepter** : ton ami ouvre NoutBook → « ⋯ » → Mes amis → « J'ai reçu un code », et tape le code. Vous êtes alors amis tous les deux
+- **Accepter** : ton ami ouvre NoutBook → « ⋯ » → « J'ai reçu un code », et tape le code. Vous êtes alors amis tous les deux
   (l'ami qui a créé le code doit ouvrir NoutBook une fois pour que l'amitié soit confirmée de son côté).
 - Sur une recette : **Envoyer à un ami**. L'ami reçoit une **copie** dans son onglet « Partagées » : s'il la modifie, la tienne ne change pas.
 - Chaque ami a son propre compte (créé dans la console Firebase, inscriptions toujours fermées).

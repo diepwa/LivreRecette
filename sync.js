@@ -45,6 +45,10 @@ export async function initSync(app) {
   let unsubR = null;
   let unsubS = null;
   let unsubX = [];
+  let friendDocs = [];          // amis tels qu'enregistrés chez moi
+  const liveNames = new Map();  // pseudo actuel de chaque ami
+  const nameUnsubs = new Map();
+  let publicSynced = false;
   let queue = Promise.resolve();
   let shopTimer = null;
 
@@ -60,6 +64,8 @@ export async function initSync(app) {
   const profileRef = () => doc(db, "users", uid, "meta", "profile");
   const friendRef = (f) => doc(db, "users", uid, "friends", f);
   const inboxOf = (u) => collection(db, "users", u, "inbox");
+  // pseudo public : lisible seulement par les comptes que l'on a en amis
+  const publicRef = (u) => doc(db, "profiles", u);
   const fail = (e) => app.setStatus({ state: "error", email, message: friendly(e) });
 
   function friendly(e) {
@@ -265,16 +271,45 @@ export async function initSync(app) {
       }, fail),
       onSnapshot(profileRef(), (snap) => {
         const d = snap.exists() ? snap.data() : {};
-        app.setProfile({ name: typeof d.name === "string" ? d.name : "" });
+        const name = typeof d.name === "string" ? d.name : "";
+        app.setProfile({ name });
+        // une fois par session : le pseudo public suit le pseudo du compte
+        if (name && !publicSynced && !snap.metadata.fromCache) {
+          publicSynced = true;
+          setDoc(publicRef(uid), { name, updated: Date.now() }).catch(() => {});
+        }
       }, fail),
       onSnapshot(collection(db, "users", uid, "friends"), (snap) => {
-        const list = [];
-        snap.forEach((d) => list.push({ uid: d.id, name: String((d.data() || {}).name || ""), since: Number((d.data() || {}).since) || 0 }));
-        list.sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
-        app.setFriends(list);
+        friendDocs = [];
+        snap.forEach((d) => friendDocs.push({ uid: d.id, name: String((d.data() || {}).name || ""), since: Number((d.data() || {}).since) || 0 }));
+        watchFriendNames();
+        emitFriends();
       }, fail),
       onSnapshot(inboxOf(uid), (snap) => { queue = queue.then(() => handleInbox(snap)).catch(fail); }, fail),
     ];
+  }
+
+  function emitFriends() {
+    const list = friendDocs.map((f) => ({ ...f, name: liveNames.get(f.uid) || f.name }));
+    list.sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
+    app.setFriends(list);
+  }
+  // suit le pseudo de chaque ami : s'il le change, on voit le nouveau
+  function watchFriendNames() {
+    const ids = new Set(friendDocs.map((f) => f.uid));
+    for (const [id, u] of nameUnsubs) if (!ids.has(id)) { u(); nameUnsubs.delete(id); liveNames.delete(id); }
+    for (const f of friendDocs) {
+      if (nameUnsubs.has(f.uid)) continue;
+      nameUnsubs.set(f.uid, onSnapshot(publicRef(f.uid), (snap) => {
+        const n = snap.exists() ? String((snap.data() || {}).name || "").slice(0, 30) : "";
+        if (!n || n === liveNames.get(f.uid)) return;
+        liveNames.set(f.uid, n);
+        // garde aussi le nouveau pseudo chez moi, pour l'avoir hors ligne
+        const mine = friendDocs.find((x) => x.uid === f.uid);
+        if (mine && mine.name !== n) setDoc(friendRef(f.uid), { name: n }, { merge: true }).catch(() => {});
+        emitFriends();
+      }, () => nameUnsubs.delete(f.uid))); // refusé = l'ami ne nous a pas (encore) en ami : on garde le nom enregistré et on réessaiera
+    }
   }
 
   function stop() {
@@ -282,6 +317,11 @@ export async function initSync(app) {
     if (unsubS) unsubS();
     unsubX.forEach((u) => u());
     unsubX = [];
+    nameUnsubs.forEach((u) => u());
+    nameUnsubs.clear();
+    liveNames.clear();
+    friendDocs = [];
+    publicSynced = false;
     unsubR = unsubS = null;
     uid = null;
     app.setFriends([]);
@@ -301,7 +341,11 @@ export async function initSync(app) {
     signIn: (e, p) => signInWithEmailAndPassword(auth, e, p),
     signOut: () => signOut(auth),
     signedIn: () => !!uid,
-    setProfile: (name) => { if (uid) setDoc(profileRef(), { name, updated: Date.now() }, { merge: true }).catch(fail); },
+    setProfile: (name) => {
+      if (!uid) return;
+      setDoc(profileRef(), { name, updated: Date.now() }, { merge: true }).catch(fail);
+      setDoc(publicRef(uid), { name, updated: Date.now() }).catch(fail);
+    },
     createInvite,
     redeemInvite,
     removeFriend: (f) => { if (uid) deleteDoc(friendRef(f)).catch(fail); },

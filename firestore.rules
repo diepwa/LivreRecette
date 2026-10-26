@@ -25,6 +25,18 @@ service cloud.firestore {
         );
     }
 
+    // Pseudo public : lisible par son propriétaire et par les comptes qu'il a en amis,
+    // pour qu'un changement de pseudo apparaisse aussi chez eux.
+    match /profiles/{uid} {
+      allow get: if request.auth != null
+        && (request.auth.uid == uid
+            || exists(/databases/$(database)/documents/users/$(uid)/friends/$(request.auth.uid)));
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 30;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Codes d'invitation : lisibles un par un par un compte connecté qui connaît le code (jamais listés),
     // valables 7 jours au plus, supprimables par leur créateur.
     match /invites/{code} {

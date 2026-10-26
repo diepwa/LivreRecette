@@ -237,7 +237,7 @@ setTimeout(function(){s.remove()},2800)})();
   <button class="icon-btn" id="back" hidden aria-label="Retour">←</button>
   <h1><a href="#/"><img class="logo" src="icons/nout.png" alt="" width="32" height="32">NoutBook</a></h1>
   <button class="icon-btn" id="cartbtn" aria-label="Liste de courses">🛒<span class="badge" id="badge" hidden></span></button>
-  <button class="icon-btn" id="menu" aria-label="Synchronisation et sauvegarde">⋯<span class="dot" id="dot" hidden></span></button>
+  <button class="icon-btn" id="menu" aria-label="Mon profil">⋯<span class="dot" id="dot" hidden></span></button>
 </header>
 <main id="view"></main>
 <a class="fab" id="fab" href="#/new">＋ Nouvelle recette</a>
@@ -309,36 +309,11 @@ setTimeout(function(){s.remove()},2800)})();
   <ul class="opts" id="sendopts"></ul>
   <div class="col">
     <button class="btn primary" type="button" id="sendgo" disabled>Envoyer</button>
-    <a class="btn" href="#/amis" id="sendfriends" style="text-align:center">👥 Ajouter un ami</a>
+    <a class="btn" href="#/profil" id="sendfriends" style="text-align:center">👥 Ajouter un ami</a>
     <button class="btn" type="button" id="sendclose">Fermer</button>
   </div>
 </dialog>
 
-<dialog id="dlg">
-  <h3>Synchronisation</h3>
-  <div class="syncbox">
-    <p class="hint" id="syncmsg" aria-live="polite"></p>
-    <form id="authf" hidden>
-      <input type="email" id="aemail" placeholder="E-mail du compte partagé" autocomplete="username" required>
-      <input type="password" id="apass" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password" minlength="6" required>
-      <p class="autherr" id="autherr" role="alert"></p>
-      <button class="btn primary" type="submit" style="width:100%">Se connecter</button>
-    </form>
-    <button class="btn" type="button" id="signout" hidden>Se déconnecter</button>
-  </div>
-  <h3>Amis</h3>
-  <div class="syncbox">
-    <p class="hint">Envoie des recettes à tes amis NoutBook et reçois les leurs.</p>
-    <a class="btn" href="#/amis" id="tofriends">👥 Mes amis</a>
-  </div>
-  <h3>Sauvegarde</h3>
-  <p>Copie de secours dans un fichier (photos comprises), à garder ou à importer sur un autre téléphone.</p>
-  <div class="col">
-    <button class="btn primary" id="exp">⬇ Exporter mes recettes</button>
-    <label class="btn" style="text-align:center;margin:0">⬆ Importer une sauvegarde<input type="file" id="imp" accept=".json,application/json" hidden></label>
-    <button class="btn" id="dlgclose">Fermer</button>
-  </div>
-</dialog>
 
 <script>
 "use strict";
@@ -432,7 +407,7 @@ async function viewList(){
   view.innerHTML=`
     <nav class="tabs" id="tabs" aria-label="Listes de recettes">${tabs.map(([k,l])=>`<button type="button" class="tab ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>${esc(l)}${k==="shared"&&unseen?`<span class="n" aria-label="${unseen} nouvelle(s)">${unseen}</span>`:""}</button>`).join("")}<button type="button" class="tab new" id="newtab">＋ Liste</button></nav>
     ${curList?`<div class="lhead"><span>${inCur.length} recette${inCur.length>1?"s":""}</span><button type="button" class="btn sm" id="lset">Renommer ou supprimer</button></div>`:""}
-    ${filter.list==="shared"?`<div class="lhead"><span>Les recettes que tes amis t’envoient arrivent ici.</span><a href="#/amis">👥 Amis</a></div>`:""}
+    ${filter.list==="shared"?`<div class="lhead"><span>Les recettes que tes amis t’envoient arrivent ici.</span><a href="#/profil">👥 Amis</a></div>`:""}
     <input class="search" id="q" type="search" placeholder="Rechercher une recette, un ingrédient…" value="${esc(filter.q)}">
     <div class="chips" id="chips"></div>
     <div id="results"></div>`;
@@ -449,7 +424,7 @@ async function viewList(){
       $("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>Ton livre est vide pour l’instant.</b><br>Ajoute ta première recette avec le bouton ci-dessous.</p></div>`;return;
     }
     if(filter.list==="shared"&&!inCur.length){
-      $("#results").innerHTML=`<div class="empty"><div class="big">📬</div><p><b>Aucune recette reçue pour l’instant.</b><br>Quand un ami t’envoie une recette, sa copie arrive ici.${friends.length?"":`<br><a href="#/amis">Ajoute un ami</a> pour commencer.`}</p></div>`;return;
+      $("#results").innerHTML=`<div class="empty"><div class="big">📬</div><p><b>Aucune recette reçue pour l’instant.</b><br>Quand un ami t’envoie une recette, sa copie arrive ici.${friends.length?"":`<br><a href="#/profil">Ajoute un ami</a> pour commencer.`}</p></div>`;return;
     }
     if(curList&&!inCur.length){
       $("#results").innerHTML=`<div class="empty"><div class="big">📑</div><p><b>Cette liste est vide.</b><br>Ouvre une recette et touche « Listes » pour la ranger ici, ou crée une recette depuis cet onglet.</p></div>`;return;
@@ -459,7 +434,7 @@ async function viewList(){
       <div class="card">
         <a class="cl" href="#/r/${r.id}">
           <div class="ph">${r.photos&&r.photos[0]?`<img src="${r.photos[0]}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}</div>
-          <div class="body"><h3>${esc(r.title)}</h3><small>${r.sharedFrom&&r.sharedNew?'<b class="nw">Nouvelle · </b>':""}${filter.list==="shared"&&r.sharedFrom&&r.sharedFrom.name?esc(deNom(r.sharedFrom.name)):esc(r.category||"")}${r.time&&filter.list!=="shared"?" · "+esc(r.time):""}</small></div>
+          <div class="body"><h3>${esc(r.title)}</h3><small>${r.sharedFrom&&r.sharedNew?'<b class="nw">Nouvelle · </b>':""}${filter.list==="shared"&&senderName(r)?esc(deNom(senderName(r))):esc(r.category||"")}${r.time&&filter.list!=="shared"?" · "+esc(r.time):""}</small></div>
         </a>
         ${r.fav?'<span class="star">★</span>':""}
         <button type="button" class="cardcart ${shop.sel[r.id]?"on":""}" data-id="${r.id}" aria-label="${shop.sel[r.id]?"Retirer des courses":"Ajouter aux courses"}">${shop.sel[r.id]?"✓":"🛒"}</button>
@@ -495,7 +470,7 @@ async function viewDetail(id){
       ${r.time?`<span class="tag">⏱ ${esc(r.time)}</span>`:""}
       ${r.servings?`<span class="tag">👥 ${esc(r.servings)} pers.</span>`:""}
       ${recipeLists(r).filter(l=>lists[l]&&!lists[l].deleted).map(l=>`<a class="tag" href="#/" data-l="${esc(l)}">📑 ${esc(lists[l].name)}</a>`).join("")}
-      ${r.sharedFrom&&typeof r.sharedFrom==="object"?`<span class="tag from">📬 Reçue${r.sharedFrom.name?" "+esc(deNom(r.sharedFrom.name)):""}${r.sharedFrom.at?" le "+new Date(r.sharedFrom.at).toLocaleDateString("fr-FR",{day:"numeric",month:"long"}):""}</span>`:""}
+      ${r.sharedFrom&&typeof r.sharedFrom==="object"?`<span class="tag from">📬 Reçue${senderName(r)?" "+esc(deNom(senderName(r))):""}${r.sharedFrom.at?" le "+new Date(r.sharedFrom.at).toLocaleDateString("fr-FR",{day:"numeric",month:"long"}):""}</span>`:""}
     </div>
     ${lines(r.ingredients).length?`<section class="block"><h3>Ingrédients</h3><ul class="ing">${lines(r.ingredients).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></section>`:""}
     ${lines(r.steps).length?`<section class="block"><h3>Préparation</h3><ol class="steps">${lines(r.steps).map(l=>`<li><span>${esc(l)}</span></li>`).join("")}</ol></section>`:""}
@@ -1240,6 +1215,11 @@ function openListsDlg(r,after){
 
 /* ---------- amis et partage d'une copie ---------- */
 const signedIn=()=>!!(syncApi&&syncApi.signedIn&&syncApi.signedIn());
+// pseudo actuel de l'expéditeur s'il est (encore) notre ami, sinon celui de l'envoi
+function senderName(r){
+  const f=r.sharedFrom&&friends.find(x=>x.uid===r.sharedFrom.uid);
+  return (f&&f.name)||(r.sharedFrom&&r.sharedFrom.name)||"";
+}
 function openSendDlg(r){
   const d=$("#senddlg"),sel=new Set(),go=$("#sendgo"),msg=$("#sendmsg");
   const draw=()=>{
@@ -1248,11 +1228,11 @@ function openSendDlg(r){
     go.textContent=sel.size>1?`Envoyer à ${sel.size} amis`:"Envoyer";
   };
   const ok=signedIn();
-  msg.textContent=!ok?"Connecte-toi à la synchronisation (menu ⋯) pour envoyer des recettes à tes amis."
+  msg.textContent=!ok?"Connecte-toi d’abord (bouton « ⋯ » → Mon profil) pour envoyer des recettes à tes amis."
     :!friends.length?"Tu n’as pas encore d’ami dans NoutBook. Ajoute-en un pour lui envoyer cette recette."
     :"Ton ami reçoit sa propre copie : s’il la modifie, la tienne ne change pas.";
   $("#sendopts").hidden=go.hidden=!ok||!friends.length;
-  $("#sendfriends").hidden=!ok;
+  $("#sendfriends").textContent=ok?"👥 Ajouter un ami":"👤 Se connecter";
   $("#sendfriends").onclick=()=>d.close();
   $("#sendopts").onclick=e=>{
     const b=e.target.closest("button[data-id]");if(!b)return;
@@ -1276,51 +1256,73 @@ async function receiveShared(m){
 }
 
 let lastInvite=null;   // dernier code créé, gardé si la page se redessine
-async function viewFriends(code){
+// Page profil (bouton « ⋯ ») : pseudo, connexion, amis, sauvegarde
+async function viewProfile(code){
   chrome(false);
   code=cleanCode(code);
-  if(!signedIn()){
-    view.innerHTML=`<h2 class="title">Amis</h2>
-      <section class="block">
-        <p>Pour ajouter des amis et leur envoyer des recettes, connecte-toi d’abord à la synchronisation.</p>
-        ${code?`<p>Code d’invitation reçu :</p><div class="code">${esc(fmtCode(code))}</div><p class="hint">Si NoutBook est installé sur ton écran d’accueil, ouvre-le, puis « ⋯ » → Mes amis → « J’ai reçu un code », et tape ce code.</p>`:""}
-        <button class="btn primary" type="button" id="tosync">Se connecter</button>
-      </section>`;
-    $("#tosync").onclick=()=>$("#dlg").showModal();
-    return;
-  }
-  const named=!!profile.name;
-  const nameBlock=`<section class="block"><h3>Ton nom</h3>
-      <p>C’est le nom que tes amis voient quand tu leur envoies une recette.</p>
+  const on=signedIn(),named=!!profile.name;
+  const st=syncState.state;
+  const pseudoBlock=`<section class="block"><h3>Pseudo</h3>
+      <p>C’est le nom que tes amis voient. Si tu le changes, il change aussi chez eux.</p>
       <form class="addrow" id="pf" autocomplete="off" style="margin:0">
-        <input id="pname" type="text" maxlength="30" placeholder="Ton prénom" value="${esc(profile.name)}" autocomplete="given-name">
+        <input id="pname" type="text" maxlength="30" placeholder="Ton pseudo" value="${esc(profile.name)}" autocomplete="nickname">
         <button class="btn primary" type="submit">Enregistrer</button>
       </form></section>`;
-  view.innerHTML=`<h2 class="title">Amis</h2>
-    ${named?"":nameBlock}
+  const accountBlock=`<section class="block"><h3>${on?"Compte":"Connexion"}</h3>
+      <p class="hint" id="syncmsg" aria-live="polite"></p>
+      <form id="authf" class="syncbox" style="border:0;margin:0;padding:0" hidden>
+        <input type="email" id="aemail" placeholder="E-mail du compte" autocomplete="username" required>
+        <input type="password" id="apass" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password" minlength="6" required>
+        <p class="autherr" id="autherr" role="alert"></p>
+        <button class="btn primary" type="submit" style="width:100%">Se connecter</button>
+      </form>
+      <button class="btn" type="button" id="signout" hidden>Se déconnecter</button>
+    </section>`;
+  const needName=named?"":`<p class="fhint">Choisis d’abord ton pseudo, plus haut.</p>`;
+  const friendsBlocks=on?`
     <section class="block"><h3>Mes amis <small class="muted">· ${friends.length}</small></h3>
       ${friends.length?`<ul class="pick" id="flist">${friends.map(f=>`<li><span class="pt">${esc(f.name||"Ami")}</span><button type="button" class="x" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}">✕</button></li>`).join("")}</ul>`
         :`<p class="muted" style="margin:0">Personne pour l’instant. Invite un ami ou tape le code qu’il t’a envoyé.</p>`}
     </section>
-    <section class="block"><h3>Inviter un ami</h3>
+    <section class="block"><h3>Ajouter un ami</h3>
       <p>Crée un code et envoie-le à ton ami. Il est valable 7 jours et sert à plusieurs amis.</p>
       <div id="inv"></div>
       <button class="btn primary" type="button" id="mkinv" ${named?"":"disabled"} ${lastInvite?"hidden":""}>Créer un code d’invitation</button>
-      ${named?"":`<p class="fhint">Choisis d’abord ton nom, plus haut.</p>`}
-    </section>
-    <section class="block"><h3>J’ai reçu un code</h3>
+      ${needName}
+      <h3 style="margin-top:18px">J’ai reçu un code</h3>
       <form class="addrow" id="cf" autocomplete="off" style="margin:0">
         <input id="icode" type="text" maxlength="12" placeholder="ABCD-EFGH" autocapitalize="characters" autocorrect="off" spellcheck="false" value="${esc(fmtCode(code))}">
         <button class="btn primary" type="submit" ${named?"":"disabled"}>Ajouter</button>
       </form>
-      <p class="fhint" id="cmsg" role="status">${named?"":"Choisis d’abord ton nom, plus haut."}</p>
-    </section>
-    ${named?nameBlock:""}`;
-  $("#pf").onsubmit=async e=>{
+      <p class="fhint" id="cmsg" role="status">${named?"":"Choisis d’abord ton pseudo, plus haut."}</p>
+    </section>`
+    :`<section class="block"><h3>Amis</h3>
+      <p style="margin:0">Connecte-toi pour ajouter des amis et leur envoyer des recettes.</p>
+      ${code?`<p style="margin:12px 0 0">Code d’invitation reçu :</p><div class="code">${esc(fmtCode(code))}</div><p class="hint" style="margin:0">Si NoutBook est installé sur ton écran d’accueil, ouvre-le, puis « ⋯ » → « J’ai reçu un code », et tape ce code.</p>`:""}
+    </section>`;
+  const backupBlock=`<section class="block"><h3>Sauvegarde</h3>
+      <p>Copie de secours dans un fichier (photos et listes comprises), à garder ou à importer sur un autre téléphone.</p>
+      <div class="col">
+        <button class="btn primary" type="button" id="exp">⬇ Exporter mes recettes</button>
+        <label class="btn" style="text-align:center;margin:0">⬆ Importer une sauvegarde<input type="file" id="imp" accept=".json,application/json" hidden></label>
+      </div></section>`;
+  view.innerHTML=`<h2 class="title">Mon profil</h2>
+    ${on?pseudoBlock+friendsBlocks+accountBlock:accountBlock+friendsBlocks}
+    ${backupBlock}`;
+  renderSync();
+  $("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
+  $("#signout").onclick=async()=>{
+    if(syncApi&&confirm("Se déconnecter ? Les recettes restent sur cet appareil."))await syncApi.signOut();
+  };
+  $("#exp").onclick=exportBackup;
+  $("#imp").onchange=importBackup;
+  if(!on)return;
+  $("#pf").onsubmit=e=>{
     e.preventDefault();
     const n=$("#pname").value.trim().slice(0,30);if(!n){$("#pname").focus();return}
-    profile={...profile,name:n};syncApi.setProfile(n);toast("Nom enregistré ✓");
-    viewFriends(code);
+    if(n===profile.name){toast("Pseudo inchangé");return}
+    profile={...profile,name:n};syncApi.setProfile(n);toast("Pseudo enregistré ✓");
+    $("#pname").blur();viewProfile(code);
   };
   const fl=$("#flist");
   if(fl)fl.onclick=e=>{
@@ -1331,7 +1333,7 @@ async function viewFriends(code){
   };
   const showInvite=c=>{
     const url=location.origin+location.pathname+"#/ami/"+c;
-    const txt=`Ajoute-moi comme ami sur NoutBook pour qu’on s’échange des recettes : dans l’app, « ⋯ » → Mes amis → « J’ai reçu un code », puis tape ${fmtCode(c)}.\n${url}`;
+    const txt=`Ajoute-moi comme ami sur NoutBook pour qu’on s’échange des recettes : dans l’app, « ⋯ » → « J’ai reçu un code », puis tape ${fmtCode(c)}.\n${url}`;
     $("#inv").innerHTML=`<div class="code">${esc(fmtCode(c))}</div><div class="row2" style="margin-bottom:10px"><button class="btn primary" type="button" id="invshare">Envoyer l’invitation</button><button class="btn" type="button" id="invcopy">Copier</button></div>`;
     $("#invshare").onclick=async()=>{
       if(navigator.share){try{await navigator.share({text:txt});return}catch(err){if(err&&err.name==="AbortError")return}}
@@ -1358,9 +1360,9 @@ async function viewFriends(code){
     msg.textContent="Vérification du code…";
     try{
       const name=await syncApi.redeemInvite(c);
-      if(location.hash!=="#/amis")history.replaceState(null,"","#/amis");
+      if(location.hash!=="#/profil")history.replaceState(null,"","#/profil");
       toast(`${name||"Ton ami"} est maintenant ton ami ✓`);
-      viewFriends();
+      $("#icode").blur();viewProfile();
     }catch(err){msg.className="fhint err";msg.textContent=err&&err.message||"Ce code n’a pas marché."}
   };
 }
@@ -1403,10 +1405,12 @@ function refreshView(){
     route().then(()=>window.scrollTo(0,y));
   },200);
 }
+const PROFILE_RE=/^#\/(profil|ami)/;
+let wasSignedIn=false;
 function setStatus(st){
-  const was=signedIn();
   syncState=st;renderSync();
-  if(signedIn()!==was&&/^#\/ami/.test(location.hash))refreshView();
+  const now=signedIn();
+  if(now!==wasSignedIn){wasSignedIn=now;if(PROFILE_RE.test(location.hash))refreshView()}
 }
 function renderSync(){
   const s=syncState,em=s.email?" · "+s.email:"";
@@ -1421,11 +1425,11 @@ function renderSync(){
     error:["red","Problème : "+(s.message||"inconnu")+em]
   };
   const [tone,text]=tones[s.state]||tones.off;
-  const dot=$("#dot"),msg=$("#syncmsg");
+  const dot=$("#dot"),msg=$("#syncmsg"),af=$("#authf"),so=$("#signout");
   dot.className="dot "+tone;dot.hidden=!tone;
-  msg.textContent=text;
-  $("#authf").hidden=s.state!=="signedout";
-  $("#signout").hidden=!["syncing","ok","pending","offline","error"].includes(s.state);
+  if(msg)msg.textContent=text;
+  if(af)af.hidden=s.state!=="signedout";
+  if(so)so.hidden=!["syncing","ok","pending","offline","error"].includes(s.state);
 }
 function authMsg(code=""){
   if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(code))return"E-mail ou mot de passe incorrect.";
@@ -1444,10 +1448,6 @@ async function doAuth(kind){
     $("#apass").value="";toast("Connecté ✓");
   }catch(err){$("#autherr").textContent=authMsg(err&&err.code)}
 }
-$("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
-$("#signout").onclick=async()=>{
-  if(syncApi&&confirm("Se déconnecter ? Les recettes restent sur cet appareil."))await syncApi.signOut();
-};
 async function bootSync(){
   renderSync();
   try{
@@ -1457,8 +1457,8 @@ async function bootSync(){
       putLocal:putRecipeLocal,delLocal:delRecipeLocal,
       getShop:()=>shop,setShop:applyRemoteShop,fitPhotos,refresh:refreshView,setStatus,
       getLists:()=>lists,setLists:applyRemoteLists,
-      setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&/^#\/ami/.test(location.hash))refreshView()},
-      setProfile:p=>{const ch=p.name!==profile.name;profile=p;if(ch&&/^#\/ami/.test(location.hash))refreshView()},
+      setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&(PROFILE_RE.test(location.hash)||/^#\/(r\/|$)/.test(location.hash||"#/")))refreshView()},
+      setProfile:p=>{const ch=p.name!==profile.name;profile=p;if(ch&&PROFILE_RE.test(location.hash))refreshView()},
       getProfile:()=>profile,receiveShared,shareable,toast
     });
   }catch(e){setStatus({state:"off"})}
@@ -1474,8 +1474,8 @@ async function route(){
     else if(h==="#/new")await viewForm();
     else if(h==="#/courses")await viewCourses();
     else if((m=h.match(/^#\/edit\/(.+)$/)))await viewForm(m[1]);
-    else if(h==="#/amis")await viewFriends();
-    else if((m=h.match(/^#\/ami\/([A-Za-z0-9-]+)$/)))await viewFriends(m[1]);
+    else if(h==="#/profil"||h==="#/amis")await viewProfile();
+    else if((m=h.match(/^#\/ami\/([A-Za-z0-9-]+)$/)))await viewProfile(m[1]);
     else await viewList();
   }catch(err){
     view.innerHTML=`<div class="empty"><div class="big">⚠️</div><p>Un souci est survenu : ${esc(err.message)}</p></div>`;
@@ -1486,18 +1486,16 @@ $("#back").onclick=()=>{ if(history.length>1)history.back(); else location.hash=
 $("#cartbtn").onclick=()=>{location.hash="#/courses"};
 
 /* ---------- backup ---------- */
-$("#menu").onclick=()=>$("#dlg").showModal();
-$("#dlgclose").onclick=()=>$("#dlg").close();
-$("#tofriends").onclick=()=>$("#dlg").close();
-$("#exp").onclick=async()=>{
+$("#menu").onclick=()=>{location.hash="#/profil"};
+async function exportBackup(){
   const data={app:"livre-recettes",version:1,exported:new Date().toISOString(),recipes:await allRecipes(),lists};
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="noutbook-"+new Date().toISOString().slice(0,10)+".json";
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   toast(`${data.recipes.length} recette(s) exportée(s)`);
-};
-$("#imp").onchange=async e=>{
+}
+async function importBackup(e){
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{
     const data=JSON.parse(await f.text());
@@ -1505,9 +1503,9 @@ $("#imp").onchange=async e=>{
     let n=0;
     if(data.lists&&typeof data.lists==="object"){lists=mergeLists(lists,data.lists);saveLists()}
     for(const r of data.recipes){if(r&&r.id&&r.title){await putRecipe(r);n++}}
-    $("#dlg").close();toast(`${n} recette(s) importée(s) ✓`);route();
+    toast(`${n} recette(s) importée(s) ✓`);route();
   }catch(err){alert("Import impossible : "+err.message)}
-};
+}
 
 /* ---------- boot ---------- */
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
