@@ -209,6 +209,22 @@ section.block p{margin:0 0 12px}
 .fhint{color:var(--muted);font-size:.85rem;margin:6px 0 0;min-height:1.2em}
 .fhint.err{color:#c0392b}
 @media (prefers-color-scheme:dark){.fhint.err{color:#ff8a7a}}
+/* tags */
+.card .ph{position:relative}
+.tico{position:absolute;right:5px;bottom:5px;display:flex;gap:1px;background:var(--card);border-radius:999px;padding:0 5px;font-size:.72rem;line-height:1.6;box-shadow:var(--shadow)}
+.chips.tchips{padding-top:0}
+.chip.tg{font-size:.85rem;padding:5px 12px}
+.tagbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.tagbox input[type=text]{flex:1;width:auto;min-width:130px;border:0;background:none;padding:6px;outline:none}
+.tpill{display:inline-flex;align-items:center;gap:2px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 2px 2px 2px;font-size:.9rem;font-weight:700}
+.tpill .ic{border:0;background:var(--card);border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;padding:0}
+.tpill .rm{border:0;background:none;color:var(--accent);width:30px;height:30px;cursor:pointer;font-size:.9rem;padding:0}
+.tsugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tsugg button{border:1px dashed var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 12px;min-height:36px;font:inherit;font-size:.85rem;cursor:pointer}
+.tsugg button:active,.chip:active{background:var(--accent-soft)}
+.icongrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0 0 14px}
+.icongrid button{aspect-ratio:1/1;border:1px solid var(--line);background:var(--card);border-radius:12px;font-size:1.4rem;cursor:pointer;padding:0}
+.icongrid button[aria-pressed=true]{border:2px solid var(--accent);background:var(--accent-soft)}
 .tab:focus-visible,ul.opts button:focus-visible,.btn:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* écran de lancement : le chat, NoutBook écrit lettre par lettre, puis un cercle qui s'agrandit jusqu'à l'accueil */
 #splash{position:fixed;inset:0;z-index:9999;background:#ece3d5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden}
@@ -282,6 +298,13 @@ setTimeout(function(){s.remove()},2800)})();
   <button class="btn" type="button" id="listclose" style="width:100%">Fermer</button>
 </dialog>
 
+<dialog id="icondlg">
+  <h3 id="icont"></h3>
+  <p>L’icône vaut pour ce tag sur toutes tes recettes.</p>
+  <div class="icongrid" id="icongrid"></div>
+  <button class="btn" type="button" id="iconclose" style="width:100%">Fermer</button>
+</dialog>
+
 <dialog id="namedlg">
   <form id="namef" autocomplete="off">
     <h3 id="namet"></h3>
@@ -343,7 +366,7 @@ const allRecipes=()=>tx("readonly",s=>s.getAll());
 const getRecipe=id=>tx("readonly",s=>s.get(id));
 const putRecipeLocal=r=>tx("readwrite",s=>s.put(r));
 const delRecipeLocal=id=>tx("readwrite",s=>s.delete(id));
-const syncHooks={push:null,remove:null,pushShop:null,pushLists:null};
+const syncHooks={push:null,remove:null,pushShop:null,pushLists:null,pushTags:null};
 async function putRecipe(r){
   await putRecipeLocal(r);
   if(syncHooks.push)syncHooks.push(r);
@@ -378,7 +401,7 @@ function resizeImage(file,max=1024,q=.75){
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
 
 /* ---------- state ---------- */
-let filter={q:"",cat:"all",list:"all"};
+let filter={q:"",cat:"all",list:"all",tags:[]};
 let friends=[],profile={name:""};
 // petite marque de modification : synchronise le changement sans faire remonter la recette en tête de l'accueil
 const touch=r=>{r.updated=(Number(r.updated)||0)+1};
@@ -398,6 +421,7 @@ function updateBadge(){
 async function viewList(){
   chrome(true);
   const rs=(await allRecipes()).sort((a,b)=>(b.updated||0)-(a.updated||0));
+  if(/^#\/(r\/|new|edit|courses|profil|ami)/.test(location.hash))return;   // on a changé de page pendant le chargement
   const ls=activeLists(lists);
   if(filter.list!=="all"&&filter.list!=="shared"&&!ls.some(l=>l.id===filter.list))filter.list="all";
   const curList=ls.find(l=>l.id===filter.list);
@@ -410,6 +434,7 @@ async function viewList(){
     ${filter.list==="shared"?`<div class="lhead"><span>Les recettes que tes amis t’envoient arrivent ici.</span><a href="#/profil">👥 Amis</a></div>`:""}
     <input class="search" id="q" type="search" placeholder="Rechercher une recette, un ingrédient…" value="${esc(filter.q)}">
     <div class="chips" id="chips"></div>
+    <div class="chips tchips" id="tchips" aria-label="Filtrer par tag"></div>
     <div id="results"></div>`;
   $("#tabs").onclick=e=>{const b=e.target.closest(".tab[data-l]");if(!b)return;filter.list=b.dataset.l;viewList()};
   const on=$("#tabs .tab.on");if(on&&on.offsetLeft+on.offsetWidth>$("#tabs").clientWidth)$("#tabs").scrollLeft=on.offsetLeft-16;
@@ -418,6 +443,14 @@ async function viewList(){
   const chips=[["all","Toutes"],["fav","★ Favoris"],...CATS.map(c=>[c,c])];
   $("#chips").innerHTML=chips.map(([k,l])=>`<button class="chip ${filter.cat===k?"on":""}" data-k="${esc(k)}">${esc(l)}</button>`).join("");
   $("#chips").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;filter.cat=b.dataset.k;viewList()};
+  const used=tagUsage(inCur);
+  filter.tags=filter.tags.filter(k=>used.some(t=>t.key===k));
+  $("#tchips").hidden=!used.length;
+  $("#tchips").innerHTML=used.map(t=>`<button class="chip tg ${filter.tags.includes(t.key)?"on":""}" data-t="${esc(t.key)}" aria-pressed="${filter.tags.includes(t.key)}">${showIcon(tagIcon(t.name,tagIcons))} ${esc(t.name)}</button>`).join("");
+  $("#tchips").onclick=e=>{
+    const b=e.target.closest(".chip[data-t]");if(!b)return;
+    const k=b.dataset.t;filter.tags=filter.tags.includes(k)?filter.tags.filter(x=>x!==k):[...filter.tags,k];viewList();
+  };
   const draw=()=>{
     const list=filterRecipes(rs,filter,lists);
     if(filter.list==="all"&&!rs.length){
@@ -433,7 +466,7 @@ async function viewList(){
     $("#results").innerHTML=`<div class="grid">${list.map(r=>`
       <div class="card">
         <a class="cl" href="#/r/${r.id}">
-          <div class="ph">${r.photos&&r.photos[0]?`<img src="${r.photos[0]}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}</div>
+          <div class="ph">${r.photos&&r.photos[0]?`<img src="${r.photos[0]}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}${recipeTags(r).length?`<span class="tico" aria-label="Tags : ${esc(recipeTags(r).join(", "))}">${recipeTags(r).slice(0,3).map(t=>showIcon(tagIcon(t,tagIcons))).join("")}</span>`:""}</div>
           <div class="body"><h3>${esc(r.title)}</h3><small>${r.sharedFrom&&r.sharedNew?'<b class="nw">Nouvelle · </b>':""}${filter.list==="shared"&&senderName(r)?esc(deNom(senderName(r))):esc(r.category||"")}${r.time&&filter.list!=="shared"?" · "+esc(r.time):""}</small></div>
         </a>
         ${r.fav?'<span class="star">★</span>':""}
@@ -469,6 +502,7 @@ async function viewDetail(id){
       ${r.category?`<span class="tag">${EMOJI[r.category]||""} ${esc(r.category)}</span>`:""}
       ${r.time?`<span class="tag">⏱ ${esc(r.time)}</span>`:""}
       ${r.servings?`<span class="tag">👥 ${esc(r.servings)} pers.</span>`:""}
+      ${recipeTags(r).map(t=>`<a class="tag" href="#/" data-t="${esc(tagKey(t))}">${showIcon(tagIcon(t,tagIcons))} ${esc(t)}</a>`).join("")}
       ${recipeLists(r).filter(l=>lists[l]&&!lists[l].deleted).map(l=>`<a class="tag" href="#/" data-l="${esc(l)}">📑 ${esc(lists[l].name)}</a>`).join("")}
       ${r.sharedFrom&&typeof r.sharedFrom==="object"?`<span class="tag from">📬 Reçue${senderName(r)?" "+esc(deNom(senderName(r))):""}${r.sharedFrom.at?" le "+new Date(r.sharedFrom.at).toLocaleDateString("fr-FR",{day:"numeric",month:"long"}):""}</span>`:""}
     </div>
@@ -494,7 +528,8 @@ async function viewDetail(id){
   $("#pdf").onclick=()=>shareRecipePdf(r);
   $("#lists").onclick=()=>openListsDlg(r,()=>viewDetail(id));
   $("#send").onclick=()=>openSendDlg(r);
-  view.querySelectorAll("a.tag[data-l]").forEach(a=>a.onclick=e=>{e.preventDefault();filter.list=a.dataset.l;filter.cat="all";location.hash="#/"});
+  view.querySelectorAll("a.tag[data-l]").forEach(a=>a.onclick=e=>{e.preventDefault();filter.list=a.dataset.l;filter.cat="all";filter.tags=[];location.hash="#/"});
+  view.querySelectorAll("a.tag[data-t]").forEach(a=>a.onclick=e=>{e.preventDefault();filter={...filter,list:"all",cat:"all",q:"",tags:[a.dataset.t]};location.hash="#/"});
   if(r.sharedFrom&&r.sharedNew){r.sharedNew=false;touch(r);putRecipe(r)}
   $("#cart").onclick=()=>{
     if(shop.sel[r.id]){location.hash="#/courses";return}
@@ -527,6 +562,9 @@ async function viewForm(id){
     </div>
     <label for="time">Temps <small>(préparation + cuisson)</small></label>
     <input type="text" id="time" value="${esc(rec.time)}" placeholder="Ex. 20 min + 35 min de cuisson">
+    <label for="tagin">Tags <small>(épicé, végétarien, rapide…)</small></label>
+    <div class="tagbox"><span id="tpills" style="display:contents"></span><input type="text" id="tagin" maxlength="24" placeholder="Ajouter un tag…" enterkeyhint="done" autocomplete="off"></div>
+    <div class="tsugg" id="tsugg"></div>
     <label>Photos</label>
     <div class="thumbs" id="thumbs"></div>
     <input type="file" id="file" accept="image/*" multiple hidden>
@@ -548,6 +586,29 @@ async function viewForm(id){
     $("#thumbs").querySelectorAll("button").forEach(b=>b.onclick=()=>{photos.splice(+b.dataset.i,1);drawThumbs()});
   };
   drawThumbs();
+  // --- tags : pastilles, suggestions, icône ---
+  let tags=recipeTags(rec);
+  const usage=tagUsage(await allRecipes());
+  const tin=$("#tagin");
+  const drawTags=()=>{
+    $("#tpills").innerHTML=tags.map((t,i)=>`<span class="tpill"><button type="button" class="ic" data-i="${i}" aria-label="Changer l’icône de ${esc(t)}">${showIcon(tagIcon(t,tagIcons))}</button>${esc(t)}<button type="button" class="rm" data-i="${i}" aria-label="Retirer ${esc(t)}">✕</button></span>`).join("");
+    const have=new Set(tags.map(tagKey)),q=tagKey(tin.value);
+    const cand=[...usage.map(u=>u.name),...TAG_START].filter((n,i,a)=>!have.has(tagKey(n))&&a.findIndex(x=>tagKey(x)===tagKey(n))===i)
+      .filter(n=>!q||tagKey(n).includes(q)).slice(0,10);
+    $("#tsugg").innerHTML=cand.map(n=>`<button type="button" data-n="${esc(n)}">＋ ${showIcon(tagIcon(n,tagIcons))} ${esc(n)}</button>`).join("");
+  };
+  const addTyped=()=>{const v=tin.value.replace(/,/g," ").trim();if(v){tags=addTag(tags,v);tin.value=""}drawTags()};
+  tin.onkeydown=e=>{if(e.key==="Enter"||e.key===","){e.preventDefault();addTyped()}};
+  tin.oninput=drawTags;
+  tin.onblur=()=>{if(tin.value.trim())addTyped()};
+  $("#tpills").onclick=e=>{
+    const rm=e.target.closest(".rm"),ic=e.target.closest(".ic");
+    if(rm){tags=tags.filter((_,i)=>i!==+rm.dataset.i);drawTags()}
+    else if(ic)openIconPicker(tags[+ic.dataset.i],drawTags);
+  };
+  $("#tsugg").onmousedown=e=>e.preventDefault();   // garde le clavier ouvert
+  $("#tsugg").onclick=e=>{const b=e.target.closest("button[data-n]");if(!b)return;tags=addTag(tags,b.dataset.n);tin.value="";drawTags()};
+  drawTags();
   $("#file").onchange=async e=>{
     const files=[...e.target.files];e.target.value="";
     for(const f of files){
@@ -558,11 +619,12 @@ async function viewForm(id){
   };
   $("#f").onsubmit=async e=>{
     e.preventDefault();
+    if(tin.value.trim())addTyped();
     photos=await fitPhotos(photos);
     Object.assign(rec,{
       title:$("#title").value.trim(),category:$("#cat").value,servings:$("#servings").value,
       time:$("#time").value.trim(),ingredients:$("#ing").value,steps:$("#steps").value,
-      notes:$("#notes").value.trim(),photos,updated:Date.now()
+      notes:$("#notes").value.trim(),photos,tags,updated:Date.now()
     });
     if(!rec.title){$("#title").focus();return}
     try{await putRecipe(rec)}catch(err){alert("Impossible d’enregistrer (espace plein ?). "+err.message);return}
@@ -841,17 +903,60 @@ function filterRecipes(rs,f,ls){
     if(!inList(r,f.list,ls))return false;
     if(f.cat==="fav"&&!r.fav)return false;
     if(f.cat!=="all"&&f.cat!=="fav"&&r.category!==f.cat)return false;
+    // plusieurs tags choisis : la recette doit les avoir tous
+    if(f.tags&&f.tags.length){const ks=new Set(recipeTags(r).map(tagKey));if(!f.tags.every(k=>ks.has(k)))return false}
     if(!q)return true;
-    return nrm([r.title,r.ingredients,r.steps,r.notes,r.category].join(" ")).includes(q);
+    return nrm([r.title,r.ingredients,r.steps,r.notes,r.category,...recipeTags(r)].join(" ")).includes(q);
   });
+}
+
+/* ---- tags (mots-clés libres, en plus de la catégorie) ---- */
+// r.tags = ["Épicé","Végétarien"…] (champ facultatif) ; l'icône d'un tag vaut pour toutes les recettes
+const tagKey=t=>stripAcc(t).replace(/[^a-z0-9' ]/g," ").replace(/\s+/g," ").trim();
+const recipeTags=r=>Array.isArray(r&&r.tags)?r.tags.filter(t=>typeof t==="string"&&t.trim()):[];
+function addTag(tags,name){
+  const n=capFirst(String(name||"").trim().replace(/\s+/g," ").slice(0,24)),k=tagKey(n);
+  if(!k||tags.some(t=>tagKey(t)===k))return tags;
+  return [...tags,n];
+}
+// émojis anciens (≤ Emoji 11) : ils s'affichent aussi sur l'ordinateur
+const TAG_AUTO=[["epice|epicee|piquant|spicy|pimente|harissa|curry","🌶️"],["vegan|vegetalien","🥦"],["vegetarien|vegetarienne|vege|veggie","🌱"],
+  ["rapide|express|minute|vite|facile","⚡"],["gluten","🌾"],["pas cher|economique|budget|petit prix","💶"],["ete|estival|barbecue|bbq|plancha","☀️"],
+  ["hiver|reconfort|reconfortant|mijote","❄️"],["enfant|enfants|kids","🧒"],["fete|fetes|noel|anniversaire|apero|aperitif|reception","🎉"],
+  ["leger|legere|light|healthy|sain|equilibre","🥗"],["four|gratin|roti","🔥"],["lactose","🥛"],["poisson|mer|fruits de mer","🐟"],
+  ["viande|boeuf|porc","🥩"],["volaille|poulet","🍗"],["gourmand|sucre|sucree|chocolat","🍫"],["fromage","🧀"],["pates|italien|italie","🍝"],
+  ["vin|alcool|cocktail","🍷"],["asie|asiatique|chinois|japonais|thai","🥢"],["monde|exotique|voyage","🌍"],["favori|prefere|top|coup de coeur","❤️"],["robot|thermomix|cookeo","🤖"]]
+  .map(([w,e])=>[new RegExp("(?:^| )(?:"+w+")(?= |$)"),e]);
+const TAG_PICK=["🏷️","🌶️","🌱","🥦","⚡","🌾","💶","☀️","❄️","🧒","🎉","🥗","🔥","🥛","🐟","🥩","🍗","🍫","🧀","🍝","🍷","🥢","🌍","❤️","⭐","🤖"];
+const TAG_START=["Épicé","Végétarien","Rapide","Sans gluten","Pas cher","Été"];
+function autoTagIcon(name){const k=tagKey(name);for(const [re,e] of TAG_AUTO)if(re.test(k))return e;return"🏷️"}
+const tagIcon=(name,icons)=>{const o=icons&&icons[tagKey(name)];return o&&o.icon||autoTagIcon(name)};
+function normalizeTagIcons(o){
+  const out={};
+  if(!o||typeof o!=="object"||Array.isArray(o))return out;
+  for(const [k,v] of Object.entries(o))if(v&&typeof v==="object"&&typeof v.icon==="string"&&v.icon)out[k]={icon:v.icon.slice(0,8),updated:Number(v.updated)||0};
+  return out;
+}
+function mergeTagIcons(a,b){
+  const out=normalizeTagIcons(a);
+  for(const [k,v] of Object.entries(normalizeTagIcons(b)))if(!out[k]||v.updated>out[k].updated)out[k]=v;
+  return out;
+}
+const tagIconsSig=o=>JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k].icon,o[k].updated]));
+// tags utilisés, du plus fréquent au moins fréquent
+function tagUsage(rs){
+  const m=new Map();
+  for(const r of rs)for(const t of recipeTags(r)){const k=tagKey(t);const e=m.get(k)||{key:k,name:t,n:0};e.n++;m.set(k,e)}
+  return [...m.values()].sort((a,b)=>b.n-a.n||a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
 }
 
 /* ---- partage d'une copie entre amis ---- */
 const SHARE_FIELDS=["title","category","time","servings","ingredients","steps","notes","photos"];
-// ce qui part chez l'ami : le contenu de la recette, sans favori, listes ni historique de partage
+// ce qui part chez l'ami : le contenu de la recette et ses tags, sans favori, listes ni historique de partage
 function shareable(r){
   const o={};
   for(const k of SHARE_FIELDS)o[k]=k==="photos"?(Array.isArray(r.photos)?r.photos.slice(0,6):[]):(r[k]==null?"":String(r[k]));
+  o.tags=recipeTags(r).slice(0,20);
   return o;
 }
 // Recette reçue → copie indépendante. Identifiant tiré du message : les deux téléphones du foyer créent la même copie.
@@ -862,6 +967,7 @@ function sharedCopy(src,m,now){
     const v=src&&src[k];
     r[k]=k==="photos"?(Array.isArray(v)?v.filter(p=>typeof p==="string").slice(0,6):[]):(v==null?"":String(v));
   }
+  r.tags=recipeTags(src).reduce(addTag,[]).slice(0,20);
   if(!r.title.trim())r.title="Recette partagée";
   return r;
 }
@@ -1213,6 +1319,33 @@ function openListsDlg(r,after){
   draw();d.showModal();
 }
 
+/* ---------- icônes des tags ---------- */
+const TAGS_KEY="livre-tags";
+let tagIcons={};
+try{const s=JSON.parse(localStorage.getItem(TAGS_KEY)||"null");if(s&&typeof s==="object")tagIcons=normalizeTagIcons(s.icons)}catch(e){}
+const showIcon=e=>emojiOk(e)?e:"🏷️";
+function saveTagIcons(){
+  try{localStorage.setItem(TAGS_KEY,JSON.stringify({icons:tagIcons}))}catch(e){}
+  if(syncHooks.pushTags)syncHooks.pushTags();
+}
+function applyRemoteTagIcons(remote){
+  const m=mergeTagIcons(tagIcons,remote),changed=tagIconsSig(m)!==tagIconsSig(tagIcons);
+  tagIcons=m;
+  try{localStorage.setItem(TAGS_KEY,JSON.stringify({icons:tagIcons}))}catch(e){}
+  if(tagIconsSig(m)!==tagIconsSig(normalizeTagIcons(remote))&&syncHooks.pushTags)syncHooks.pushTags();
+  if(changed)refreshView();
+}
+function setTagIcon(name,icon){tagIcons[tagKey(name)]={icon,updated:Date.now()};saveTagIcons()}
+const tagIconsFor=tags=>Object.fromEntries(recipeTags({tags}).map(t=>[tagKey(t),tagIcon(t,tagIcons)]));
+function openIconPicker(name,after){
+  const d=$("#icondlg"),cur=tagIcon(name,tagIcons);
+  $("#icont").textContent=`Icône de « ${name} »`;
+  $("#icongrid").innerHTML=TAG_PICK.map(e=>`<button type="button" data-e="${e}" aria-pressed="${e===cur}">${showIcon(e)}</button>`).join("");
+  $("#icongrid").onclick=ev=>{const b=ev.target.closest("button[data-e]");if(!b)return;setTagIcon(name,b.dataset.e);d.close();if(after)after()};
+  $("#iconclose").onclick=()=>d.close();
+  d.showModal();
+}
+
 /* ---------- amis et partage d'une copie ---------- */
 const signedIn=()=>!!(syncApi&&syncApi.signedIn&&syncApi.signedIn());
 // pseudo actuel de l'expéditeur s'il est (encore) notre ami, sinon celui de l'envoi
@@ -1250,6 +1383,10 @@ function openSendDlg(r){
 async function receiveShared(m){
   const r=sharedCopy(m.recipe,m,Date.now());
   if(await getRecipe(r.id))return;   // déjà reçue (l'autre téléphone du foyer a été plus rapide)
+  const ic=normalizeTagIcons(Object.fromEntries(Object.entries(m.tagIcons&&typeof m.tagIcons==="object"?m.tagIcons:{}).map(([k,v])=>[k,{icon:v,updated:1}])));
+  let added=false;
+  for(const t of r.tags){const k=tagKey(t);if(!tagIcons[k]&&ic[k]&&ic[k].icon!==autoTagIcon(t)){tagIcons[k]={icon:ic[k].icon,updated:Date.now()};added=true}}
+  if(added)saveTagIcons();
   await putRecipe(r);
   toast("📬 Nouvelle recette "+(r.sharedFrom.name?deNom(r.sharedFrom.name):"de ton ami"));
   refreshView();
@@ -1459,7 +1596,8 @@ async function bootSync(){
       getLists:()=>lists,setLists:applyRemoteLists,
       setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&(PROFILE_RE.test(location.hash)||/^#\/(r\/|$)/.test(location.hash||"#/")))refreshView()},
       setProfile:p=>{const ch=p.name!==profile.name;profile=p;if(ch&&PROFILE_RE.test(location.hash))refreshView()},
-      getProfile:()=>profile,receiveShared,shareable,toast
+      getProfile:()=>profile,receiveShared,shareable,toast,
+      getTagIcons:()=>tagIcons,setTagIcons:applyRemoteTagIcons,tagIconsFor
     });
   }catch(e){setStatus({state:"off"})}
 }
@@ -1488,7 +1626,7 @@ $("#cartbtn").onclick=()=>{location.hash="#/courses"};
 /* ---------- backup ---------- */
 $("#menu").onclick=()=>{location.hash="#/profil"};
 async function exportBackup(){
-  const data={app:"livre-recettes",version:1,exported:new Date().toISOString(),recipes:await allRecipes(),lists};
+  const data={app:"livre-recettes",version:1,exported:new Date().toISOString(),recipes:await allRecipes(),lists,tagIcons};
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="noutbook-"+new Date().toISOString().slice(0,10)+".json";
@@ -1502,6 +1640,7 @@ async function importBackup(e){
     if(!data||!Array.isArray(data.recipes))throw new Error("Fichier non reconnu");
     let n=0;
     if(data.lists&&typeof data.lists==="object"){lists=mergeLists(lists,data.lists);saveLists()}
+    if(data.tagIcons&&typeof data.tagIcons==="object"){tagIcons=mergeTagIcons(tagIcons,data.tagIcons);saveTagIcons()}
     for(const r of data.recipes){if(r&&r.id&&r.title){await putRecipe(r);n++}}
     toast(`${n} recette(s) importée(s) ✓`);route();
   }catch(err){alert("Import impossible : "+err.message)}

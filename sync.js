@@ -61,6 +61,7 @@ export async function initSync(app) {
   const recipeRef = (id) => doc(db, "users", uid, "recipes", docId(id));
   const shopRef = () => doc(db, "users", uid, "meta", "shop");
   const listsRef = () => doc(db, "users", uid, "meta", "lists");
+  const tagsRef = () => doc(db, "users", uid, "meta", "tags");
   const profileRef = () => doc(db, "users", uid, "meta", "profile");
   const friendRef = (f) => doc(db, "users", uid, "friends", f);
   const inboxOf = (u) => collection(db, "users", u, "inbox");
@@ -115,6 +116,11 @@ export async function initSync(app) {
     setDoc(listsRef(), { lists: app.getLists(), updated: Date.now() }, { merge: true }).catch(fail);
   };
 
+  hooks.pushTags = () => {
+    if (!uid) return;
+    setDoc(tagsRef(), { icons: app.getTagIcons(), updated: Date.now() }, { merge: true }).catch(fail);
+  };
+
   // ---------- amis et partage ----------
   const myName = () => (app.getProfile().name || "").trim();
   function randomCode() {
@@ -167,7 +173,7 @@ export async function initSync(app) {
       const recipe = app.shareable(r);
       recipe.photos = await app.fitPhotos(recipe.photos);
       for (const f of to) {
-        setDoc(doc(inboxOf(f.uid)), { type: "recipe", from, fromName: myName(), at: Date.now(), recipe })
+        setDoc(doc(inboxOf(f.uid)), { type: "recipe", from, fromName: myName(), at: Date.now(), recipe, tagIcons: app.tagIconsFor(recipe.tags) })
           .catch((e) => {
             const c = (e && e.code) || "";
             app.toast(c.includes("permission-denied")
@@ -268,6 +274,14 @@ export async function initSync(app) {
           return;
         }
         app.setLists((snap.data() || {}).lists || {});
+      }, fail),
+      onSnapshot(tagsRef(), (snap) => {
+        if (snap.metadata.hasPendingWrites) return;
+        if (!snap.exists()) {
+          if (!snap.metadata.fromCache && Object.keys(app.getTagIcons()).length) hooks.pushTags();
+          return;
+        }
+        app.setTagIcons((snap.data() || {}).icons || {});
       }, fail),
       onSnapshot(profileRef(), (snap) => {
         const d = snap.exists() ? snap.data() : {};

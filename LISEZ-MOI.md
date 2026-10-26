@@ -62,6 +62,14 @@ Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'e
 - « Renommer ou supprimer » sous l'onglet d'une liste. Supprimer une liste ne supprime jamais ses recettes (et « Annuler » la fait revenir).
 - Les listes sont synchronisées entre vos deux téléphones et comprises dans l'export de secours.
 
+## Tags
+
+- Dans le formulaire d'une recette, champ **Tags** : tape un nom (Épicé, Végétarien…) puis Entrée ou virgule. Les suggestions proposent d'abord les tags déjà utilisés.
+- Touche l'icône d'un tag pour la changer. L'icône vaut pour toutes les recettes qui portent ce tag.
+- Sur l'accueil, la rangée de tags filtre les recettes ; plusieurs tags = recettes qui les ont tous. Ça se combine avec la liste et la catégorie, et la recherche trouve aussi les tags.
+- Les cartes affichent jusqu'à 3 icônes de tags. Une recette envoyée à un ami garde ses tags et leurs icônes.
+- Les tags et leurs icônes sont synchronisés et compris dans l'export de secours. Rien à changer dans les règles Firestore.
+
 ## Amis et envoi de recettes
 
 - Bouton « ⋯ » → page **Mon profil** : pseudo, connexion / déconnexion, amis et sauvegarde.
