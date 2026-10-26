@@ -6,5 +6,35 @@ service cloud.firestore {
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+
+    // Boîte aux lettres : seule exception, un autre compte peut y DÉPOSER un message (jamais lire ni modifier).
+    // - une recette, seulement si le destinataire l'a dans ses amis ;
+    // - une demande d'ami, seulement avec un code d'invitation valide créé par le destinataire.
+    match /users/{uid}/inbox/{msg} {
+      allow create: if request.auth != null
+        && request.auth.uid != uid
+        && request.resource.data.from == request.auth.uid
+        && (
+          (request.resource.data.type == "recipe"
+            && exists(/databases/$(database)/documents/users/$(uid)/friends/$(request.auth.uid)))
+          ||
+          (request.resource.data.type == "friend"
+            && request.resource.data.code is string
+            && get(/databases/$(database)/documents/invites/$(request.resource.data.code)).data.from == uid
+            && get(/databases/$(database)/documents/invites/$(request.resource.data.code)).data.exp > request.time)
+        );
+    }
+
+    // Codes d'invitation : lisibles un par un par un compte connecté qui connaît le code (jamais listés),
+    // valables 7 jours au plus, supprimables par leur créateur.
+    match /invites/{code} {
+      allow get: if request.auth != null && resource.data.exp > request.time;
+      allow create: if request.auth != null
+        && code.size() == 8
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.exp is timestamp
+        && request.resource.data.exp < request.time + duration.value(8, 'd');
+      allow delete: if request.auth != null && resource.data.from == request.auth.uid;
+    }
   }
 }

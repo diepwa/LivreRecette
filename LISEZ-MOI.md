@@ -48,6 +48,29 @@ Utilisez bien **le même compte** sur les deux téléphones : c'est ce qui vous 
 - Photos : 6 maximum par recette, réduites automatiquement pour tenir dans la limite de 1 Mo par recette.
 - Le bouton d'export reste utile comme copie de secours.
 
+## Mise à jour « listes et amis » : règles Firestore à republier
+
+Cette version ajoute les listes, les amis et l'envoi de recettes. **Avant de l'utiliser, republie les règles** :
+Firebase → Firestore Database → onglet **Règles** → remplacer tout le contenu par le nouveau fichier `firestore.rules` → « Publier ».
+Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'envoi de recettes sont refusés.
+
+## Listes de recettes
+
+- En haut de l'accueil, des onglets : **Tout le livre** (toutes les recettes, chacune une seule fois), **Partagées**, puis tes listes.
+- « ＋ Liste » crée une liste. Sur une recette, bouton **Listes** pour la ranger dans une ou plusieurs listes.
+- Une recette créée depuis l'onglet d'une liste y est rangée d'office.
+- « Renommer ou supprimer » sous l'onglet d'une liste. Supprimer une liste ne supprime jamais ses recettes (et « Annuler » la fait revenir).
+- Les listes sont synchronisées entre vos deux téléphones et comprises dans l'export de secours.
+
+## Amis et envoi de recettes
+
+- Menu « ⋯ » → **Mes amis**. Choisis d'abord ton nom (celui que tes amis voient).
+- **Inviter** : « Créer un code d'invitation », puis « Envoyer l'invitation » (Messages, WhatsApp…). Le code est valable 7 jours.
+- **Accepter** : ton ami ouvre NoutBook → « ⋯ » → Mes amis → « J'ai reçu un code », et tape le code. Vous êtes alors amis tous les deux
+  (l'ami qui a créé le code doit ouvrir NoutBook une fois pour que l'amitié soit confirmée de son côté).
+- Sur une recette : **Envoyer à un ami**. L'ami reçoit une **copie** dans son onglet « Partagées » : s'il la modifie, la tienne ne change pas.
+- Chaque ami a son propre compte (créé dans la console Firebase, inscriptions toujours fermées).
+
 ## Liste de courses (style Bring)
 
 - Bouton 🛒 sur chaque recette (accueil ou page de la recette) pour l'ajouter au panier.
