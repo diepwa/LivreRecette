@@ -407,7 +407,7 @@ function resizeImage(file,max=1024,q=.75){
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
 
 /* ---------- state ---------- */
-let filter={q:"",cat:"all",list:"all",tags:[]};
+let filter={q:"",cat:"all",list:"mine",tags:[]};
 let friends=[],profile={name:""};
 // petite marque de modification : synchronise le changement sans faire remonter la recette en tête de l'accueil
 const touch=r=>{r.updated=(Number(r.updated)||0)+1};
@@ -429,11 +429,11 @@ async function viewList(){
   const rs=(await allRecipes()).sort((a,b)=>(b.updated||0)-(a.updated||0));
   if(/^#\/(r\/|new|edit|courses|profil|ami)/.test(location.hash))return;   // on a changé de page pendant le chargement
   const ls=activeLists(lists);
-  if(filter.list!=="all"&&filter.list!=="shared"&&!ls.some(l=>l.id===filter.list))filter.list="all";
+  if(!["mine","shared","all"].includes(filter.list)&&!ls.some(l=>l.id===filter.list))filter.list="mine";
   const curList=ls.find(l=>l.id===filter.list);
   const unseen=rs.filter(r=>r.sharedFrom&&r.sharedNew).length;
   const inCur=rs.filter(r=>inList(r,filter.list,lists));
-  const tabs=[["all","Tout le livre"],["shared","Partagées"],...ls.map(l=>[l.id,l.name])];
+  const tabs=[["mine","Ma liste"],["shared","Partagées"],...ls.map(l=>[l.id,l.name]),["all","Tout"]];
   view.innerHTML=`
     <nav class="tabs" id="tabs" aria-label="Listes de recettes">${tabs.map(([k,l])=>`<button type="button" class="tab ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>${esc(l)}${k==="shared"&&unseen?`<span class="n" aria-label="${unseen} nouvelle(s)">${unseen}</span>`:""}</button>`).join("")}<button type="button" class="tab new" id="newtab">＋ Liste</button></nav>
     ${curList?`<div class="lhead"><span>${inCur.length} recette${inCur.length>1?"s":""}</span><button type="button" class="btn sm" id="lset">Renommer ou supprimer</button></div>`:""}
@@ -459,8 +459,11 @@ async function viewList(){
   };
   const draw=()=>{
     const list=filterRecipes(rs,filter,lists);
-    if(filter.list==="all"&&!rs.length){
+    if((filter.list==="all"||filter.list==="mine")&&!rs.length){
       $("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>Ton livre est vide pour l’instant.</b><br>Ajoute ta première recette avec le bouton ci-dessous.</p></div>`;return;
+    }
+    if(filter.list==="mine"&&!inCur.length){
+      $("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>Tu n’as pas encore de recette à toi.</b><br>Ajoute-la avec le bouton ci-dessous. Celles que tes amis t’envoient sont dans « Partagées ».</p></div>`;return;
     }
     if(filter.list==="shared"&&!inCur.length){
       $("#results").innerHTML=`<div class="empty"><div class="big">📬</div><p><b>Aucune recette reçue pour l’instant.</b><br>Quand un ami t’envoie une recette, sa copie arrive ici.${friends.length?"":`<br><a href="#/profil">Ajoute un ami</a> pour commencer.`}</p></div>`;return;
@@ -899,7 +902,9 @@ const activeLists=ls=>Object.entries(ls||{}).filter(([,v])=>!v.deleted)
 const recipeLists=r=>Array.isArray(r&&r.lists)?r.lists.filter(x=>typeof x==="string"):[];
 function inList(r,list,ls){
   if(!list||list==="all")return true;
-  if(list==="shared")return !!(r.sharedFrom&&typeof r.sharedFrom==="object");
+  const shared=!!(r.sharedFrom&&typeof r.sharedFrom==="object");
+  if(list==="shared")return shared;
+  if(list==="mine")return !shared;   // Ma liste : mes recettes, sans celles reçues
   return !!(ls[list]&&!ls[list].deleted)&&recipeLists(r).includes(list);
 }
 // Une recette n'apparaît qu'une fois : les listes ne font que pointer vers elle.
@@ -1296,7 +1301,7 @@ function openListSettings(id){
   $("#lsetren").onclick=()=>{d.close();askName("Renommer la liste",l.name,n=>{l.name=n.slice(0,40);l.updated=Date.now();saveLists();viewList()})};
   $("#lsetdel").onclick=()=>{
     d.close();
-    l.deleted=true;l.updated=Date.now();saveLists();filter.list="all";viewList();
+    l.deleted=true;l.updated=Date.now();saveLists();filter.list="mine";viewList();
     toastUndo("Liste supprimée : "+l.name,()=>{l.deleted=false;l.updated=Date.now();saveLists();filter.list=id;viewList()});
   };
   d.showModal();
