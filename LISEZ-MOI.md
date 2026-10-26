@@ -34,7 +34,7 @@ L'app ne propose volontairement **pas** de créer un compte : les inscriptions s
 Le compte partagé se crée donc dans la console : Authentication → Utilisateurs → « Ajouter un utilisateur »
 (si besoin, on peut temporairement rouvrir les inscriptions, puis les refermer).
 
-1. Sur chaque téléphone : bouton « ⋯ » → Synchronisation → saisir l'e-mail et le mot de passe
+1. Sur chaque téléphone : bouton « ⋯ » (Mon profil) → Connexion → saisir l'e-mail et le mot de passe
    du compte partagé → **Se connecter**.
 2. Le premier téléphone connecté envoie ses recettes ; le second les reçoit, ainsi que le panier.
 
@@ -46,7 +46,39 @@ Utilisez bien **le même compte** sur les deux téléphones : c'est ce qui vous 
 - Hors ligne, tout reste utilisable ; les modifications partent au retour du réseau.
 - En cas de modification simultanée de la même recette, la dernière enregistrée l'emporte.
 - Photos : 6 maximum par recette, réduites automatiquement pour tenir dans la limite de 1 Mo par recette.
-- Le bouton d'export reste utile comme copie de secours.
+- Le bouton d'export (« ⋯ » → Sauvegarde) reste utile comme copie de secours.
+
+## Mise à jour « listes et amis » : règles Firestore à republier
+
+Cette version ajoute les listes, les amis et l'envoi de recettes. **Avant de l'utiliser, republie les règles** :
+Firebase → Firestore Database → onglet **Règles** → remplacer tout le contenu par le nouveau fichier `firestore.rules` → « Publier ».
+Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'envoi de recettes sont refusés.
+
+## Listes de recettes
+
+- En haut de l'accueil, des onglets : **Tout le livre** (toutes les recettes, chacune une seule fois), **Partagées**, puis tes listes.
+- « ＋ Liste » crée une liste. Sur une recette, bouton **Listes** pour la ranger dans une ou plusieurs listes.
+- Une recette créée depuis l'onglet d'une liste y est rangée d'office.
+- « Renommer ou supprimer » sous l'onglet d'une liste. Supprimer une liste ne supprime jamais ses recettes (et « Annuler » la fait revenir).
+- Les listes sont synchronisées entre vos deux téléphones et comprises dans l'export de secours.
+
+## Tags
+
+- Dans le formulaire d'une recette, champ **Tags** : tape un nom (Épicé, Végétarien…) puis Entrée ou virgule. Les suggestions proposent d'abord les tags déjà utilisés.
+- Touche l'icône d'un tag pour la changer. L'icône vaut pour toutes les recettes qui portent ce tag.
+- Sur l'accueil, la rangée de tags filtre les recettes ; plusieurs tags = recettes qui les ont tous. Ça se combine avec la liste et la catégorie, et la recherche trouve aussi les tags.
+- Les cartes affichent jusqu'à 3 icônes de tags. Une recette envoyée à un ami garde ses tags et leurs icônes.
+- Les tags et leurs icônes sont synchronisés et compris dans l'export de secours. Rien à changer dans les règles Firestore.
+
+## Amis et envoi de recettes
+
+- Bouton « ⋯ » → page **Mon profil** : pseudo, connexion / déconnexion, amis et sauvegarde.
+- Choisis d'abord ton **pseudo** : tes amis le voient, et s'il change, il change aussi chez eux.
+- **Inviter** : « Créer un code d'invitation », puis « Envoyer l'invitation » (Messages, WhatsApp…). Le code est valable 7 jours.
+- **Accepter** : ton ami ouvre NoutBook → « ⋯ » → « J'ai reçu un code », et tape le code. Vous êtes alors amis tous les deux
+  (l'ami qui a créé le code doit ouvrir NoutBook une fois pour que l'amitié soit confirmée de son côté).
+- Sur une recette : **Envoyer à un ami**. L'ami reçoit une **copie** dans son onglet « Partagées » : s'il la modifie, la tienne ne change pas.
+- Chaque ami a son propre compte (créé dans la console Firebase, inscriptions toujours fermées).
 
 ## Liste de courses (style Bring)
 

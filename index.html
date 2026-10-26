@@ -182,6 +182,50 @@ dialog{max-height:88vh;overflow:auto}
 .recap ul.pick .x{width:26px;height:26px;font-size:1rem}
 .tdots{position:absolute;top:5px;left:0;right:0;display:flex;justify-content:center;gap:3px;pointer-events:none}
 .tdots i{width:9px;height:9px;border-radius:50%;background:var(--rc);border:1.5px solid #fff}
+/* listes : onglets façon intercalaires de carnet */
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);margin:-6px -16px 12px;padding:0 10px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;display:flex;align-items:center;gap:6px;min-height:44px;padding:8px 10px 7px;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;font-family:var(--serif);font-weight:600;font-size:.98rem;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:active{background:var(--accent-soft);border-radius:10px 10px 0 0}
+.tab .n{font-family:var(--sans);font-size:.68rem;font-weight:800;background:var(--buy);color:#fff;border-radius:999px;min-width:18px;height:18px;line-height:18px;padding:0 5px;text-align:center}
+.tab.new{color:var(--accent)}
+.lhead{display:flex;align-items:center;gap:10px;margin:0 0 10px;color:var(--muted);font-size:.88rem}
+.lhead span{flex:1;min-width:0}
+.lhead a{color:var(--accent);font-weight:700}
+.card small .nw{color:var(--buy);font-weight:800}
+a.tag{text-decoration:none}
+.tag.from{background:none;border:1px dashed var(--line);color:var(--muted)}
+ul.opts{list-style:none;margin:0 0 14px;padding:0}
+ul.opts li{border-bottom:1px dashed var(--line)}
+ul.opts li:last-child{border:0}
+ul.opts button{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:8px 2px;background:none;border:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+ul.opts .cb{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;line-height:1}
+ul.opts button[aria-checked=true] .cb{background:var(--accent);color:var(--accent-ink)}
+ul.opts button[aria-checked=true] .cb::after{content:"✓"}
+ul.opts .hint{margin:0;padding:6px 0}
+.code{font-family:var(--serif);font-weight:700;font-size:2rem;letter-spacing:.12em;text-align:center;background:var(--accent-soft);color:var(--accent);border-radius:12px;padding:12px;margin:4px 0 12px;-webkit-user-select:all;user-select:all}
+section.block p{margin:0 0 12px}
+.fhint{color:var(--muted);font-size:.85rem;margin:6px 0 0;min-height:1.2em}
+.fhint.err{color:#c0392b}
+@media (prefers-color-scheme:dark){.fhint.err{color:#ff8a7a}}
+/* tags */
+.card .ph{position:relative}
+.tico{position:absolute;right:5px;bottom:5px;display:flex;gap:1px;background:var(--card);border-radius:999px;padding:0 5px;font-size:.72rem;line-height:1.6;box-shadow:var(--shadow)}
+.chips.tchips{padding-top:0}
+.chip.tg{font-size:.85rem;padding:5px 12px}
+.tagbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.tagbox input[type=text]{flex:1;width:auto;min-width:130px;border:0;background:none;padding:6px;outline:none}
+.tpill{display:inline-flex;align-items:center;gap:2px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 2px 2px 2px;font-size:.9rem;font-weight:700}
+.tpill .ic{border:0;background:var(--card);border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;padding:0}
+.tpill .rm{border:0;background:none;color:var(--accent);width:30px;height:30px;cursor:pointer;font-size:.9rem;padding:0}
+.tsugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tsugg button{border:1px dashed var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 12px;min-height:36px;font:inherit;font-size:.85rem;cursor:pointer}
+.tsugg button:active,.chip:active{background:var(--accent-soft)}
+.icongrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0 0 14px}
+.icongrid button{aspect-ratio:1/1;border:1px solid var(--line);background:var(--card);border-radius:12px;font-size:1.4rem;cursor:pointer;padding:0}
+.icongrid button[aria-pressed=true]{border:2px solid var(--accent);background:var(--accent-soft)}
+.tab:focus-visible,ul.opts button:focus-visible,.btn:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* écran de lancement : le chat, NoutBook écrit lettre par lettre, puis un cercle qui s'agrandit jusqu'à l'accueil */
 #splash{position:fixed;inset:0;z-index:9999;background:#ece3d5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden}
 #splash .ring{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:var(--bg);transform:scale(0);animation:splash-ring .8s cubic-bezier(.65,0,.35,1) 1.7s forwards}
@@ -209,7 +253,7 @@ setTimeout(function(){s.remove()},2800)})();
   <button class="icon-btn" id="back" hidden aria-label="Retour">←</button>
   <h1><a href="#/"><img class="logo" src="icons/nout.png" alt="" width="32" height="32">NoutBook</a></h1>
   <button class="icon-btn" id="cartbtn" aria-label="Liste de courses">🛒<span class="badge" id="badge" hidden></span></button>
-  <button class="icon-btn" id="menu" aria-label="Synchronisation et sauvegarde">⋯<span class="dot" id="dot" hidden></span></button>
+  <button class="icon-btn" id="menu" aria-label="Mon profil">⋯<span class="dot" id="dot" hidden></span></button>
 </header>
 <main id="view"></main>
 <a class="fab" id="fab" href="#/new">＋ Nouvelle recette</a>
@@ -243,26 +287,56 @@ setTimeout(function(){s.remove()},2800)})();
   </div>
 </dialog>
 
-<dialog id="dlg">
-  <h3>Synchronisation</h3>
-  <div class="syncbox">
-    <p class="hint" id="syncmsg" aria-live="polite"></p>
-    <form id="authf" hidden>
-      <input type="email" id="aemail" placeholder="E-mail du compte partagé" autocomplete="username" required>
-      <input type="password" id="apass" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password" minlength="6" required>
-      <p class="autherr" id="autherr" role="alert"></p>
-      <button class="btn primary" type="submit" style="width:100%">Se connecter</button>
-    </form>
-    <button class="btn" type="button" id="signout" hidden>Se déconnecter</button>
-  </div>
-  <h3>Sauvegarde</h3>
-  <p>Copie de secours dans un fichier (photos comprises), à garder ou à importer sur un autre téléphone.</p>
+<dialog id="listdlg">
+  <h3>Ranger dans des listes</h3>
+  <p>Une recette peut être dans plusieurs listes. Elle reste une seule fois dans ton livre.</p>
+  <ul class="opts" id="listopts"></ul>
+  <form class="addrow" id="newlistf" autocomplete="off" style="margin:0 0 14px">
+    <input id="newlist" type="text" maxlength="40" placeholder="Nouvelle liste…" enterkeyhint="done">
+    <button class="btn" type="submit">Créer</button>
+  </form>
+  <button class="btn" type="button" id="listclose" style="width:100%">Fermer</button>
+</dialog>
+
+<dialog id="icondlg">
+  <h3 id="icont"></h3>
+  <p>L’icône vaut pour ce tag sur toutes tes recettes.</p>
+  <div class="icongrid" id="icongrid"></div>
+  <button class="btn" type="button" id="iconclose" style="width:100%">Fermer</button>
+</dialog>
+
+<dialog id="namedlg">
+  <form id="namef" autocomplete="off">
+    <h3 id="namet"></h3>
+    <input id="namein" type="text" maxlength="40" placeholder="Ex. Noël, Semaine rapide…" required>
+    <div class="row2" style="margin-top:14px">
+      <button class="btn" type="button" id="nameno">Annuler</button>
+      <button class="btn primary" type="submit">Valider</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="lsetdlg">
+  <h3 id="lsett"></h3>
+  <p>Supprimer la liste ne supprime pas ses recettes : elles restent dans ton livre.</p>
   <div class="col">
-    <button class="btn primary" id="exp">⬇ Exporter mes recettes</button>
-    <label class="btn" style="text-align:center;margin:0">⬆ Importer une sauvegarde<input type="file" id="imp" accept=".json,application/json" hidden></label>
-    <button class="btn" id="dlgclose">Fermer</button>
+    <button class="btn" type="button" id="lsetren">Renommer la liste</button>
+    <button class="btn danger" type="button" id="lsetdel">Supprimer la liste</button>
+    <button class="btn" type="button" id="lsetclose">Fermer</button>
   </div>
 </dialog>
+
+<dialog id="senddlg">
+  <h3>Envoyer à un ami</h3>
+  <p id="sendmsg">Ton ami reçoit sa propre copie : s’il la modifie, la tienne ne change pas.</p>
+  <ul class="opts" id="sendopts"></ul>
+  <div class="col">
+    <button class="btn primary" type="button" id="sendgo" disabled>Envoyer</button>
+    <a class="btn" href="#/profil" id="sendfriends" style="text-align:center">👥 Ajouter un ami</a>
+    <button class="btn" type="button" id="sendclose">Fermer</button>
+  </div>
+</dialog>
+
 
 <script>
 "use strict";
@@ -292,7 +366,7 @@ const allRecipes=()=>tx("readonly",s=>s.getAll());
 const getRecipe=id=>tx("readonly",s=>s.get(id));
 const putRecipeLocal=r=>tx("readwrite",s=>s.put(r));
 const delRecipeLocal=id=>tx("readwrite",s=>s.delete(id));
-const syncHooks={push:null,remove:null,pushShop:null};
+const syncHooks={push:null,remove:null,pushShop:null,pushLists:null,pushTags:null};
 async function putRecipe(r){
   await putRecipeLocal(r);
   if(syncHooks.push)syncHooks.push(r);
@@ -327,7 +401,10 @@ function resizeImage(file,max=1024,q=.75){
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
 
 /* ---------- state ---------- */
-let filter={q:"",cat:"all"};
+let filter={q:"",cat:"all",list:"all",tags:[]};
+let friends=[],profile={name:""};
+// petite marque de modification : synchronise le changement sans faire remonter la recette en tête de l'accueil
+const touch=r=>{r.updated=(Number(r.updated)||0)+1};
 
 /* ---------- views ---------- */
 const view=$("#view");
@@ -343,31 +420,54 @@ function updateBadge(){
 
 async function viewList(){
   chrome(true);
-  const rs=(await allRecipes()).sort((a,b)=>b.updated-a.updated);
+  const rs=(await allRecipes()).sort((a,b)=>(b.updated||0)-(a.updated||0));
+  if(/^#\/(r\/|new|edit|courses|profil|ami)/.test(location.hash))return;   // on a changé de page pendant le chargement
+  const ls=activeLists(lists);
+  if(filter.list!=="all"&&filter.list!=="shared"&&!ls.some(l=>l.id===filter.list))filter.list="all";
+  const curList=ls.find(l=>l.id===filter.list);
+  const unseen=rs.filter(r=>r.sharedFrom&&r.sharedNew).length;
+  const inCur=rs.filter(r=>inList(r,filter.list,lists));
+  const tabs=[["all","Tout le livre"],["shared","Partagées"],...ls.map(l=>[l.id,l.name])];
   view.innerHTML=`
+    <nav class="tabs" id="tabs" aria-label="Listes de recettes">${tabs.map(([k,l])=>`<button type="button" class="tab ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>${esc(l)}${k==="shared"&&unseen?`<span class="n" aria-label="${unseen} nouvelle(s)">${unseen}</span>`:""}</button>`).join("")}<button type="button" class="tab new" id="newtab">＋ Liste</button></nav>
+    ${curList?`<div class="lhead"><span>${inCur.length} recette${inCur.length>1?"s":""}</span><button type="button" class="btn sm" id="lset">Renommer ou supprimer</button></div>`:""}
+    ${filter.list==="shared"?`<div class="lhead"><span>Les recettes que tes amis t’envoient arrivent ici.</span><a href="#/profil">👥 Amis</a></div>`:""}
     <input class="search" id="q" type="search" placeholder="Rechercher une recette, un ingrédient…" value="${esc(filter.q)}">
     <div class="chips" id="chips"></div>
+    <div class="chips tchips" id="tchips" aria-label="Filtrer par tag"></div>
     <div id="results"></div>`;
+  $("#tabs").onclick=e=>{const b=e.target.closest(".tab[data-l]");if(!b)return;filter.list=b.dataset.l;viewList()};
+  const on=$("#tabs .tab.on");if(on&&on.offsetLeft+on.offsetWidth>$("#tabs").clientWidth)$("#tabs").scrollLeft=on.offsetLeft-16;
+  $("#newtab").onclick=()=>askName("Nouvelle liste","",n=>{filter.list=createList(n);viewList()});
+  if(curList)$("#lset").onclick=()=>openListSettings(curList.id);
   const chips=[["all","Toutes"],["fav","★ Favoris"],...CATS.map(c=>[c,c])];
   $("#chips").innerHTML=chips.map(([k,l])=>`<button class="chip ${filter.cat===k?"on":""}" data-k="${esc(k)}">${esc(l)}</button>`).join("");
   $("#chips").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;filter.cat=b.dataset.k;viewList()};
+  const used=tagUsage(inCur);
+  filter.tags=filter.tags.filter(k=>used.some(t=>t.key===k));
+  $("#tchips").hidden=!used.length;
+  $("#tchips").innerHTML=used.map(t=>`<button class="chip tg ${filter.tags.includes(t.key)?"on":""}" data-t="${esc(t.key)}" aria-pressed="${filter.tags.includes(t.key)}">${showIcon(tagIcon(t.name,tagIcons))} ${esc(t.name)}</button>`).join("");
+  $("#tchips").onclick=e=>{
+    const b=e.target.closest(".chip[data-t]");if(!b)return;
+    const k=b.dataset.t;filter.tags=filter.tags.includes(k)?filter.tags.filter(x=>x!==k):[...filter.tags,k];viewList();
+  };
   const draw=()=>{
-    const q=norm(filter.q);
-    const list=rs.filter(r=>{
-      if(filter.cat==="fav"&&!r.fav)return false;
-      if(filter.cat!=="all"&&filter.cat!=="fav"&&r.category!==filter.cat)return false;
-      if(!q)return true;
-      return norm([r.title,r.ingredients,r.steps,r.notes,r.category].join(" ")).includes(q);
-    });
-    if(!rs.length){
+    const list=filterRecipes(rs,filter,lists);
+    if(filter.list==="all"&&!rs.length){
       $("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>Ton livre est vide pour l’instant.</b><br>Ajoute ta première recette avec le bouton ci-dessous.</p></div>`;return;
+    }
+    if(filter.list==="shared"&&!inCur.length){
+      $("#results").innerHTML=`<div class="empty"><div class="big">📬</div><p><b>Aucune recette reçue pour l’instant.</b><br>Quand un ami t’envoie une recette, sa copie arrive ici.${friends.length?"":`<br><a href="#/profil">Ajoute un ami</a> pour commencer.`}</p></div>`;return;
+    }
+    if(curList&&!inCur.length){
+      $("#results").innerHTML=`<div class="empty"><div class="big">📑</div><p><b>Cette liste est vide.</b><br>Ouvre une recette et touche « Listes » pour la ranger ici, ou crée une recette depuis cet onglet.</p></div>`;return;
     }
     if(!list.length){$("#results").innerHTML=`<div class="empty"><div class="big">🔍</div><p>Aucune recette ne correspond.</p></div>`;return}
     $("#results").innerHTML=`<div class="grid">${list.map(r=>`
       <div class="card">
         <a class="cl" href="#/r/${r.id}">
-          <div class="ph">${r.photos&&r.photos[0]?`<img src="${r.photos[0]}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}</div>
-          <div class="body"><h3>${esc(r.title)}</h3><small>${esc(r.category||"")}${r.time?" · "+esc(r.time):""}</small></div>
+          <div class="ph">${r.photos&&r.photos[0]?`<img src="${r.photos[0]}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}${recipeTags(r).length?`<span class="tico" aria-label="Tags : ${esc(recipeTags(r).join(", "))}">${recipeTags(r).slice(0,3).map(t=>showIcon(tagIcon(t,tagIcons))).join("")}</span>`:""}</div>
+          <div class="body"><h3>${esc(r.title)}</h3><small>${r.sharedFrom&&r.sharedNew?'<b class="nw">Nouvelle · </b>':""}${filter.list==="shared"&&senderName(r)?esc(deNom(senderName(r))):esc(r.category||"")}${r.time&&filter.list!=="shared"?" · "+esc(r.time):""}</small></div>
         </a>
         ${r.fav?'<span class="star">★</span>':""}
         <button type="button" class="cardcart ${shop.sel[r.id]?"on":""}" data-id="${r.id}" aria-label="${shop.sel[r.id]?"Retirer des courses":"Ajouter aux courses"}">${shop.sel[r.id]?"✓":"🛒"}</button>
@@ -402,6 +502,9 @@ async function viewDetail(id){
       ${r.category?`<span class="tag">${EMOJI[r.category]||""} ${esc(r.category)}</span>`:""}
       ${r.time?`<span class="tag">⏱ ${esc(r.time)}</span>`:""}
       ${r.servings?`<span class="tag">👥 ${esc(r.servings)} pers.</span>`:""}
+      ${recipeTags(r).map(t=>`<a class="tag" href="#/" data-t="${esc(tagKey(t))}">${showIcon(tagIcon(t,tagIcons))} ${esc(t)}</a>`).join("")}
+      ${recipeLists(r).filter(l=>lists[l]&&!lists[l].deleted).map(l=>`<a class="tag" href="#/" data-l="${esc(l)}">📑 ${esc(lists[l].name)}</a>`).join("")}
+      ${r.sharedFrom&&typeof r.sharedFrom==="object"?`<span class="tag from">📬 Reçue${senderName(r)?" "+esc(deNom(senderName(r))):""}${r.sharedFrom.at?" le "+new Date(r.sharedFrom.at).toLocaleDateString("fr-FR",{day:"numeric",month:"long"}):""}</span>`:""}
     </div>
     ${lines(r.ingredients).length?`<section class="block"><h3>Ingrédients</h3><ul class="ing">${lines(r.ingredients).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></section>`:""}
     ${lines(r.steps).length?`<section class="block"><h3>Préparation</h3><ol class="steps">${lines(r.steps).map(l=>`<li><span>${esc(l)}</span></li>`).join("")}</ol></section>`:""}
@@ -410,6 +513,8 @@ async function viewDetail(id){
       <button class="btn" id="fav">${r.fav?"★ Retirer des favoris":"☆ Favori"}</button>
       <button class="btn primary" id="cart">${shop.sel[r.id]?"✓ Dans les courses":"🛒 Ajouter aux courses"}</button>
       <a class="btn" href="#/edit/${r.id}">✎ Modifier</a>
+      <button class="btn" id="lists" type="button">📑 Listes</button>
+      <button class="btn" id="send" type="button">📬 Envoyer à un ami</button>
       <button class="btn" id="pdf" type="button">📄 Partager en PDF</button>
       <button class="btn" onclick="window.print()">🖨 Imprimer</button>
       <button class="btn danger" id="del">🗑 Supprimer</button>
@@ -419,8 +524,13 @@ async function viewDetail(id){
     const lb=document.createElement("div");lb.className="lightbox";lb.innerHTML=`<img src="${im.src}" alt="">`;
     lb.onclick=()=>lb.remove();document.body.appendChild(lb);
   });
-  $("#fav").onclick=async()=>{r.fav=!r.fav;await putRecipe(r);viewDetail(id)};
+  $("#fav").onclick=async()=>{r.fav=!r.fav;touch(r);await putRecipe(r);viewDetail(id)};
   $("#pdf").onclick=()=>shareRecipePdf(r);
+  $("#lists").onclick=()=>openListsDlg(r,()=>viewDetail(id));
+  $("#send").onclick=()=>openSendDlg(r);
+  view.querySelectorAll("a.tag[data-l]").forEach(a=>a.onclick=e=>{e.preventDefault();filter.list=a.dataset.l;filter.cat="all";filter.tags=[];location.hash="#/"});
+  view.querySelectorAll("a.tag[data-t]").forEach(a=>a.onclick=e=>{e.preventDefault();filter={...filter,list:"all",cat:"all",q:"",tags:[a.dataset.t]};location.hash="#/"});
+  if(r.sharedFrom&&r.sharedNew){r.sharedNew=false;touch(r);putRecipe(r)}
   $("#cart").onclick=()=>{
     if(shop.sel[r.id]){location.hash="#/courses";return}
     addRecipeToCart(shop,r.id,Number(r.servings)||1);saveShop();updateBadge();
@@ -436,6 +546,8 @@ async function viewForm(id){
   const r=id?await getRecipe(id):null;
   if(id&&!r){location.hash="#/";return}
   const rec=r||{id:uid(),title:"",category:"Plat",time:"",servings:"",ingredients:"",steps:"",notes:"",photos:[],fav:false,created:Date.now()};
+  // nouvelle recette créée depuis l'onglet d'une liste : elle y est rangée d'office
+  if(!r&&lists[filter.list]&&!lists[filter.list].deleted)rec.lists=[filter.list];
   let photos=[...(rec.photos||[])];
   view.innerHTML=`
   <h2 class="title">${r?"Modifier la recette":"Nouvelle recette"}</h2>
@@ -450,6 +562,9 @@ async function viewForm(id){
     </div>
     <label for="time">Temps <small>(préparation + cuisson)</small></label>
     <input type="text" id="time" value="${esc(rec.time)}" placeholder="Ex. 20 min + 35 min de cuisson">
+    <label for="tagin">Tags <small>(épicé, végétarien, rapide…)</small></label>
+    <div class="tagbox"><span id="tpills" style="display:contents"></span><input type="text" id="tagin" maxlength="24" placeholder="Ajouter un tag…" enterkeyhint="done" autocomplete="off"></div>
+    <div class="tsugg" id="tsugg"></div>
     <label>Photos</label>
     <div class="thumbs" id="thumbs"></div>
     <input type="file" id="file" accept="image/*" multiple hidden>
@@ -471,6 +586,29 @@ async function viewForm(id){
     $("#thumbs").querySelectorAll("button").forEach(b=>b.onclick=()=>{photos.splice(+b.dataset.i,1);drawThumbs()});
   };
   drawThumbs();
+  // --- tags : pastilles, suggestions, icône ---
+  let tags=recipeTags(rec);
+  const usage=tagUsage(await allRecipes());
+  const tin=$("#tagin");
+  const drawTags=()=>{
+    $("#tpills").innerHTML=tags.map((t,i)=>`<span class="tpill"><button type="button" class="ic" data-i="${i}" aria-label="Changer l’icône de ${esc(t)}">${showIcon(tagIcon(t,tagIcons))}</button>${esc(t)}<button type="button" class="rm" data-i="${i}" aria-label="Retirer ${esc(t)}">✕</button></span>`).join("");
+    const have=new Set(tags.map(tagKey)),q=tagKey(tin.value);
+    const cand=[...usage.map(u=>u.name),...TAG_START].filter((n,i,a)=>!have.has(tagKey(n))&&a.findIndex(x=>tagKey(x)===tagKey(n))===i)
+      .filter(n=>!q||tagKey(n).includes(q)).slice(0,10);
+    $("#tsugg").innerHTML=cand.map(n=>`<button type="button" data-n="${esc(n)}">＋ ${showIcon(tagIcon(n,tagIcons))} ${esc(n)}</button>`).join("");
+  };
+  const addTyped=()=>{const v=tin.value.replace(/,/g," ").trim();if(v){tags=addTag(tags,v);tin.value=""}drawTags()};
+  tin.onkeydown=e=>{if(e.key==="Enter"||e.key===","){e.preventDefault();addTyped()}};
+  tin.oninput=drawTags;
+  tin.onblur=()=>{if(tin.value.trim())addTyped()};
+  $("#tpills").onclick=e=>{
+    const rm=e.target.closest(".rm"),ic=e.target.closest(".ic");
+    if(rm){tags=tags.filter((_,i)=>i!==+rm.dataset.i);drawTags()}
+    else if(ic)openIconPicker(tags[+ic.dataset.i],drawTags);
+  };
+  $("#tsugg").onmousedown=e=>e.preventDefault();   // garde le clavier ouvert
+  $("#tsugg").onclick=e=>{const b=e.target.closest("button[data-n]");if(!b)return;tags=addTag(tags,b.dataset.n);tin.value="";drawTags()};
+  drawTags();
   $("#file").onchange=async e=>{
     const files=[...e.target.files];e.target.value="";
     for(const f of files){
@@ -481,11 +619,12 @@ async function viewForm(id){
   };
   $("#f").onsubmit=async e=>{
     e.preventDefault();
+    if(tin.value.trim())addTyped();
     photos=await fitPhotos(photos);
     Object.assign(rec,{
       title:$("#title").value.trim(),category:$("#cat").value,servings:$("#servings").value,
       time:$("#time").value.trim(),ingredients:$("#ing").value,steps:$("#steps").value,
-      notes:$("#notes").value.trim(),photos,updated:Date.now()
+      notes:$("#notes").value.trim(),photos,tags,updated:Date.now()
     });
     if(!rec.title){$("#title").focus();return}
     try{await putRecipe(rec)}catch(err){alert("Impossible d’enregistrer (espace plein ?). "+err.message);return}
@@ -728,6 +867,116 @@ function buildCatalog(recipes,shop,onList,query){
   const rest=list.filter(e=>!topKeys.has(e.key)).sort((a,b)=>a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
   return{top,rest};
 }
+
+/* ---- listes de recettes ---- */
+// lists = {id:{name,created,updated,deleted}} ; une recette porte r.lists = [id…] (champ facultatif).
+// Une liste supprimée garde une trace (deleted:true) pour que la fusion entre téléphones ne la fasse pas revenir.
+function normalizeLists(o){
+  const out={};
+  if(!o||typeof o!=="object"||Array.isArray(o))return out;
+  for(const [id,v] of Object.entries(o)){
+    if(!v||typeof v!=="object"||typeof v.name!=="string")continue;
+    out[id]={name:v.name,created:Number(v.created)||0,updated:Number(v.updated)||0,deleted:!!v.deleted};
+  }
+  return out;
+}
+// fusion liste par liste : la modification la plus récente l'emporte
+function mergeLists(a,b){
+  const out=normalizeLists(a);
+  for(const [id,v] of Object.entries(normalizeLists(b)))if(!out[id]||v.updated>out[id].updated)out[id]=v;
+  return out;
+}
+const listsSig=o=>JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k].name,o[k].created,o[k].updated,o[k].deleted]));
+const activeLists=ls=>Object.entries(ls||{}).filter(([,v])=>!v.deleted)
+  .map(([id,v])=>({id,name:v.name,created:v.created}))
+  .sort((a,b)=>a.created-b.created||a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+const recipeLists=r=>Array.isArray(r&&r.lists)?r.lists.filter(x=>typeof x==="string"):[];
+function inList(r,list,ls){
+  if(!list||list==="all")return true;
+  if(list==="shared")return !!(r.sharedFrom&&typeof r.sharedFrom==="object");
+  return !!(ls[list]&&!ls[list].deleted)&&recipeLists(r).includes(list);
+}
+// Une recette n'apparaît qu'une fois : les listes ne font que pointer vers elle.
+function filterRecipes(rs,f,ls){
+  const q=nrm(f.q);
+  return rs.filter(r=>{
+    if(!inList(r,f.list,ls))return false;
+    if(f.cat==="fav"&&!r.fav)return false;
+    if(f.cat!=="all"&&f.cat!=="fav"&&r.category!==f.cat)return false;
+    // plusieurs tags choisis : la recette doit les avoir tous
+    if(f.tags&&f.tags.length){const ks=new Set(recipeTags(r).map(tagKey));if(!f.tags.every(k=>ks.has(k)))return false}
+    if(!q)return true;
+    return nrm([r.title,r.ingredients,r.steps,r.notes,r.category,...recipeTags(r)].join(" ")).includes(q);
+  });
+}
+
+/* ---- tags (mots-clés libres, en plus de la catégorie) ---- */
+// r.tags = ["Épicé","Végétarien"…] (champ facultatif) ; l'icône d'un tag vaut pour toutes les recettes
+const tagKey=t=>stripAcc(t).replace(/[^a-z0-9' ]/g," ").replace(/\s+/g," ").trim();
+const recipeTags=r=>Array.isArray(r&&r.tags)?r.tags.filter(t=>typeof t==="string"&&t.trim()):[];
+function addTag(tags,name){
+  const n=capFirst(String(name||"").trim().replace(/\s+/g," ").slice(0,24)),k=tagKey(n);
+  if(!k||tags.some(t=>tagKey(t)===k))return tags;
+  return [...tags,n];
+}
+// émojis anciens (≤ Emoji 11) : ils s'affichent aussi sur l'ordinateur
+const TAG_AUTO=[["epice|epicee|piquant|spicy|pimente|harissa|curry","🌶️"],["vegan|vegetalien","🥦"],["vegetarien|vegetarienne|vege|veggie","🌱"],
+  ["rapide|express|minute|vite|facile","⚡"],["gluten","🌾"],["pas cher|economique|budget|petit prix","💶"],["ete|estival|barbecue|bbq|plancha","☀️"],
+  ["hiver|reconfort|reconfortant|mijote","❄️"],["enfant|enfants|kids","🧒"],["fete|fetes|noel|anniversaire|apero|aperitif|reception","🎉"],
+  ["leger|legere|light|healthy|sain|equilibre","🥗"],["four|gratin|roti","🔥"],["lactose","🥛"],["poisson|mer|fruits de mer","🐟"],
+  ["viande|boeuf|porc","🥩"],["volaille|poulet","🍗"],["gourmand|sucre|sucree|chocolat","🍫"],["fromage","🧀"],["pates|italien|italie","🍝"],
+  ["vin|alcool|cocktail","🍷"],["asie|asiatique|chinois|japonais|thai","🥢"],["monde|exotique|voyage","🌍"],["favori|prefere|top|coup de coeur","❤️"],["robot|thermomix|cookeo","🤖"]]
+  .map(([w,e])=>[new RegExp("(?:^| )(?:"+w+")(?= |$)"),e]);
+const TAG_PICK=["🏷️","🌶️","🌱","🥦","⚡","🌾","💶","☀️","❄️","🧒","🎉","🥗","🔥","🥛","🐟","🥩","🍗","🍫","🧀","🍝","🍷","🥢","🌍","❤️","⭐","🤖"];
+const TAG_START=["Épicé","Végétarien","Rapide","Sans gluten","Pas cher","Été"];
+function autoTagIcon(name){const k=tagKey(name);for(const [re,e] of TAG_AUTO)if(re.test(k))return e;return"🏷️"}
+const tagIcon=(name,icons)=>{const o=icons&&icons[tagKey(name)];return o&&o.icon||autoTagIcon(name)};
+function normalizeTagIcons(o){
+  const out={};
+  if(!o||typeof o!=="object"||Array.isArray(o))return out;
+  for(const [k,v] of Object.entries(o))if(v&&typeof v==="object"&&typeof v.icon==="string"&&v.icon)out[k]={icon:v.icon.slice(0,8),updated:Number(v.updated)||0};
+  return out;
+}
+function mergeTagIcons(a,b){
+  const out=normalizeTagIcons(a);
+  for(const [k,v] of Object.entries(normalizeTagIcons(b)))if(!out[k]||v.updated>out[k].updated)out[k]=v;
+  return out;
+}
+const tagIconsSig=o=>JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k].icon,o[k].updated]));
+// tags utilisés, du plus fréquent au moins fréquent
+function tagUsage(rs){
+  const m=new Map();
+  for(const r of rs)for(const t of recipeTags(r)){const k=tagKey(t);const e=m.get(k)||{key:k,name:t,n:0};e.n++;m.set(k,e)}
+  return [...m.values()].sort((a,b)=>b.n-a.n||a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
+}
+
+/* ---- partage d'une copie entre amis ---- */
+const SHARE_FIELDS=["title","category","time","servings","ingredients","steps","notes","photos"];
+// ce qui part chez l'ami : le contenu de la recette et ses tags, sans favori, listes ni historique de partage
+function shareable(r){
+  const o={};
+  for(const k of SHARE_FIELDS)o[k]=k==="photos"?(Array.isArray(r.photos)?r.photos.slice(0,6):[]):(r[k]==null?"":String(r[k]));
+  o.tags=recipeTags(r).slice(0,20);
+  return o;
+}
+// Recette reçue → copie indépendante. Identifiant tiré du message : les deux téléphones du foyer créent la même copie.
+function sharedCopy(src,m,now){
+  const r={id:"s-"+m.id,fav:false,lists:[],created:now,updated:now,
+    sharedFrom:{uid:String(m.from||""),name:String(m.fromName||""),at:Number(m.at)||now},sharedNew:true};
+  for(const k of SHARE_FIELDS){
+    const v=src&&src[k];
+    r[k]=k==="photos"?(Array.isArray(v)?v.filter(p=>typeof p==="string").slice(0,6):[]):(v==null?"":String(v));
+  }
+  r.tags=recipeTags(src).reduce(addTag,[]).slice(0,20);
+  if(!r.title.trim())r.title="Recette partagée";
+  return r;
+}
+// code d'invitation : 8 caractères sans ambiguïté (pas de 0/O, 1/I/L)
+const CODE_ABC="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const cleanCode=s=>String(s||"").toUpperCase().split("").filter(c=>CODE_ABC.includes(c)).join("");
+const fmtCode=c=>c.length===8?c.slice(0,4)+"-"+c.slice(4):c;
+// « de Bob », « d’Alice »
+const deNom=n=>(/^[aeiouyhàâäéèêëîïôöùûüœ]/i.test(n)?"d’":"de ")+n;
 /*PURE-END*/
 
 /* ---------- émojis : repli si l'appareil ne sait pas afficher un émoji récent (carré vide) ---------- */
@@ -1004,6 +1253,257 @@ async function viewCourses(){
   draw();
 }
 
+/* ---------- listes de recettes ---------- */
+const LISTS_KEY="livre-listes";
+let lists={};
+try{const s=JSON.parse(localStorage.getItem(LISTS_KEY)||"null");if(s&&typeof s==="object")lists=normalizeLists(s.lists)}catch(e){}
+function saveLists(){
+  try{localStorage.setItem(LISTS_KEY,JSON.stringify({lists}))}catch(e){}
+  if(syncHooks.pushLists)syncHooks.pushLists();
+}
+function applyRemoteLists(remote){
+  const m=mergeLists(lists,remote);
+  const changed=listsSig(m)!==listsSig(lists);
+  lists=m;
+  try{localStorage.setItem(LISTS_KEY,JSON.stringify({lists}))}catch(e){}
+  // ce téléphone connaît des listes (ou des changements) que le serveur n'a pas encore : on les envoie
+  if(listsSig(m)!==listsSig(normalizeLists(remote))&&syncHooks.pushLists)syncHooks.pushLists();
+  if(changed)refreshView();
+}
+function createList(name){
+  const id="l"+uid(),now=Date.now();
+  lists[id]={name:name.trim().slice(0,40),created:now,updated:now,deleted:false};
+  saveLists();
+  return id;
+}
+function askName(title,value,ok){
+  const d=$("#namedlg"),i=$("#namein");
+  $("#namet").textContent=title;i.value=value||"";
+  $("#nameno").onclick=()=>d.close();
+  $("#namef").onsubmit=e=>{e.preventDefault();const v=i.value.trim();if(!v)return;d.close();ok(v)};
+  d.showModal();i.focus();
+}
+function openListSettings(id){
+  const d=$("#lsetdlg"),l=lists[id];if(!l)return;
+  $("#lsett").textContent="📑 "+l.name;
+  $("#lsetclose").onclick=()=>d.close();
+  $("#lsetren").onclick=()=>{d.close();askName("Renommer la liste",l.name,n=>{l.name=n.slice(0,40);l.updated=Date.now();saveLists();viewList()})};
+  $("#lsetdel").onclick=()=>{
+    d.close();
+    l.deleted=true;l.updated=Date.now();saveLists();filter.list="all";viewList();
+    toastUndo("Liste supprimée : "+l.name,()=>{l.deleted=false;l.updated=Date.now();saveLists();filter.list=id;viewList()});
+  };
+  d.showModal();
+}
+function openListsDlg(r,after){
+  const d=$("#listdlg");
+  const draw=()=>{
+    const ls=activeLists(lists),mine=new Set(recipeLists(r));
+    $("#listopts").innerHTML=ls.length?ls.map(l=>`<li><button type="button" role="checkbox" aria-checked="${mine.has(l.id)}" data-id="${esc(l.id)}"><span class="cb"></span>${esc(l.name)}</button></li>`).join("")
+      :`<li class="hint">Aucune liste pour l’instant : crée la première ci-dessous.</li>`;
+  };
+  const save=async ids=>{r.lists=ids;touch(r);await putRecipe(r);draw()};
+  $("#listopts").onclick=e=>{
+    const b=e.target.closest("button[data-id]");if(!b)return;
+    const cur=recipeLists(r),id=b.dataset.id;
+    save(cur.includes(id)?cur.filter(x=>x!==id):[...cur,id]);
+  };
+  $("#newlistf").onsubmit=e=>{
+    e.preventDefault();
+    const n=$("#newlist").value.trim();if(!n)return;
+    $("#newlist").value="";
+    save([...recipeLists(r),createList(n)]);
+  };
+  $("#listclose").onclick=()=>d.close();
+  d.onclose=()=>{d.onclose=null;if(after)after()};
+  draw();d.showModal();
+}
+
+/* ---------- icônes des tags ---------- */
+const TAGS_KEY="livre-tags";
+let tagIcons={};
+try{const s=JSON.parse(localStorage.getItem(TAGS_KEY)||"null");if(s&&typeof s==="object")tagIcons=normalizeTagIcons(s.icons)}catch(e){}
+const showIcon=e=>emojiOk(e)?e:"🏷️";
+function saveTagIcons(){
+  try{localStorage.setItem(TAGS_KEY,JSON.stringify({icons:tagIcons}))}catch(e){}
+  if(syncHooks.pushTags)syncHooks.pushTags();
+}
+function applyRemoteTagIcons(remote){
+  const m=mergeTagIcons(tagIcons,remote),changed=tagIconsSig(m)!==tagIconsSig(tagIcons);
+  tagIcons=m;
+  try{localStorage.setItem(TAGS_KEY,JSON.stringify({icons:tagIcons}))}catch(e){}
+  if(tagIconsSig(m)!==tagIconsSig(normalizeTagIcons(remote))&&syncHooks.pushTags)syncHooks.pushTags();
+  if(changed)refreshView();
+}
+function setTagIcon(name,icon){tagIcons[tagKey(name)]={icon,updated:Date.now()};saveTagIcons()}
+const tagIconsFor=tags=>Object.fromEntries(recipeTags({tags}).map(t=>[tagKey(t),tagIcon(t,tagIcons)]));
+function openIconPicker(name,after){
+  const d=$("#icondlg"),cur=tagIcon(name,tagIcons);
+  $("#icont").textContent=`Icône de « ${name} »`;
+  $("#icongrid").innerHTML=TAG_PICK.map(e=>`<button type="button" data-e="${e}" aria-pressed="${e===cur}">${showIcon(e)}</button>`).join("");
+  $("#icongrid").onclick=ev=>{const b=ev.target.closest("button[data-e]");if(!b)return;setTagIcon(name,b.dataset.e);d.close();if(after)after()};
+  $("#iconclose").onclick=()=>d.close();
+  d.showModal();
+}
+
+/* ---------- amis et partage d'une copie ---------- */
+const signedIn=()=>!!(syncApi&&syncApi.signedIn&&syncApi.signedIn());
+// pseudo actuel de l'expéditeur s'il est (encore) notre ami, sinon celui de l'envoi
+function senderName(r){
+  const f=r.sharedFrom&&friends.find(x=>x.uid===r.sharedFrom.uid);
+  return (f&&f.name)||(r.sharedFrom&&r.sharedFrom.name)||"";
+}
+function openSendDlg(r){
+  const d=$("#senddlg"),sel=new Set(),go=$("#sendgo"),msg=$("#sendmsg");
+  const draw=()=>{
+    $("#sendopts").innerHTML=friends.map(f=>`<li><button type="button" role="checkbox" aria-checked="${sel.has(f.uid)}" data-id="${esc(f.uid)}"><span class="cb"></span>${esc(f.name||"Ami")}</button></li>`).join("");
+    go.disabled=!sel.size;
+    go.textContent=sel.size>1?`Envoyer à ${sel.size} amis`:"Envoyer";
+  };
+  const ok=signedIn();
+  msg.textContent=!ok?"Connecte-toi d’abord (bouton « ⋯ » → Mon profil) pour envoyer des recettes à tes amis."
+    :!friends.length?"Tu n’as pas encore d’ami dans NoutBook. Ajoute-en un pour lui envoyer cette recette."
+    :"Ton ami reçoit sa propre copie : s’il la modifie, la tienne ne change pas.";
+  $("#sendopts").hidden=go.hidden=!ok||!friends.length;
+  $("#sendfriends").textContent=ok?"👥 Ajouter un ami":"👤 Se connecter";
+  $("#sendfriends").onclick=()=>d.close();
+  $("#sendopts").onclick=e=>{
+    const b=e.target.closest("button[data-id]");if(!b)return;
+    sel.has(b.dataset.id)?sel.delete(b.dataset.id):sel.add(b.dataset.id);draw();
+  };
+  go.onclick=()=>{
+    const to=friends.filter(f=>sel.has(f.uid));
+    d.close();
+    syncApi.sendRecipe(to,r);
+    toast("Copie envoyée à "+to.map(f=>f.name||"ton ami").join(", "));
+  };
+  $("#sendclose").onclick=()=>d.close();
+  draw();d.showModal();
+}
+async function receiveShared(m){
+  const r=sharedCopy(m.recipe,m,Date.now());
+  if(await getRecipe(r.id))return;   // déjà reçue (l'autre téléphone du foyer a été plus rapide)
+  const ic=normalizeTagIcons(Object.fromEntries(Object.entries(m.tagIcons&&typeof m.tagIcons==="object"?m.tagIcons:{}).map(([k,v])=>[k,{icon:v,updated:1}])));
+  let added=false;
+  for(const t of r.tags){const k=tagKey(t);if(!tagIcons[k]&&ic[k]&&ic[k].icon!==autoTagIcon(t)){tagIcons[k]={icon:ic[k].icon,updated:Date.now()};added=true}}
+  if(added)saveTagIcons();
+  await putRecipe(r);
+  toast("📬 Nouvelle recette "+(r.sharedFrom.name?deNom(r.sharedFrom.name):"de ton ami"));
+  refreshView();
+}
+
+let lastInvite=null;   // dernier code créé, gardé si la page se redessine
+// Page profil (bouton « ⋯ ») : pseudo, connexion, amis, sauvegarde
+async function viewProfile(code){
+  chrome(false);
+  code=cleanCode(code);
+  const on=signedIn(),named=!!profile.name;
+  const st=syncState.state;
+  const pseudoBlock=`<section class="block"><h3>Pseudo</h3>
+      <p>C’est le nom que tes amis voient. Si tu le changes, il change aussi chez eux.</p>
+      <form class="addrow" id="pf" autocomplete="off" style="margin:0">
+        <input id="pname" type="text" maxlength="30" placeholder="Ton pseudo" value="${esc(profile.name)}" autocomplete="nickname">
+        <button class="btn primary" type="submit">Enregistrer</button>
+      </form></section>`;
+  const accountBlock=`<section class="block"><h3>${on?"Compte":"Connexion"}</h3>
+      <p class="hint" id="syncmsg" aria-live="polite"></p>
+      <form id="authf" class="syncbox" style="border:0;margin:0;padding:0" hidden>
+        <input type="email" id="aemail" placeholder="E-mail du compte" autocomplete="username" required>
+        <input type="password" id="apass" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password" minlength="6" required>
+        <p class="autherr" id="autherr" role="alert"></p>
+        <button class="btn primary" type="submit" style="width:100%">Se connecter</button>
+      </form>
+      <button class="btn" type="button" id="signout" hidden>Se déconnecter</button>
+    </section>`;
+  const needName=named?"":`<p class="fhint">Choisis d’abord ton pseudo, plus haut.</p>`;
+  const friendsBlocks=on?`
+    <section class="block"><h3>Mes amis <small class="muted">· ${friends.length}</small></h3>
+      ${friends.length?`<ul class="pick" id="flist">${friends.map(f=>`<li><span class="pt">${esc(f.name||"Ami")}</span><button type="button" class="x" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}">✕</button></li>`).join("")}</ul>`
+        :`<p class="muted" style="margin:0">Personne pour l’instant. Invite un ami ou tape le code qu’il t’a envoyé.</p>`}
+    </section>
+    <section class="block"><h3>Ajouter un ami</h3>
+      <p>Crée un code et envoie-le à ton ami. Il est valable 7 jours et sert à plusieurs amis.</p>
+      <div id="inv"></div>
+      <button class="btn primary" type="button" id="mkinv" ${named?"":"disabled"} ${lastInvite?"hidden":""}>Créer un code d’invitation</button>
+      ${needName}
+      <h3 style="margin-top:18px">J’ai reçu un code</h3>
+      <form class="addrow" id="cf" autocomplete="off" style="margin:0">
+        <input id="icode" type="text" maxlength="12" placeholder="ABCD-EFGH" autocapitalize="characters" autocorrect="off" spellcheck="false" value="${esc(fmtCode(code))}">
+        <button class="btn primary" type="submit" ${named?"":"disabled"}>Ajouter</button>
+      </form>
+      <p class="fhint" id="cmsg" role="status">${named?"":"Choisis d’abord ton pseudo, plus haut."}</p>
+    </section>`
+    :`<section class="block"><h3>Amis</h3>
+      <p style="margin:0">Connecte-toi pour ajouter des amis et leur envoyer des recettes.</p>
+      ${code?`<p style="margin:12px 0 0">Code d’invitation reçu :</p><div class="code">${esc(fmtCode(code))}</div><p class="hint" style="margin:0">Si NoutBook est installé sur ton écran d’accueil, ouvre-le, puis « ⋯ » → « J’ai reçu un code », et tape ce code.</p>`:""}
+    </section>`;
+  const backupBlock=`<section class="block"><h3>Sauvegarde</h3>
+      <p>Copie de secours dans un fichier (photos et listes comprises), à garder ou à importer sur un autre téléphone.</p>
+      <div class="col">
+        <button class="btn primary" type="button" id="exp">⬇ Exporter mes recettes</button>
+        <label class="btn" style="text-align:center;margin:0">⬆ Importer une sauvegarde<input type="file" id="imp" accept=".json,application/json" hidden></label>
+      </div></section>`;
+  view.innerHTML=`<h2 class="title">Mon profil</h2>
+    ${on?pseudoBlock+friendsBlocks+accountBlock:accountBlock+friendsBlocks}
+    ${backupBlock}`;
+  renderSync();
+  $("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
+  $("#signout").onclick=async()=>{
+    if(syncApi&&confirm("Se déconnecter ? Les recettes restent sur cet appareil."))await syncApi.signOut();
+  };
+  $("#exp").onclick=exportBackup;
+  $("#imp").onchange=importBackup;
+  if(!on)return;
+  $("#pf").onsubmit=e=>{
+    e.preventDefault();
+    const n=$("#pname").value.trim().slice(0,30);if(!n){$("#pname").focus();return}
+    if(n===profile.name){toast("Pseudo inchangé");return}
+    profile={...profile,name:n};syncApi.setProfile(n);toast("Pseudo enregistré ✓");
+    $("#pname").blur();viewProfile(code);
+  };
+  const fl=$("#flist");
+  if(fl)fl.onclick=e=>{
+    const b=e.target.closest("button[data-id]");if(!b)return;
+    const f=friends.find(x=>x.uid===b.dataset.id);if(!f)return;
+    syncApi.removeFriend(f.uid);
+    toastUndo("Retiré de tes amis : "+(f.name||"ami"),()=>syncApi.restoreFriend(f));
+  };
+  const showInvite=c=>{
+    const url=location.origin+location.pathname+"#/ami/"+c;
+    const txt=`Ajoute-moi comme ami sur NoutBook pour qu’on s’échange des recettes : dans l’app, « ⋯ » → « J’ai reçu un code », puis tape ${fmtCode(c)}.\n${url}`;
+    $("#inv").innerHTML=`<div class="code">${esc(fmtCode(c))}</div><div class="row2" style="margin-bottom:10px"><button class="btn primary" type="button" id="invshare">Envoyer l’invitation</button><button class="btn" type="button" id="invcopy">Copier</button></div>`;
+    $("#invshare").onclick=async()=>{
+      if(navigator.share){try{await navigator.share({text:txt});return}catch(err){if(err&&err.name==="AbortError")return}}
+      toast(await copyText(txt)?"Invitation copiée ✓":"Copie impossible");
+    };
+    $("#invcopy").onclick=async()=>toast(await copyText(txt)?"Invitation copiée ✓":"Copie impossible");
+  };
+  if(lastInvite)showInvite(lastInvite);
+  $("#mkinv").onclick=async()=>{
+    const b=$("#mkinv");b.disabled=true;b.textContent="Création…";
+    try{
+      lastInvite=await syncApi.createInvite();
+      if(document.body.contains(b)){showInvite(lastInvite);b.hidden=true}else refreshView();
+    }catch(err){
+      b.disabled=false;b.textContent="Créer un code d’invitation";
+      toast(err&&err.message||"Création impossible, réessaie avec du réseau.");
+    }
+  };
+  $("#cf").onsubmit=async e=>{
+    e.preventDefault();
+    const c=cleanCode($("#icode").value),msg=$("#cmsg");
+    msg.className="fhint";
+    if(c.length!==8){msg.className="fhint err";msg.textContent="Le code fait 8 caractères, par exemple ABCD-EFGH.";return}
+    msg.textContent="Vérification du code…";
+    try{
+      const name=await syncApi.redeemInvite(c);
+      if(location.hash!=="#/profil")history.replaceState(null,"","#/profil");
+      toast(`${name||"Ton ami"} est maintenant ton ami ✓`);
+      $("#icode").blur();viewProfile();
+    }catch(err){msg.className="fhint err";msg.textContent=err&&err.message||"Ce code n’a pas marché."}
+  };
+}
+
 /* ---------- photos : rester sous la limite de 1 Mo par recette ---------- */
 const MAX_PHOTOS=6;
 function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src})}
@@ -1042,7 +1542,13 @@ function refreshView(){
     route().then(()=>window.scrollTo(0,y));
   },200);
 }
-function setStatus(st){syncState=st;renderSync()}
+const PROFILE_RE=/^#\/(profil|ami)/;
+let wasSignedIn=false;
+function setStatus(st){
+  syncState=st;renderSync();
+  const now=signedIn();
+  if(now!==wasSignedIn){wasSignedIn=now;if(PROFILE_RE.test(location.hash))refreshView()}
+}
 function renderSync(){
   const s=syncState,em=s.email?" · "+s.email:"";
   const tones={
@@ -1056,11 +1562,11 @@ function renderSync(){
     error:["red","Problème : "+(s.message||"inconnu")+em]
   };
   const [tone,text]=tones[s.state]||tones.off;
-  const dot=$("#dot"),msg=$("#syncmsg");
+  const dot=$("#dot"),msg=$("#syncmsg"),af=$("#authf"),so=$("#signout");
   dot.className="dot "+tone;dot.hidden=!tone;
-  msg.textContent=text;
-  $("#authf").hidden=s.state!=="signedout";
-  $("#signout").hidden=!["syncing","ok","pending","offline","error"].includes(s.state);
+  if(msg)msg.textContent=text;
+  if(af)af.hidden=s.state!=="signedout";
+  if(so)so.hidden=!["syncing","ok","pending","offline","error"].includes(s.state);
 }
 function authMsg(code=""){
   if(/invalid-credential|wrong-password|user-not-found|invalid-login/.test(code))return"E-mail ou mot de passe incorrect.";
@@ -1079,10 +1585,6 @@ async function doAuth(kind){
     $("#apass").value="";toast("Connecté ✓");
   }catch(err){$("#autherr").textContent=authMsg(err&&err.code)}
 }
-$("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
-$("#signout").onclick=async()=>{
-  if(syncApi&&confirm("Se déconnecter ? Les recettes restent sur cet appareil."))await syncApi.signOut();
-};
 async function bootSync(){
   renderSync();
   try{
@@ -1090,7 +1592,12 @@ async function bootSync(){
     syncApi=await mod.initSync({
       hooks:syncHooks,listLocal:allRecipes,getLocal:getRecipe,
       putLocal:putRecipeLocal,delLocal:delRecipeLocal,
-      getShop:()=>shop,setShop:applyRemoteShop,fitPhotos,refresh:refreshView,setStatus
+      getShop:()=>shop,setShop:applyRemoteShop,fitPhotos,refresh:refreshView,setStatus,
+      getLists:()=>lists,setLists:applyRemoteLists,
+      setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&(PROFILE_RE.test(location.hash)||/^#\/(r\/|$)/.test(location.hash||"#/")))refreshView()},
+      setProfile:p=>{const ch=p.name!==profile.name;profile=p;if(ch&&PROFILE_RE.test(location.hash))refreshView()},
+      getProfile:()=>profile,receiveShared,shareable,toast,
+      getTagIcons:()=>tagIcons,setTagIcons:applyRemoteTagIcons,tagIconsFor
     });
   }catch(e){setStatus({state:"off"})}
 }
@@ -1105,6 +1612,8 @@ async function route(){
     else if(h==="#/new")await viewForm();
     else if(h==="#/courses")await viewCourses();
     else if((m=h.match(/^#\/edit\/(.+)$/)))await viewForm(m[1]);
+    else if(h==="#/profil"||h==="#/amis")await viewProfile();
+    else if((m=h.match(/^#\/ami\/([A-Za-z0-9-]+)$/)))await viewProfile(m[1]);
     else await viewList();
   }catch(err){
     view.innerHTML=`<div class="empty"><div class="big">⚠️</div><p>Un souci est survenu : ${esc(err.message)}</p></div>`;
@@ -1115,26 +1624,27 @@ $("#back").onclick=()=>{ if(history.length>1)history.back(); else location.hash=
 $("#cartbtn").onclick=()=>{location.hash="#/courses"};
 
 /* ---------- backup ---------- */
-$("#menu").onclick=()=>$("#dlg").showModal();
-$("#dlgclose").onclick=()=>$("#dlg").close();
-$("#exp").onclick=async()=>{
-  const data={app:"livre-recettes",version:1,exported:new Date().toISOString(),recipes:await allRecipes()};
+$("#menu").onclick=()=>{location.hash="#/profil"};
+async function exportBackup(){
+  const data={app:"livre-recettes",version:1,exported:new Date().toISOString(),recipes:await allRecipes(),lists,tagIcons};
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="noutbook-"+new Date().toISOString().slice(0,10)+".json";
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   toast(`${data.recipes.length} recette(s) exportée(s)`);
-};
-$("#imp").onchange=async e=>{
+}
+async function importBackup(e){
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{
     const data=JSON.parse(await f.text());
     if(!data||!Array.isArray(data.recipes))throw new Error("Fichier non reconnu");
     let n=0;
+    if(data.lists&&typeof data.lists==="object"){lists=mergeLists(lists,data.lists);saveLists()}
+    if(data.tagIcons&&typeof data.tagIcons==="object"){tagIcons=mergeTagIcons(tagIcons,data.tagIcons);saveTagIcons()}
     for(const r of data.recipes){if(r&&r.id&&r.title){await putRecipe(r);n++}}
-    $("#dlg").close();toast(`${n} recette(s) importée(s) ✓`);route();
+    toast(`${n} recette(s) importée(s) ✓`);route();
   }catch(err){alert("Import impossible : "+err.message)}
-};
+}
 
 /* ---------- boot ---------- */
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
