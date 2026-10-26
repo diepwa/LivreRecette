@@ -31,7 +31,7 @@ export async function initSync(app) {
 
   const { initializeApp } = appMod;
   const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } = authMod;
-  const { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot } = fsMod;
+  const { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, deleteDoc, onSnapshot, Timestamp } = fsMod;
 
   const fb = initializeApp(cfg);
   const auth = getAuth(fb);
@@ -44,6 +44,11 @@ export async function initSync(app) {
   let email = "";
   let unsubR = null;
   let unsubS = null;
+  let unsubX = [];
+  let friendDocs = [];          // amis tels qu'enregistrés chez moi
+  const liveNames = new Map();  // pseudo actuel de chaque ami
+  const nameUnsubs = new Map();
+  let publicSynced = false;
   let queue = Promise.resolve();
   let shopTimer = null;
 
@@ -55,6 +60,13 @@ export async function initSync(app) {
   const recipesCol = () => collection(db, "users", uid, "recipes");
   const recipeRef = (id) => doc(db, "users", uid, "recipes", docId(id));
   const shopRef = () => doc(db, "users", uid, "meta", "shop");
+  const listsRef = () => doc(db, "users", uid, "meta", "lists");
+  const tagsRef = () => doc(db, "users", uid, "meta", "tags");
+  const profileRef = () => doc(db, "users", uid, "meta", "profile");
+  const friendRef = (f) => doc(db, "users", uid, "friends", f);
+  const inboxOf = (u) => collection(db, "users", u, "inbox");
+  // pseudo public : lisible seulement par les comptes que l'on a en amis
+  const publicRef = (u) => doc(db, "profiles", u);
   const fail = (e) => app.setStatus({ state: "error", email, message: friendly(e) });
 
   function friendly(e) {
@@ -97,6 +109,96 @@ export async function initSync(app) {
       } catch (e) { fail(e); }
     }, 400);
   };
+
+  hooks.pushLists = () => {
+    if (!uid) return;
+    // merge:true fusionne liste par liste : deux téléphones peuvent créer une liste chacun sans s'écraser
+    setDoc(listsRef(), { lists: app.getLists(), updated: Date.now() }, { merge: true }).catch(fail);
+  };
+
+  hooks.pushTags = () => {
+    if (!uid) return;
+    setDoc(tagsRef(), { icons: app.getTagIcons(), updated: Date.now() }, { merge: true }).catch(fail);
+  };
+
+  // ---------- amis et partage ----------
+  const myName = () => (app.getProfile().name || "").trim();
+  function randomCode() {
+    const abc = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    const b = new Uint8Array(8);
+    crypto.getRandomValues(b);
+    return Array.from(b, (x) => abc[x % abc.length]).join("");
+  }
+  async function createInvite() {
+    if (!uid) throw new Error("Connecte-toi d'abord.");
+    const code = randomCode();
+    // valable 7 jours ; les règles Firestore refusent un code expiré
+    const write = setDoc(doc(db, "invites", code), {
+      from: uid,
+      name: myName(),
+      exp: Timestamp.fromMillis(Date.now() + 7 * 864e5),
+    });
+    // hors ligne, l'écriture attendrait le réseau indéfiniment : l'ami ne pourrait pas encore utiliser le code
+    const late = new Promise((_, rej) => setTimeout(() => rej(new Error("Pas de réseau : réessaie quand tu seras connecté.")), 12000));
+    try { await Promise.race([write, late]); }
+    catch (e) {
+      if ((e && e.code || "").includes("permission-denied")) throw new Error("Création refusée : les règles Firestore ne sont pas à jour.");
+      throw e;
+    }
+    return code;
+  }
+  async function redeemInvite(code) {
+    if (!uid) throw new Error("Connecte-toi d'abord.");
+    let snap;
+    try {
+      snap = await getDoc(doc(db, "invites", code));
+    } catch (e) {
+      const c = (e && e.code) || "";
+      if (c.includes("permission-denied")) throw new Error("Code inconnu ou expiré. Demande un nouveau code à ton ami.");
+      throw new Error("Vérification impossible : il faut du réseau.");
+    }
+    if (!snap.exists()) throw new Error("Code inconnu ou expiré. Demande un nouveau code à ton ami.");
+    const inv = snap.data();
+    if (inv.from === uid) throw new Error("C'est ton propre code : envoie-le à ton ami.");
+    const name = String(inv.name || "").slice(0, 30);
+    setDoc(friendRef(inv.from), { name, since: Date.now() }).catch(fail);
+    // prévient l'ami : son app l'ajoutera à son tour (amitié réciproque)
+    setDoc(doc(inboxOf(inv.from)), { type: "friend", from: uid, fromName: myName(), code, at: Date.now() }).catch(fail);
+    return name;
+  }
+  function sendRecipe(to, r) {
+    if (!uid) return;
+    const from = uid;
+    (async () => {
+      const recipe = app.shareable(r);
+      recipe.photos = await app.fitPhotos(recipe.photos);
+      for (const f of to) {
+        setDoc(doc(inboxOf(f.uid)), { type: "recipe", from, fromName: myName(), at: Date.now(), recipe, tagIcons: app.tagIconsFor(recipe.tags) })
+          .catch((e) => {
+            const c = (e && e.code) || "";
+            app.toast(c.includes("permission-denied")
+              ? `Envoi refusé : ${f.name || "ton ami"} doit d'abord ouvrir NoutBook pour confirmer votre amitié (ou t'a retiré de ses amis).`
+              : `Envoi à ${f.name || "ton ami"} impossible : ${friendly(e)}`);
+          });
+      }
+    })().catch(fail);
+  }
+
+  async function handleInbox(snap) {
+    for (const ch of snap.docChanges()) {
+      if (ch.type === "removed") continue;
+      const d = ch.doc, m = d.data() || {};
+      try {
+        if (m.type === "recipe" && m.recipe && typeof m.recipe === "object") {
+          await app.receiveShared({ ...m, id: d.id });
+        } else if (m.type === "friend" && typeof m.from === "string") {
+          setDoc(friendRef(m.from), { name: String(m.fromName || "").slice(0, 30), since: Date.now() }).catch(fail);
+        }
+        // pas d'attente du serveur : hors ligne, la suppression part au retour du réseau
+        deleteDoc(d.ref).catch(fail);
+      } catch (e) { fail(e); }
+    }
+  }
 
   // ---------- réception (serveur -> local) ----------
   async function handleRecipes(snap, migKey) {
@@ -164,13 +266,80 @@ export async function initSync(app) {
       },
       fail
     );
+    unsubX = [
+      onSnapshot(listsRef(), (snap) => {
+        if (snap.metadata.hasPendingWrites) return;
+        if (!snap.exists()) {
+          if (!snap.metadata.fromCache && Object.keys(app.getLists()).length) hooks.pushLists();
+          return;
+        }
+        app.setLists((snap.data() || {}).lists || {});
+      }, fail),
+      onSnapshot(tagsRef(), (snap) => {
+        if (snap.metadata.hasPendingWrites) return;
+        if (!snap.exists()) {
+          if (!snap.metadata.fromCache && Object.keys(app.getTagIcons()).length) hooks.pushTags();
+          return;
+        }
+        app.setTagIcons((snap.data() || {}).icons || {});
+      }, fail),
+      onSnapshot(profileRef(), (snap) => {
+        const d = snap.exists() ? snap.data() : {};
+        const name = typeof d.name === "string" ? d.name : "";
+        app.setProfile({ name });
+        // une fois par session : le pseudo public suit le pseudo du compte
+        if (name && !publicSynced && !snap.metadata.fromCache) {
+          publicSynced = true;
+          setDoc(publicRef(uid), { name, updated: Date.now() }).catch(() => {});
+        }
+      }, fail),
+      onSnapshot(collection(db, "users", uid, "friends"), (snap) => {
+        friendDocs = [];
+        snap.forEach((d) => friendDocs.push({ uid: d.id, name: String((d.data() || {}).name || ""), since: Number((d.data() || {}).since) || 0 }));
+        watchFriendNames();
+        emitFriends();
+      }, fail),
+      onSnapshot(inboxOf(uid), (snap) => { queue = queue.then(() => handleInbox(snap)).catch(fail); }, fail),
+    ];
+  }
+
+  function emitFriends() {
+    const list = friendDocs.map((f) => ({ ...f, name: liveNames.get(f.uid) || f.name }));
+    list.sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
+    app.setFriends(list);
+  }
+  // suit le pseudo de chaque ami : s'il le change, on voit le nouveau
+  function watchFriendNames() {
+    const ids = new Set(friendDocs.map((f) => f.uid));
+    for (const [id, u] of nameUnsubs) if (!ids.has(id)) { u(); nameUnsubs.delete(id); liveNames.delete(id); }
+    for (const f of friendDocs) {
+      if (nameUnsubs.has(f.uid)) continue;
+      nameUnsubs.set(f.uid, onSnapshot(publicRef(f.uid), (snap) => {
+        const n = snap.exists() ? String((snap.data() || {}).name || "").slice(0, 30) : "";
+        if (!n || n === liveNames.get(f.uid)) return;
+        liveNames.set(f.uid, n);
+        // garde aussi le nouveau pseudo chez moi, pour l'avoir hors ligne
+        const mine = friendDocs.find((x) => x.uid === f.uid);
+        if (mine && mine.name !== n) setDoc(friendRef(f.uid), { name: n }, { merge: true }).catch(() => {});
+        emitFriends();
+      }, () => nameUnsubs.delete(f.uid))); // refusé = l'ami ne nous a pas (encore) en ami : on garde le nom enregistré et on réessaiera
+    }
   }
 
   function stop() {
     if (unsubR) unsubR();
     if (unsubS) unsubS();
+    unsubX.forEach((u) => u());
+    unsubX = [];
+    nameUnsubs.forEach((u) => u());
+    nameUnsubs.clear();
+    liveNames.clear();
+    friendDocs = [];
+    publicSynced = false;
     unsubR = unsubS = null;
     uid = null;
+    app.setFriends([]);
+    app.setProfile({ name: "" });
   }
 
   onAuthStateChanged(auth, (user) => {
@@ -185,5 +354,16 @@ export async function initSync(app) {
   return {
     signIn: (e, p) => signInWithEmailAndPassword(auth, e, p),
     signOut: () => signOut(auth),
+    signedIn: () => !!uid,
+    setProfile: (name) => {
+      if (!uid) return;
+      setDoc(profileRef(), { name, updated: Date.now() }, { merge: true }).catch(fail);
+      setDoc(publicRef(uid), { name, updated: Date.now() }).catch(fail);
+    },
+    createInvite,
+    redeemInvite,
+    removeFriend: (f) => { if (uid) deleteDoc(friendRef(f)).catch(fail); },
+    restoreFriend: (f) => { if (uid) setDoc(friendRef(f.uid), { name: f.name, since: f.since || Date.now() }).catch(fail); },
+    sendRecipe,
   };
 }
