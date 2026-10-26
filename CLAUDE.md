@@ -33,13 +33,75 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Design
 
-- Palette crème / brun (variables `:root` d'`index.html`) : fond `#faf7f1`, encre `#33291f`, accent `#6b5238`, accent doux `#ece3d5`, ligne `#e6dccb`. Thème sombre : fond `#1b1712`, accent `#d9c3a0`. Tuiles « à acheter » rouges (`--buy` `#e0555d`) et « catalogue » vert-bleu (`--cat` `#4f8f85`) conservées volontairement.
+Contexte de design de l'app, à relire avant toute modification visuelle.
+
+### Pour qui, pour quoi
+
+- Deux personnes d'un même foyer, sur iPhone, en PWA plein écran. Usage dans la cuisine (mains occupées, coup d'œil rapide sur une recette) et au supermarché (cocher vite, d'une main, parfois avec un réseau faible).
+- L'app remplace un cahier de recettes familial et une appli de courses type Bring. Elle doit rester aussi simple à utiliser que ces deux objets.
+- Interface entièrement en français, sur un ton familier : les textes tutoient (« Ton livre est vide… », « Touche une tuile… »). Garder ce tutoiement dans les nouveaux textes.
+
+### Personnalité
+
+Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées au démarrage, émojis d'aliments). Jamais froide ni « appli de productivité ». Calme plutôt que bruyante : une seule couleur d'accent, beaucoup de crème.
+
+### Direction visuelle
+
+- Papier crème et encre brune, comme un carnet de cuisine. Les photos des recettes apportent la couleur ; l'interface reste sobre autour.
+- Formes rondes et douces : polices arrondies, coins arrondis partout, pastilles en `999px`.
+- Deux exceptions colorées assumées, propres au panier façon Bring : tuiles rouges « à acheter » et tuiles vert-bleu « catalogue ». Ne pas les ramener dans la palette brune.
+
+### Palette
+
+- Variables `:root` d'`index.html` : fond `#faf7f1`, carte `#ffffff`, encre `#33291f`, texte secondaire `--muted` `#85775f`, ligne `#e6dccb`, accent `#6b5238`, accent doux `#ece3d5`, ok `#4f7a4a`. Rouge danger `#c0392b`.
+- Thème sombre (`prefers-color-scheme`) : fond `#1b1712`, carte `#26201a`, encre `#f0e8da`, accent `#d9c3a0`. Toute nouvelle couleur doit avoir sa valeur sombre.
+- Panier : `--buy` `#e0555d` (sombre `#c94a52`), `--cat` `#4f8f85` (sombre `#3f7a71`). Couleurs de recette `--rc` dans le récap et les pastilles des tuiles.
+- Toujours passer par les variables, pas de couleur en dur dans un nouveau composant.
 - Pour changer la palette, modifier ensemble : `:root` et le bloc sombre, `<meta name="theme-color">`, `manifest.json` (`background_color`, `theme_color`), le splash (`#splash`), l'objet `C` de `recipe-pdf.js` et les icônes `icons/*`.
-- Polices Google Fonts : Fredoka (titres, `--serif`) et Nunito (texte, `--sans`).
-- Écran de démarrage `#splash` : logo puis lettres « NoutBook » animées.
-- Émojis : l'ordinateur de l'utilisateur n'affiche pas les émojis récents. Préférer ≤ Emoji 11 ; pour un émoji récent, ajouter un repli en 3e élément dans `EMOJI_MAP`. Affichage via `shownEmoji()`. Pas d'émoji devant les titres « NoutBook » et « Liste de courses ».
+
+### Typographie
+
+- Google Fonts : Fredoka (titres, `--serif`, graisse 600-700) et Nunito (texte, `--sans`). Replis `ui-rounded` / `SF Pro Rounded` pour garder l'aspect arrondi hors ligne.
+- Échelle utilisée : titre de recette `1.8rem`, en-tête `1.35rem`, titres de bloc `1.15–1.2rem`, texte `1rem`, secondaire `.85–.9rem`. Les tuiles et cartes de la grille descendent à `.62–.78rem` pour tenir à 3-4 colonnes sur iPhone : ne pas descendre plus bas.
+- Champs de saisie à `1rem` minimum (en dessous, iOS zoome à la saisie).
+
+### Formes, ombres, espacements
+
+- Rayons : `--radius` 16px (cartes, blocs, dialogues, galerie), 12px (boutons, champs, tuiles, vignettes), 10px (petits boutons), `999px` (pastilles, recherche, FAB, toast).
+- Ombre unique `--shadow` (`0 2px 10px` brun à 10 %), plus forte seulement pour ce qui flotte (FAB, barre du bas, dialogues).
+- Séparateurs de liste en pointillés `1px dashed var(--line)`.
+- Marges de page 16px, largeur max 900px, grilles à espacement 8px (12px au-delà de 640px).
+
+### Mise en page et ergonomie mobile
+
+- Mobile d'abord, portrait. Accueil en grille 3 colonnes (4 à 640px, 5 à 900px), tuiles du panier en 4 colonnes (5 à 560px, 6 à 760px).
+- Respecter les zones sûres iOS (`env(safe-area-inset-*)`) pour l'en-tête collant, le FAB, la barre « Il me faut… » et le toast.
+- Cibles tactiles d'au moins 32px, 40px pour les boutons d'icône. Retour au toucher par `:active` (fond accent doux ou `scale(.96)` sur les tuiles), pas de survol requis.
+- Actions destructrices réversibles : toast avec « Annuler » plutôt qu'une confirmation quand c'est possible.
+
+### Mouvement
+
+- Sobre et court (0,2 à 0,8 s). Seul moment expressif : l'écran de démarrage `#splash` (logo qui rebondit, lettres « NoutBook » une par une, cercle qui s'ouvre sur l'accueil).
+- Respecter `prefers-reduced-motion` (le splash est alors masqué) et prévoir la même chose pour toute nouvelle animation.
+
+### Iconographie
+
+- Émojis plutôt qu'une bibliothèque d'icônes : aliments sur les tuiles, 🛒 pour le panier, ★ pour les favoris.
+- L'ordinateur de l'utilisateur n'affiche pas les émojis récents. Préférer ≤ Emoji 11 ; pour un émoji récent, ajouter un repli en 3e élément dans `EMOJI_MAP`. Affichage via `shownEmoji()`.
+- Pas d'émoji devant les titres « NoutBook » et « Liste de courses ».
+
+### À éviter
+
+- Nouvelles couleurs d'accent, dégradés, effets de verre, ombres lourdes, coins carrés.
+- Polices non arrondies ou supplémentaires.
+- Texte en anglais dans l'interface.
+- Animations longues ou qui bloquent l'action.
+- Bouton « Créer un compte » : les inscriptions sont fermées.
+
+### Détails techniques à garder
+
 - Garder `[hidden]{display:none !important}` (sinon `.btn{display:inline-block}` écrase `hidden`).
-- Pas de bouton « Créer un compte » : les inscriptions sont fermées.
+- Styles d'impression (`@media print`) : masquer en-tête, FAB, actions, splash et barre du bas.
 
 ## Fonctions à préserver
 
