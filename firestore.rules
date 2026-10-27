@@ -33,7 +33,10 @@ service cloud.firestore {
             || exists(/databases/$(database)/documents/users/$(uid)/friends/$(request.auth.uid)));
       allow create, update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.name is string
-        && request.resource.data.name.size() <= 30;
+        && request.resource.data.name.size() <= 30
+        // photo de profil facultative : petite image (data URL) de moins de 60 000 caractères
+        && (!('photo' in request.resource.data)
+            || (request.resource.data.photo is string && request.resource.data.photo.size() < 60000));
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
