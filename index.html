@@ -244,7 +244,40 @@ section.block p{margin:0 0 12px}
 @keyframes splash-ring{to{transform:scale(60)}}
 @media (prefers-color-scheme:dark){#splash{background:#26201a}#splash .stext{color:#f0e8da}}
 @media (prefers-reduced-motion:reduce){#splash{display:none}}
+/* import de recettes depuis un texte */
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#imptxt{min-height:44vh;margin-top:12px}
+.impcta{display:flex;gap:12px;align-items:center;background:var(--accent-soft);color:var(--ink);text-decoration:none;border-radius:12px;padding:12px 14px;margin:6px 0 4px;font-size:.9rem;line-height:1.35}
+.impcta>span:first-child{font-size:1.5rem;flex:none}
+.impcta b{color:var(--accent)}
+.impcta:active{transform:scale(.98)}
+.imp{padding:10px 14px 12px}
+.imp.off{opacity:.55}
+.imphead{display:flex;align-items:center;gap:4px}
+.impcb{flex:none;width:44px;height:44px;margin:0 0 0 -10px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.impcb .cb{width:24px;height:24px;border-radius:7px;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;line-height:1;color:var(--accent-ink)}
+.impcb[aria-checked=true] .cb{background:var(--accent)}
+.impcb[aria-checked=true] .cb::after{content:"✓"}
+.imp .imphead input[type=text]{flex:1;min-width:0;font-family:var(--serif);font-weight:600;font-size:1.1rem;border:1px solid transparent;background:none;padding:8px 10px;margin:0}
+.imp .imphead input[type=text]:focus{border-color:var(--line);background:var(--bg);outline:none}
+.imp .impsum{margin:0 0 0 48px;color:var(--muted);font-size:.85rem}
+.imp p.fhint{margin:4px 0 0 48px;min-height:0}
+.imp details{margin-top:2px}
+.imp summary{list-style:none;cursor:pointer;color:var(--accent);font-weight:700;font-size:.9rem;min-height:40px;display:flex;align-items:center;margin-left:48px;width:max-content}
+.imp summary::-webkit-details-marker{display:none}
+.imp summary::after{content:"▾";margin-left:6px}
+.imp details[open] summary::after{content:"▴"}
+.imp details[open] summary{margin-bottom:-8px}
+.imp .tagbox{padding:4px}
+.imp .tpill .ic{display:flex;align-items:center;justify-content:center}
+.impspace{height:84px}
+.impbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(0,0,0,.12)}
+.impbar>div{max-width:900px;margin:0 auto;display:flex;gap:10px}
+.impbar .btn{flex:1;text-align:center;min-height:46px}
+.impbar .btn.primary{flex:2}
+.btn:disabled{opacity:.5;cursor:default}
 @media print{#splash{display:none}.searchbar{display:none}}
+@media print{.impbar,.impcta{display:none}}
 @media print{header.top,.fab,.actions{display:none}body{background:#fff;color:#000}section.block{box-shadow:none;border:1px solid #ccc}}
 </style>
 </head>
@@ -427,7 +460,7 @@ function updateBadge(){
 async function viewList(){
   chrome(true);
   const rs=(await allRecipes()).sort((a,b)=>(b.updated||0)-(a.updated||0));
-  if(/^#\/(r\/|new|edit|courses|profil|ami)/.test(location.hash))return;   // on a changé de page pendant le chargement
+  if(/^#\/(r\/|new|edit|courses|profil|ami|importer)/.test(location.hash))return;   // on a changé de page pendant le chargement
   const ls=activeLists(lists);
   if(!["mine","shared","all"].includes(filter.list)&&!ls.some(l=>l.id===filter.list))filter.list="mine";
   const curList=ls.find(l=>l.id===filter.list);
@@ -560,6 +593,7 @@ async function viewForm(id){
   let photos=[...(rec.photos||[])];
   view.innerHTML=`
   <h2 class="title">${r?"Modifier la recette":"Nouvelle recette"}</h2>
+  ${r?"":`<a class="impcta" href="#/importer"><span aria-hidden="true">📋</span><span><b>Tu l’as déjà en texte ?</b><br>Colle-la (Instagram, site, notes…), l’app remplit tout. Plusieurs d’un coup, c’est possible.</span></a>`}
   <form id="f" autocomplete="off">
     <label for="title">Nom de la recette</label>
     <input type="text" id="title" required maxlength="120" value="${esc(rec.title)}" placeholder="Ex. Tarte aux pommes de mamie">
@@ -677,7 +711,7 @@ function matchUnit(nr,alias){
 }
 function parseIngredient(line){
   const t=String(line||"").replace(/^[\-•*·]\s*/,"").trim();
-  if(!t)return null;
+  if(!t||t.endsWith(":"))return null;   // sous-titre « Pour la pâte : »
   const pn=parseNumber(t);
   let n=null,rest=t,fam="n",f=1,u="";
   if(pn){n=pn.n;rest=pn.rest.trim()}
@@ -988,6 +1022,254 @@ const cleanCode=s=>String(s||"").toUpperCase().split("").filter(c=>CODE_ABC.incl
 const fmtCode=c=>c.length===8?c.slice(0,4)+"-"+c.slice(4):c;
 // « de Bob », « d’Alice »
 const deNom=n=>(/^[aeiouyhàâäéèêëîïôöùûüœ]/i.test(n)?"d’":"de ")+n;
+/* ---- import de recettes à partir d'un texte (Instagram, site, notes…) ---- */
+// Analyse par règles, sans réseau ni service extérieur : on découpe le texte en recettes, puis chaque recette en champs.
+const IMP_ZW=/[​-‍⁠﻿­]/g;
+const IMP_SEP=/^(?:[-–—_*=~•·#+]\s*){3,}$/;   // ---, ***, ===, • • •
+const IMP_PIC=/^(?:[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}️‍⃣]\s*)+/u;
+const IMP_PIC_END=/(?:\s*[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}️‍⃣])+$/u;
+const IMP_BULLET=/^(?:[-–—•*·▪▫◦‣⁃►▸▹→>✓✔☐☑+]+\s*)+/;
+const IMP_KEYCAP=/^(?:[0-9#*]️?⃣|\u{1F51F})+\s*/u;
+const IMP_STEPNUM=/^(?:(?:[ée]tape|step)\s*\d{1,2}\s*[:.)\-–/]?\s*|\(?\d{1,2}\s*[.)\]\-–:/]\s*(?=\D)|\d{1,2}\s*[.)]\s*(?=\D))/i;
+const IMP_ING_HEAD=/^(?:les |mes |vos )?(?:ingr[ée]dients?|ingr\.?)(?=\s|$)/;
+const IMP_STEP_HEAD=/^(?:la |les |ma )?(?:pr[ée]paration|[ée]tapes?|instructions?|recette|d[ée]roul[ée]e?|d[ée]roulement|r[ée]alisation|m[ée]thode|marche [àa] suivre|comment (?:faire|la pr[ée]parer|on fait)|progression|proc[ée]d[ée]|mode op[ée]ratoire|(?:les )?[ée]tapes de (?:la )?pr[ée]paration|pr[ée]paration de la recette|cuisson|montage)$/;
+const IMP_NOTE_HEAD=/^(?:mes |mon |nos |notre |les |le |la |l'|un |une |petits? |petites? )*(?:astuces?|conseils?|notes?|tips?|variantes?|variations?|bon [àa] savoir|[àa] savoir|[àa] noter|remarques?|infos?|suggestions?(?: de [a-zàâéèêîôûç ]+)?|conservation|pour aller plus loin|(?:petit )?plus|nb|n\.b\.?|ps|p\.s\.?|astuces? du chef|conseils? du chef|accompagnements?|service|pour servir)$/;
+const IMP_NOISE=/(?:lien (?:en|dans (?:ma|la)) bio|abonne[- ]toi|abonnez[- ]vous|enregistre[zr]? (?:cette|la|ce) (?:recette|publication|post|vid[ée]o)|n'?h[ée]site[zr]? pas [àa] (?:liker|partager|commenter|t'abonner|vous abonner|enregistrer|me dire|me taguer|m'identifier|identifier|taguer|tester)|partage[zr]? (?:cette|la) (?:recette|publication)|tague?[zr]? (?:un|une|tes|vos) ami|dis[- ]moi (?:en|dans les) commentaires?|dites[- ]moi (?:en|dans les) commentaires?|recette (?:ci-dessous|en l[ée]gende|ci-apr[èe]s)|voir plus|\bswipe\b|plus de recettes sur|^bon(?:ne)? (?:app[ée]tit|d[ée]gustation)\b)/i;
+const IMP_DUR="(\\d+(?:[.,]\\d+)?\\s*(?:h(?:eures?|rs?)?|min(?:utes?|s)?\\.?|mn)(?:\\s*(?:et\\s*)?\\d{1,2}(?:\\s*(?:min(?:utes?|s)?\\.?|mn))?)?)";
+const IMP_TIME_RE=[
+  ["prep",new RegExp(IMP_DUR+"\\s*(?:de |d')pr[ée]p(?:aration|\\.)?","i")],
+  ["cook",new RegExp(IMP_DUR+"\\s*(?:de )cuisson","i")],
+  ["rest",new RegExp(IMP_DUR+"\\s*(?:de )(?:repos|r[ée]frig[ée]ration)","i")],
+  ["prep",new RegExp("(?:temps de )?pr[ée]p(?:aration|\\.)?\\s*:?\\s*(?:de\\s*)?"+IMP_DUR,"i")],
+  ["cook",new RegExp("(?:temps de )?cuisson\\s*:?\\s*(?:de\\s*)?"+IMP_DUR,"i")],
+  ["rest",new RegExp("(?:temps de )?(?:repos|r[ée]frig[ée]ration|pause)\\s*:?\\s*(?:de\\s*)?"+IMP_DUR,"i")],
+  ["total",new RegExp("(?:temps )?total\\s*:?\\s*"+IMP_DUR,"i")],
+  ["total",new RegExp("^\\s*(?:temps\\s*:?\\s*)?"+IMP_DUR+"\\s*$","i")]
+];
+const IMP_SERV_RE=[
+  /(?:pour|portions?|parts?|personnes?|couverts?|nombre de (?:personnes|parts|portions)|quantit[ée]s?)\s*:?\s*(\d{1,2})(?:\s*(?:[àa-]|ou)\s*\d{1,2})?\s*(?:personnes?|pers\.?|parts?|portions?|couverts?|gourmands?|convives?|p\b)?/i,
+  /(\d{1,2})(?:\s*(?:[àa-]|ou)\s*\d{1,2})?\s*(?:personnes?|pers\.?|parts?|portions?|couverts?|gourmands?|convives?)\b/i
+];
+const IMP_FILLER=/(?<!\p{L})(?:pour|environ|env|et|de|du|temps|total|difficult[ée]|niveau|co[uû]t|budget|tr[èe]s|facile|moyen(?:ne)?|difficile|bon march[ée]|abordable|cher|assez|personnes?|pers|parts?|portions?|ou|à|a)(?!\p{L})/giu;
+const impPlain=l=>l.replace(IMP_PIC,"").replace(IMP_PIC_END,"").trim();
+function impStrip(l){
+  let t=String(l||"");
+  for(let k=0;k<3;k++)t=t.replace(IMP_KEYCAP,"").replace(IMP_PIC,"").replace(IMP_BULLET,"").trim();
+  return t;
+}
+function impDur(s){
+  const t=nrm(s).replace(/,/g,".");
+  const h=t.match(/(\d+(?:\.\d+)?)\s*h/),m=t.match(/(?:h(?:eures?|rs?)?\s*(?:et\s*)?(\d{1,2})|(\d+)\s*(?:min|mn))/);
+  let hh=h?parseFloat(h[1]):0,mm=m?Number(m[1]||m[2]):0;
+  if(hh%1){mm+=Math.round(hh%1*60);hh=Math.floor(hh)}
+  if(!h&&mm>=60&&mm%60===0){hh=mm/60;mm=0}
+  if(!hh)return mm+" min";
+  return hh+" h"+(mm?" "+String(mm).padStart(2,"0"):"");
+}
+// "Pour 4 personnes", "Préparation : 20 min | Cuisson : 1 h" : renvoie les infos si la ligne ne contient rien d'autre
+function impMeta(line){
+  const t=impPlain(String(line||"")).replace(/[|•·,;/()\[\]–—-]+/g," ");
+  if(!t||t.length>120)return null;
+  const o={};let rest=" "+t+" ";
+  for(const [k,re] of IMP_TIME_RE){const m=rest.match(re);if(m&&!o[k]){o[k]=impDur(m[1]);rest=rest.replace(m[0]," ")}}
+  for(const re of IMP_SERV_RE){const m=rest.match(re);if(m){o.servings=Number(m[1]);rest=rest.replace(m[0]," ");break}}
+  if(!Object.keys(o).length)return null;
+  rest=rest.replace(/(?:difficult[ée]|niveau|co[uû]t|budget)\s*:?/gi," ").replace(IMP_FILLER," ").replace(/[:.!\s]+/g," ").trim();
+  return rest?null:o;
+}
+function impTime(m){
+  const p=[];
+  if(m.prep)p.push(m.prep);
+  if(m.cook)p.push(m.cook+" de cuisson");
+  if(m.rest)p.push(m.rest+" de repos");
+  if(!p.length&&m.total)p.push(m.total);
+  return p.join(" + ");
+}
+// intertitre : {kind:"ing"|"steps"|"notes", rest, sub, servings} ou null
+function impHeading(line){
+  const p=impStrip(line);
+  const ci=p.indexOf(":");
+  const left=(ci>=0?p.slice(0,ci):p).trim(),rest=ci>=0?p.slice(ci+1).trim():"";
+  if(!left||left.length>48)return null;
+  const h=nrm(left).replace(/[’]/g,"'").replace(/\s*\([^)]*\)\s*/g," ").replace(/[!.*_]+/g,"").replace(/\s+/g," ").trim();
+  const paren=(left.match(/\(([^)]*)\)/)||[])[1]||"";
+  const im=h.match(IMP_ING_HEAD);
+  if(im){
+    const after=h.slice(im[0].length).trim();
+    const meta=impMeta(after+" "+paren);
+    if(!after||meta)return{kind:"ing",rest,servings:meta&&meta.servings||null};
+    const nb=after.match(/^pour (\d{1,2})\b/);
+    if(nb)return{kind:"ing",rest,servings:Number(nb[1])};
+    if(/^(?:pour|de|du|des) /.test(after))return{kind:"ing",rest,sub:capFirst(left.replace(/^ingr[ée]dients?\s*/i,"").trim())+" :"};
+    return null;
+  }
+  if(IMP_STEP_HEAD.test(h)){
+    // « Préparation : 20 min » est une durée, pas un intertitre
+    if(rest&&impMeta(p))return null;
+    return{kind:"steps",rest};
+  }
+  if(IMP_NOTE_HEAD.test(h))return{kind:"notes",rest};
+  return null;
+}
+const impIsTags=l=>/^(?:\s*#[\p{L}\p{N}_]+[\s,.]*)+$/u.test(l);
+function impLooksTitle(l){
+  const t=impPlain(l);
+  if(t.length<2||t.length>90||!/\p{L}/u.test(t))return false;
+  if(/[.:;,]$/.test(t)||/^[\d½¼¾⅓⅔(\-–•*]/.test(t)||t.startsWith("#"))return false;
+  if(impMeta(t)||impHeading(t)||IMP_NOISE.test(t))return false;
+  return t.split(/\s+/).length<=14;
+}
+const IMP_ING_START=/^(?:\d|[½¼¾⅓⅔]|une? |des |du |de la |quelques |q\.?s\.?\b|sel\b|poivre\b|huile\b|beurre\b|sucre\b|farine\b|lait\b|eau\b|œufs?\b|oeufs?\b|jus\b|zeste\b|gousses?\b|pinc[ée]e\b|sachets?\b|cuill)/i;
+function impIngLike(raw){
+  const bullet=IMP_BULLET.test(raw.trim())||IMP_PIC.test(raw.trim());
+  const t=impStrip(raw);
+  if(!t||t.length>90||IMP_STEPNUM.test(raw.trim())&&!/^\d+\s*(?:g|kg|ml|cl|l)\b/i.test(t))return false;
+  if(/[.!]$/.test(t)&&t.length>45)return false;
+  return bullet&&t.length<=70||IMP_ING_START.test(t);
+}
+const impStepLike=raw=>{const s=raw.trim();return IMP_KEYCAP.test(s)||IMP_STEPNUM.test(s)&&!IMP_ING_START.test(s.replace(IMP_STEPNUM,""))||impStrip(s).length>70};
+// "200 g de farine, 3 œufs, 1 pincée de sel" sur une seule ligne
+function impSplitIngs(t){
+  const parts=t.split(/\s*[,;]\s*|\s+(?:et|\+)\s+(?=\d)/).map(s=>s.trim()).filter(Boolean);
+  if(parts.length>=2&&parts.filter(s=>IMP_ING_START.test(s)).length>=Math.max(2,parts.length-1))return parts;
+  return[t];
+}
+function impCleanTitle(l){
+  let t=impPlain(impStrip(l)).replace(/#[\p{L}\p{N}_]+/gu,"").replace(/^(?:la )?recette\s*(?:[:\-–]|du|de la|des|de l')\s*/i,m=>/[:\-–]/.test(m)?"":m).trim();
+  t=t.replace(/[\s:–—-]+$/,"");
+  if(t.length>3&&t===t.toUpperCase()&&/\p{Lu}/u.test(t))t=capFirst(t.toLowerCase());
+  return t.slice(0,120);
+}
+const IMP_CAT=[
+  ["Boisson",/\b(?:smoothie|cocktail|mocktail|jus|limonade|citronnade|milk ?shake|th[ée] glac[ée]|sirop|latte|chocolat chaud|sangria|punch|mojito|spritz|infusion|lassi|boisson)\b/],
+  ["Gâteau & pâtisserie",/\b(?:g[aâ]teaux?|cakes?|cookies?|brownies?|muffins?|cupcakes?|madeleines?|financiers?|biscuits?|sabl[ée]s?|macarons?|cheesecakes?|fondants?|moelleux|quatre[- ]quarts|clafoutis|far|flans?|choux|[ée]clairs?|brioches?|viennoiseries?|cr[êe]pes?|gaufres?|pancakes?|beignets?|bugnes?|kouign|kougelhopf|galettes? des rois|cannel[ée]s?|tartes? (?:au|aux|à la|a la) (?:pommes?|poires?|citron|fraises?|framboises?|chocolat|abricots?|prunes?|myrtilles?|rhubarbe|fruits?|sucre|caramel|noix|amandines?|bourdaloue|tatin)|tarte tatin|tartelettes? (?:au|aux) (?:citron|fraises?|chocolat|fruits?)|bûche|charlotte|entremets?|layer|banana bread|crumble|cookies)\b/],
+  ["Dessert",/\b(?:mousses? au|tiramisu|panna cotta|cr[eè]mes? (?:br[uû]l[ée]e|caramel|dessert|anglaise|p[âa]tissi[eè]re)|cr[eè]me au chocolat|riz au lait|semoule au lait|compotes?|salade de fruits|glaces?|sorbets?|granit[ée]|verrines? sucr[ée]es?|ile flottante|[îi]les? flottantes?|pavlova|fraisier|dessert|coupe|parfait glac[ée]|poires? belle|crumble|smoothie bowl|overnight|porridge|granola|yaourt)\b/],
+  ["Entrée",/\b(?:soupes?|velout[ée]s?|potage|gaspacho|gazpacho|bouillon|salades?|verrines?|tartinades?|houmous|hummus|guacamole|tapenade|caviar d'aubergine|dips?|rillettes|terrines?|carpaccio|tartare de (?:saumon|thon|daurade)|bruschettas?|toasts?|bouch[ée]es?|feuillet[ée]s ap[ée]ro|ap[ée]ritifs?|entr[ée]es?|œufs? mimosa|oeufs? mimosa|accras|nems?|samoussas?|rouleaux de printemps|blinis|gougères|cake sal[ée])\b/]
+];
+const IMP_SWEET=/\b(?:sucre|chocolat|vanille|levure chimique|miel|confiture|caramel|sucre glace|cassonade|vergeoise|chantilly|mascarpone|p[aâ]te de sp[ée]culoos|fruits rouges)\b/;
+const IMP_SALTY=/\b(?:sel|poivre|oignons?|ail|[ée]chalotes?|lardons|bouillon|poulet|bœuf|boeuf|porc|jambon|saumon|thon|crevettes?|parmesan|gruy[eè]re|emmental|cumin|curry|moutarde|lardons|chorizo|pancetta|herbes de provence|persil|ciboulette|coriandre|poireaux?|courgettes?|tomates?|pommes de terre)\b/g;
+function impCategory(title,ings){
+  const t=nrm(title),i=nrm(ings);
+  for(const [c,re] of IMP_CAT)if(re.test(t)){
+    if(c==="Entrée"&&/\b(?:salade de fruits|cake)\b/.test(t))continue;
+    return c;
+  }
+  const sweet=IMP_SWEET.test(i),salty=(i.match(IMP_SALTY)||[]).length;
+  if(sweet&&salty<2)return /\b(?:tartes?|tartelettes?|p[âa]te|four|levure)\b/.test(t+" "+i)?"Gâteau & pâtisserie":"Dessert";
+  return "Plat";
+}
+// découpe un texte en morceaux, un par recette : lignes ---, sinon un nouvel intertitre « Ingrédients » après des étapes
+function splitRecipeTexts(text){
+  const all=String(text||"").replace(IMP_ZW,"").replace(/\r\n?/g,"\n").replace(/ /g," ").split("\n");
+  const chunks=[[]];
+  for(const l of all){if(IMP_SEP.test(l.trim()))chunks.push([]);else chunks[chunks.length-1].push(l)}
+  const out=[];
+  for(const c of chunks){
+    const heads=[];let stepsSeen=false;
+    c.forEach((l,i)=>{
+      const h=l.trim()&&impHeading(l);
+      if(h&&h.kind==="ing"&&!h.sub){if(!heads.length||stepsSeen)heads.push(i);stepsSeen=false}
+      else if(h&&h.kind==="steps"||impStepLike(l))stepsSeen=true;
+    });
+    let start=0;
+    for(let k=1;k<heads.length;k++){
+      const s=impRecipeStart(c,heads[k],heads[k-1]);
+      if(s<=start)continue;
+      out.push(c.slice(start,s));start=s;
+    }
+    out.push(c.slice(start));
+  }
+  return out.map(c=>c.join("\n").trim()).filter(t=>/\p{L}/u.test(t));
+}
+// la recette suivante commence à son titre, juste avant « Ingrédients » (en sautant « Pour 4 personnes », durées et courte intro)
+function impRecipeStart(lines,h,lo){
+  let prose=0;
+  for(let i=h-1;i>lo;i--){
+    const t=lines[i].trim();
+    if(!t||impMeta(t)||IMP_NOISE.test(t)||impIsTags(t))continue;
+    if(impLooksTitle(t))return i;
+    if(++prose>3)break;
+  }
+  return h;
+}
+// une recette en texte → brouillon {title, category, servings, time, ingredients, steps, notes, tags, warn}
+function parseRecipeText(text,knownTags=[]){
+  const ing=[],steps=[],notes=[],intro=[],hashtags=[];
+  const meta={};let title="",sec=null,servings=null,lastBlank=false;
+  const addMeta=m=>{for(const k of ["prep","cook","rest","total"])if(m[k]&&!meta[k])meta[k]=m[k];if(m.servings&&!servings)servings=m.servings};
+  const push=(kind,raw)=>{
+    let t=impStrip(raw);
+    if(!t)return;
+    if(kind==="ing"){
+      // une phrase longue dans les ingrédients : les étapes ont commencé sans intertitre
+      if(ing.length&&impStepLike(raw)&&!impIngLike(raw)){sec="steps";kind="steps"}
+      else{for(const s of impSplitIngs(t))ing.push(s.replace(/^[\-–]\s*/,""));return}
+    }
+    if(kind==="steps"){
+      t=t.replace(IMP_STEPNUM,"").replace(IMP_KEYCAP,"").replace(IMP_PIC,"").trim();
+      if(!t)return;
+      const prev=steps[steps.length-1];
+      // ligne coupée en plein milieu d'une phrase (copie depuis un site)
+      if(prev&&!lastBlank&&/^\p{Ll}/u.test(t)&&!/[.!?:)]$/.test(prev)&&!IMP_STEPNUM.test(raw.trim())){steps[steps.length-1]=prev+" "+t;return}
+      steps.push(t);return;
+    }
+    if(kind==="notes")notes.push(capFirst(t));
+  };
+  for(const raw0 of String(text||"").replace(IMP_ZW,"").replace(/\r\n?/g,"\n").split("\n")){
+    let raw=raw0.replace(/ /g," ").replace(/#[\p{L}\p{N}_]+/gu,m=>{hashtags.push(m.slice(1));return""}).replace(/\s+$/,"");
+    if(!raw.trim()){lastBlank=true;continue}
+    const plain=impStrip(raw);
+    if(!plain||IMP_NOISE.test(plain)&&plain.length<140){lastBlank=false;continue}
+    const h=impHeading(raw);
+    if(h){
+      sec=h.kind;
+      if(h.servings&&!servings)servings=h.servings;
+      if(h.sub)ing.push(h.sub);
+      if(h.rest)push(sec,h.rest);
+      lastBlank=false;continue;
+    }
+    const m=impMeta(raw);
+    if(m&&sec!=="notes"){addMeta(m);lastBlank=false;continue}
+    if(!sec){
+      if(!title&&!intro.length&&impLooksTitle(raw))title=impCleanTitle(raw);
+      else intro.push(raw);
+    }else push(sec,raw);
+    lastBlank=false;
+  }
+  // pas d'intertitre : on trie les lignes d'après leur forme
+  if(!ing.length||!steps.length){
+    const rest=[];const noIng=!ing.length,noSteps=!steps.length;let mode="intro";
+    for(const raw of intro){
+      if(noIng&&mode!=="steps"&&impIngLike(raw)){mode="ing";ing.push(...impSplitIngs(impStrip(raw)))}
+      else if(noSteps&&(mode==="ing"||impStepLike(raw))&&!(mode==="intro"&&!impStepLike(raw))){mode="steps";push("steps",raw)}
+      else if(noSteps&&mode==="steps"){push("steps",raw)}
+      else rest.push(impStrip(raw));
+    }
+    intro.length=0;intro.push(...rest);
+  }else for(let i=0;i<intro.length;i++)intro[i]=impStrip(intro[i]);
+  if(!title){
+    const i=intro.findIndex(l=>l.length<=90&&!/[.:]$/.test(l));
+    if(i>=0)title=impCleanTitle(intro.splice(i,1)[0]);
+  }
+  const ingTxt=ing.join("\n");
+  const tags=[];
+  const known=[...knownTags,...TAG_START];
+  for(const h of hashtags){
+    const k=tagKey(h).replace(/ /g,"");
+    const t=known.find(n=>tagKey(n).replace(/ /g,"")===k);
+    if(t&&!tags.some(x=>tagKey(x)===tagKey(t)))tags.push(t);
+  }
+  const warn=[];
+  if(!title)warn.push("title");
+  if(!ing.length)warn.push("ing");
+  if(!steps.length)warn.push("steps");
+  return{
+    title:title||"",category:impCategory(title,ingTxt),servings:servings?String(servings):"",time:impTime(meta),
+    ingredients:ingTxt,steps:steps.join("\n"),notes:[intro.join("\n"),notes.join("\n")].filter(Boolean).join("\n\n"),
+    tags:tags.slice(0,5),warn
+  };
+}
+const parseRecipesText=(text,knownTags)=>splitRecipeTexts(text).map(t=>parseRecipeText(t,knownTags)).filter(r=>r.ingredients||r.steps);
 /*PURE-END*/
 
 /* ---------- émojis : repli si l'appareil ne sait pas afficher un émoji récent (carré vide) ---------- */
@@ -1448,6 +1730,9 @@ async function viewProfile(code){
       <p style="margin:0">Connecte-toi pour ajouter des amis et leur envoyer des recettes.</p>
       ${code?`<p style="margin:12px 0 0">Code d’invitation reçu :</p><div class="code">${esc(fmtCode(code))}</div><p class="hint" style="margin:0">Si NoutBook est installé sur ton écran d’accueil, ouvre-le, puis « ⋯ » → « J’ai reçu un code », et tape ce code.</p>`:""}
     </section>`;
+  const importBlock=`<section class="block"><h3>Importer des recettes</h3>
+      <p>Colle le texte d’une ou de plusieurs recettes (Instagram, sites, notes) : l’app les découpe et tu vérifies avant de les créer.</p>
+      <a class="btn primary" href="#/importer" style="display:block;text-align:center">📋 Importer depuis un texte</a></section>`;
   const backupBlock=`<section class="block"><h3>Sauvegarde</h3>
       <p>Copie de secours dans un fichier (photos et listes comprises), à garder ou à importer sur un autre téléphone.</p>
       <div class="col">
@@ -1456,7 +1741,7 @@ async function viewProfile(code){
       </div></section>`;
   view.innerHTML=`<h2 class="title">Mon profil</h2>
     ${on?pseudoBlock+friendsBlocks+accountBlock:accountBlock+friendsBlocks}
-    ${backupBlock}`;
+    ${importBlock}${backupBlock}`;
   renderSync();
   $("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
   $("#signout").onclick=async()=>{
@@ -1624,6 +1909,7 @@ async function route(){
     else if(h==="#/courses")await viewCourses();
     else if((m=h.match(/^#\/edit\/(.+)$/)))await viewForm(m[1]);
     else if(h==="#/profil"||h==="#/amis")await viewProfile();
+    else if(h==="#/importer")await viewImport();
     else if((m=h.match(/^#\/ami\/([A-Za-z0-9-]+)$/)))await viewProfile(m[1]);
     else await viewList();
   }catch(err){
@@ -1655,6 +1941,167 @@ async function importBackup(e){
     for(const r of data.recipes){if(r&&r.id&&r.title){await putRecipe(r);n++}}
     toast(`${n} recette(s) importée(s) ✓`);route();
   }catch(err){alert("Import impossible : "+err.message)}
+}
+
+/* ---------- import de recettes depuis un texte ---------- */
+// le texte collé et la relecture survivent à un aller-retour dans l'app (pas à une fermeture)
+let impDraft={text:"",items:null,list:null};
+async function viewImport(){
+  chrome(false);
+  if(!impDraft.items)return viewImportText();
+  const rs=await allRecipes();
+  const have=new Set(rs.map(r=>tagKey(r.title)).filter(Boolean));
+  const items=impDraft.items,list=impDraft.list&&lists[impDraft.list]&&!lists[impDraft.list].deleted?lists[impDraft.list]:null;
+  const isDup=(it,i)=>{const k=tagKey(it.title);return !!k&&(have.has(k)||items.slice(0,i).some(o=>o.on&&tagKey(o.title)===k))};
+  const one=items.length===1;
+  const sum=it=>{
+    const n=lines(it.ingredients).length,s=lines(it.steps).length,p=[];
+    p.push(n?n+" ingrédient"+(n>1?"s":""):"aucun ingrédient");
+    p.push(s?s+" étape"+(s>1?"s":""):"aucune étape");
+    if(it.notes.trim())p.push("notes");
+    if(it.servings)p.push(it.servings+" pers.");
+    if(it.time)p.push(it.time);
+    return p.join(" · ");
+  };
+  const card=(it,i)=>`
+    <section class="block imp ${it.on?"":"off"}" data-i="${i}">
+      <div class="imphead">
+        <button type="button" class="impcb" role="checkbox" aria-checked="${it.on}" aria-label="Créer cette recette"><span class="cb"></span></button>
+        <input type="text" class="impt" maxlength="120" value="${esc(it.title)}" placeholder="Nom de la recette" aria-label="Nom de la recette">
+      </div>
+      <p class="impsum">${esc(sum(it))}</p>
+      <p class="fhint err impw" ${it.dup?"":"hidden"}>Déjà dans ton livre. Coche-la si tu veux quand même une 2e recette.</p>
+      <p class="fhint impw2" ${!it.dup&&(!it.title.trim()||!lines(it.ingredients).length||!lines(it.steps).length)?"":"hidden"}>${!it.title.trim()?"Donne-lui un nom.":"À vérifier : "+(!lines(it.ingredients).length?"je n’ai pas trouvé d’ingrédients.":"je n’ai pas trouvé d’étapes.")}</p>
+      <details ${one?"open":""}><summary>${one?"Détails":"Voir et corriger"}</summary>
+        <div class="row">
+          <div><label>Catégorie</label><select class="impc">${CATS.map(c=>`<option ${c===it.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+          <div><label>Personnes</label><input type="number" class="imps" min="1" inputmode="numeric" value="${esc(it.servings)}" placeholder="4"></div>
+        </div>
+        <label>Temps</label><input type="text" class="impti" value="${esc(it.time)}" placeholder="Ex. 20 min + 35 min de cuisson">
+        ${it.tags.length?`<label>Tags</label><div class="tagbox imptags">${it.tags.map((t,k)=>`<span class="tpill"><span class="ic" aria-hidden="true">${showIcon(tagIcon(t,tagIcons))}</span>${esc(t)}<button type="button" class="rm" data-k="${k}" aria-label="Retirer ${esc(t)}">✕</button></span>`).join("")}</div>`:""}
+        <label>Ingrédients <small>(un par ligne)</small></label><textarea class="impi">${esc(it.ingredients)}</textarea>
+        <label>Préparation <small>(une étape par ligne)</small></label><textarea class="impp">${esc(it.steps)}</textarea>
+        <label>Notes <small>(astuces, conseils…)</small></label><textarea class="impn" style="min-height:90px">${esc(it.notes)}</textarea>
+      </details>
+    </section>`;
+  const nOn=()=>items.filter(it=>it.on).length;
+  const nDup=items.filter(it=>it.dup).length;
+  view.innerHTML=`
+    <h2 class="title">${one?"Vérifie la recette":"Vérifie les recettes"}</h2>
+    <p class="hint">${one?"Corrige ce qui doit l’être, puis crée-la. Tu pourras ajouter des photos ensuite.":`J’ai trouvé ${items.length} recettes${nDup?`, dont ${nDup} déjà dans ton livre (décochée${nDup>1?"s":""})`:""}. Décoche celles que tu ne veux pas.`}${list?` Elles iront dans la liste « ${esc(list.name)} ».`:""}</p>
+    <form id="impr" autocomplete="off">${items.map(card).join("")}</form>
+    <div class="impspace"></div>
+    <div class="impbar"><div>
+      <button class="btn" type="button" id="impback">← Texte</button>
+      <button class="btn primary" type="submit" form="impr" id="impgo"></button>
+    </div></div>`;
+  const go=$("#impgo");
+  const label=()=>{const n=nOn();go.disabled=!n;go.textContent=!n?"Rien à créer":n===1?"Créer la recette":`Créer les ${n} recettes`};
+  label();
+  const refreshCard=sec=>{
+    const it=items[+sec.dataset.i];
+    sec.querySelector(".impsum").textContent=sum(it);
+    sec.querySelector(".impw2").hidden=!!it.dup||!!(it.title.trim()&&lines(it.ingredients).length&&lines(it.steps).length);
+  };
+  const f=$("#impr");
+  f.oninput=e=>{
+    const sec=e.target.closest(".imp");if(!sec)return;
+    const it=items[+sec.dataset.i],c=e.target.classList;
+    if(c.contains("impt"))it.title=e.target.value;
+    else if(c.contains("imps"))it.servings=e.target.value;
+    else if(c.contains("impti"))it.time=e.target.value;
+    else if(c.contains("impi"))it.ingredients=e.target.value;
+    else if(c.contains("impp"))it.steps=e.target.value;
+    else if(c.contains("impn"))it.notes=e.target.value;
+    refreshCard(sec);
+  };
+  f.onchange=e=>{
+    const sec=e.target.closest(".imp");if(!sec)return;
+    if(e.target.classList.contains("impc"))items[+sec.dataset.i].category=e.target.value;
+  };
+  f.onclick=e=>{
+    const sec=e.target.closest(".imp");if(!sec)return;
+    const it=items[+sec.dataset.i];
+    const cb=e.target.closest(".impcb");
+    if(cb){it.on=!it.on;cb.setAttribute("aria-checked",it.on);sec.classList.toggle("off",!it.on);label();return}
+    const rm=e.target.closest(".imptags .rm");
+    if(rm){it.tags.splice(+rm.dataset.k,1);rm.closest(".tpill").remove()}
+  };
+  $("#impback").onclick=()=>{impDraft.items=null;viewImport()};
+  f.onsubmit=async e=>{
+    e.preventDefault();
+    const todo=items.filter(it=>it.on);
+    const noName=todo.find(it=>!it.title.trim());
+    if(noName){const sec=f.querySelector(`.imp[data-i="${items.indexOf(noName)}"]`);sec.scrollIntoView({block:"center"});sec.querySelector(".impt").focus();toast("Une recette n’a pas de nom");return}
+    go.disabled=true;$("#impback").disabled=true;
+    const now=Date.now(),made=[];
+    try{
+      for(const it of todo){
+        go.textContent=`Création… ${made.length+1}/${todo.length}`;
+        // même forme qu'une recette créée à la main ; la 1re du texte arrive en tête de l'accueil
+        const rec={id:uid(),title:it.title.trim().slice(0,120),category:CATS.includes(it.category)?it.category:"Plat",
+          time:it.time.trim(),servings:it.servings,ingredients:it.ingredients,steps:it.steps,notes:it.notes.trim(),
+          photos:[],fav:false,tags:it.tags.slice(),created:now-made.length,updated:now-made.length};
+        if(list)rec.lists=[impDraft.list];
+        await putRecipe(rec);
+        made.push(rec);it.on=false;it.made=true;
+      }
+    }catch(err){
+      // ce qui est créé reste créé ; la relecture ne garde que le reste, pour ne rien créer deux fois
+      impDraft.items=items.filter(it=>!it.made);
+      alert(`${made.length} recette(s) créée(s), puis un souci : ${err.message}`);
+      return impDraft.items.length?viewImport():(location.hash="#/");
+    }
+    impDraft={text:"",items:null,list:null};
+    toast(made.length===1?"Recette créée ✓":`${made.length} recettes créées ✓`);
+    location.hash=made.length===1?"#/r/"+made[0].id:"#/";
+  };
+}
+function viewImportText(){
+  if(impDraft.list===null)impDraft.list=lists[filter.list]&&!lists[filter.list].deleted?filter.list:"";
+  view.innerHTML=`
+    <h2 class="title">Importer des recettes</h2>
+    <p class="hint">Colle le texte d’une recette (Instagram, site, notes…) ou de plusieurs à la suite. Si deux recettes se mélangent, sépare-les par une ligne <b>---</b>.</p>
+    <form id="impf" autocomplete="off">
+      <div class="row2">
+        <button class="btn" type="button" id="imppaste" hidden>📋 Coller</button>
+        <label class="btn" style="margin:0;font-weight:400">📄 Fichiers texte<input type="file" id="impfile" accept=".txt,.md,text/plain" multiple hidden></label>
+      </div>
+      <label for="imptxt" class="sr">Texte des recettes</label>
+      <textarea id="imptxt" placeholder="Tarte aux poireaux&#10;Pour 6 personnes&#10;&#10;Ingrédients :&#10;- 3 poireaux&#10;- 200 g de lardons&#10;&#10;Préparation :&#10;1. Préchauffe le four à 180 °C.&#10;…&#10;&#10;Astuce : …">${esc(impDraft.text)}</textarea>
+      <p class="fhint" id="impmsg" role="status"></p>
+      <div class="formbar">
+        <a class="btn" href="#/" id="impcancel">Annuler</a>
+        <button class="btn primary" type="submit">Analyser</button>
+      </div>
+    </form>`;
+  const ta=$("#imptxt");
+  ta.oninput=()=>{impDraft.text=ta.value;$("#impmsg").textContent=""};
+  $("#impcancel").onclick=()=>{impDraft={text:"",items:null,list:null}};
+  const add=t=>{t=String(t||"").trim();if(!t)return;ta.value=ta.value.trim()?ta.value.trim()+"\n\n---\n\n"+t:t;impDraft.text=ta.value};
+  if(navigator.clipboard&&navigator.clipboard.readText){
+    $("#imppaste").hidden=false;
+    $("#imppaste").onclick=async()=>{
+      try{add(await navigator.clipboard.readText())}catch(e){toast("Coller impossible : touche longuement la zone de texte")}
+    };
+  }
+  $("#impfile").onchange=async e=>{
+    const files=[...e.target.files];e.target.value="";
+    for(const fl of files){try{add(await fl.text())}catch(err){toast("Fichier illisible : "+fl.name)}}
+  };
+  $("#impf").onsubmit=async e=>{
+    e.preventDefault();
+    const rs=await allRecipes();
+    const found=parseRecipesText(ta.value,tagUsage(rs).map(t=>t.name));
+    if(!found.length){$("#impmsg").textContent="Je n’ai trouvé aucune recette dans ce texte.";ta.focus();return}
+    const have=new Set(rs.map(r=>tagKey(r.title)).filter(Boolean)),seen=new Set();
+    impDraft.items=found.map(r=>{
+      const k=tagKey(r.title),dup=!!k&&(have.has(k)||seen.has(k));
+      if(k)seen.add(k);
+      return{...r,on:!dup,dup};
+    });
+    viewImport();window.scrollTo(0,0);
+  };
 }
 
 /* ---------- boot ---------- */
