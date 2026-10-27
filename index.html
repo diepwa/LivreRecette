@@ -156,6 +156,9 @@ ul.pick .x{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:p
 .dot{position:absolute;top:6px;right:5px;width:11px;height:11px;border-radius:50%;border:2px solid var(--bg);background:var(--muted)}
 .dot.green{background:#3f9d55}.dot.orange{background:#e0a030}.dot.red{background:#d64545}
 dialog{max-height:88vh;max-height:88dvh;overflow:auto;overscroll-behavior:contain}
+/* fenêtres avec un champ de saisie : ancrées en haut, pour rester visibles quand le clavier iPhone monte */
+#namedlg,#listdlg{margin:calc(env(safe-area-inset-top) + 48px) auto auto;max-height:min(70vh,calc(100dvh - 340px))}
+.ios-scrim.kb{align-items:flex-start;padding-top:calc(env(safe-area-inset-top) + 64px)}
 .syncbox{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .syncbox .hint{margin:0 0 10px}
 .syncbox input{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1rem;margin-bottom:8px}
@@ -437,6 +440,12 @@ dialog p{font-size:.875rem}
 .me{display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 0 2px}
 .av{flex:none;width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 70%,var(--card)),var(--accent));color:var(--accent-ink);font-family:var(--serif);font-weight:700;font-size:.9rem}
 .av.big{width:84px;height:84px;font-size:2.4rem;box-shadow:0 4px 14px rgba(60,40,20,.18)}
+.av img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+button.av-btn{position:relative;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--ease-out)}
+button.av-btn:active{transform:scale(.96)}
+.av-btn .cam{position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--card);color:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(60,40,20,.25)}
+.av-btn .cam svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#pfile{display:none}
 .me-n{font-family:var(--serif);font-weight:800;font-size:1.6rem;letter-spacing:-.02em;line-height:1.15;margin-top:10px}
 .me-s{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.875rem;margin-top:2px}
 .me-s .sd{width:8px;height:8px;border-radius:50%;background:var(--ok)}
@@ -678,7 +687,7 @@ function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\
 
 /* ---------- state ---------- */
 let filter={q:"",cat:"all",list:"mine",tags:[]};
-let friends=[],profile={name:""};
+let friends=[],profile={name:"",photo:""};
 // petite marque de modification : synchronise le changement sans faire remonter la recette en tête de l'accueil
 const touch=r=>{r.updated=(Number(r.updated)||0)+1};
 
@@ -1927,7 +1936,7 @@ const CHEV_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 
 // résout {i,value} (i = index du bouton touché) ou null si on touche à côté ; sheet:true = menu qui monte du bas
 function iosAlert({title,msg="",input=null,actions,sheet=false}){
   return new Promise(res=>{
-    const w=document.createElement("div");w.className="ios-scrim"+(sheet?" sheet":"");
+    const w=document.createElement("div");w.className="ios-scrim"+(sheet?" sheet":"")+(input?" kb":"");
     const btn=(a,cls="")=>`<button type="button" data-i="${actions.indexOf(a)}" class="${cls} ${a.danger?"dg":""} ${a.bold?"b":""}">${esc(a.label)}</button>`;
     w.innerHTML=`<div class="ios-${sheet?"sheet":"alert"}" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
       <div class="ia-box"><div class="ia-t">${esc(title)}</div>${msg?`<div class="ia-m">${esc(msg)}</div>`:""}${input?`<input class="ia-in" type="text" maxlength="30" value="${esc(input.value||"")}" placeholder="${esc(input.placeholder||"")}" enterkeyhint="done">`:""}
@@ -1950,7 +1959,8 @@ async function viewProfile(code){
   code=cleanCode(code);
   const on=signedIn(),named=!!profile.name;
   const st=syncState.state;
-  const ini=n=>esc((n||"?").trim().charAt(0).toUpperCase()||"?");
+  const ini=(n,ph)=>ph&&/^data:image\//.test(ph)?`<img src="${esc(ph)}" alt="" draggable="false">`:esc((n||"?").trim().charAt(0).toUpperCase()||"?");
+  const CAM_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
   // déconnecté : connexion d'abord, les amis ensuite
   const accountBlock=`<h4 class="gh">Connexion</h4>
     <div class="grp pad"><p class="hint" id="syncmsg" aria-live="polite"></p>
@@ -1964,7 +1974,7 @@ async function viewProfile(code){
     <div class="grp pad"><p style="margin:0">Connecte-toi pour ajouter des amis et leur envoyer des recettes.</p>
       ${code?`<p style="margin:12px 0 0">Code d’invitation reçu :</p><div class="code">${esc(fmtCode(code))}</div><p class="hint" style="margin:0">Si NoutBook est installé sur ton écran d’accueil, ouvre-le, puis « ⋯ » → « J’ai reçu un code », et tape ce code.</p>`:""}</div>`;
   // connecté : façon Réglages, en listes groupées
-  const signedBlock=`<div class="me"><div class="av big" aria-hidden="true">${ini(profile.name)}</div>
+  const signedBlock=`<div class="me"><button type="button" class="av big av-btn" id="avbtn" aria-label="${profile.photo?"Changer ta photo de profil":"Ajouter une photo de profil"}">${ini(profile.name,profile.photo)}<span class="cam">${CAM_SVG}</span></button><input type="file" id="pfile" accept="image/*" aria-hidden="true" tabindex="-1">
       <div class="me-n">${esc(profile.name||"Sans pseudo")}</div>
       <div class="me-s"><span class="sd"></span><span id="syncmsg" aria-live="polite"></span></div></div>
     <h4 class="gh">Pseudo</h4>
@@ -1974,7 +1984,7 @@ async function viewProfile(code){
       <p class="gf">C’est le nom que tes amis voient. Valide avec la touche Entrée.</p>`}
     <h4 class="gh">Mes amis <span>${friends.length}</span></h4>
     <div class="grp" id="flist">
-      ${friends.map(f=>`<button type="button" class="gr fr" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}"><span class="av" aria-hidden="true">${ini(f.name)}</span><span class="pt">${esc(f.name||"Ami")}</span></button>`).join("")||`<div class="gr muted">Personne pour l’instant.</div>`}
+      ${friends.map(f=>`<button type="button" class="gr fr" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}"><span class="av" aria-hidden="true">${ini(f.name,f.photo)}</span><span class="pt">${esc(f.name||"Ami")}</span></button>`).join("")||`<div class="gr muted">Personne pour l’instant.</div>`}
       <button type="button" class="gr act" id="mkinv" ${named?"":"disabled"} ${lastInvite?"hidden":""}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Inviter un ami</span></button>
     </div>
     <div id="inv"></div>
@@ -1990,6 +2000,20 @@ async function viewProfile(code){
     if(!syncApi)return;
     const r=await iosAlert({sheet:true,title:"Se déconnecter ?",msg:"Les recettes restent sur cet appareil.",actions:[{label:"Se déconnecter",danger:true},{label:"Annuler",cancel:true}]});
     if(r&&r.i===0)await syncApi.signOut();
+  };
+  const setPhoto=async p=>{
+    profile={...profile,photo:p};syncApi.setPhoto(p);
+    toast(p?"Photo enregistrée ✓":"Photo retirée");viewProfile(code);
+  };
+  $("#avbtn").onclick=async()=>{
+    if(!profile.photo){$("#pfile").click();return}
+    const r=await iosAlert({sheet:true,title:"Photo de profil",actions:[{label:"Choisir une autre photo"},{label:"Retirer la photo",danger:true},{label:"Annuler",cancel:true}]});
+    if(!r)return;
+    if(r.i===0)$("#pfile").click();else if(r.i===1)setPhoto("");
+  };
+  $("#pfile").onchange=async e=>{
+    const file=e.target.files&&e.target.files[0];e.target.value="";if(!file)return;
+    try{setPhoto(await avatarFromFile(file))}catch(err){toast("Cette image n’a pas pu être lue")}
   };
   const saveName=n=>{
     n=n.trim().slice(0,30);if(!n)return false;
@@ -2058,6 +2082,23 @@ async function reencode(src,max,q){
   c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
   c.getContext("2d").drawImage(img,0,0,c.width,c.height);
   return c.toDataURL("image/jpeg",q);
+}
+// photo de profil : recadrage carré au centre, 256 px, JPEG (~10-25 Ko) — reste sous les 60 Ko acceptés
+async function avatarFromFile(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await loadImg(url);
+    const side=Math.min(img.naturalWidth||img.width,img.naturalHeight||img.height);
+    const sx=((img.naturalWidth||img.width)-side)/2,sy=((img.naturalHeight||img.height)-side)/2;
+    for(const [px,q] of [[256,.82],[256,.7],[200,.65],[160,.6]]){
+      const c=document.createElement("canvas");c.width=c.height=px;
+      const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,px,px);
+      x.drawImage(img,sx,sy,side,side,0,0,px,px);
+      const d=c.toDataURL("image/jpeg",q);
+      if(d.length<50000)return d;
+    }
+    throw new Error("trop lourde");
+  }finally{URL.revokeObjectURL(url)}
 }
 async function fitPhotos(photos,budget=800000){
   let ph=[...(photos||[])];
@@ -2138,7 +2179,7 @@ async function bootSync(){
       getShop:()=>shop,setShop:applyRemoteShop,fitPhotos,refresh:refreshView,setStatus,
       getLists:()=>lists,setLists:applyRemoteLists,
       setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&(PROFILE_RE.test(location.hash)||/^#\/(r\/|$)/.test(location.hash||"#/")))refreshView()},
-      setProfile:p=>{const ch=p.name!==profile.name;profile=p;if(ch&&PROFILE_RE.test(location.hash))refreshView()},
+      setProfile:p=>{const ch=p.name!==profile.name||(p.photo||"")!==(profile.photo||"");profile={photo:"",...p};if(ch&&PROFILE_RE.test(location.hash))refreshView()},
       getProfile:()=>profile,receiveShared,shareable,toast,
       getTagIcons:()=>tagIcons,setTagIcons:applyRemoteTagIcons,tagIconsFor
     });

@@ -17,7 +17,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v20`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v22`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.

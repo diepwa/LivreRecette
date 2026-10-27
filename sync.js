@@ -47,6 +47,8 @@ export async function initSync(app) {
   let unsubX = [];
   let friendDocs = [];          // amis tels qu'enregistrés chez moi
   const liveNames = new Map();  // pseudo actuel de chaque ami
+  const livePhotos = new Map(); // photo actuelle de chaque ami (data URL, vide si aucune)
+  const okPhoto = (p) => (typeof p === "string" && p.startsWith("data:image/") && p.length < 60000 ? p : "");
   const nameUnsubs = new Map();
   let publicSynced = false;
   let queue = Promise.resolve();
@@ -286,11 +288,12 @@ export async function initSync(app) {
       onSnapshot(profileRef(), (snap) => {
         const d = snap.exists() ? snap.data() : {};
         const name = typeof d.name === "string" ? d.name : "";
-        app.setProfile({ name });
-        // une fois par session : le pseudo public suit le pseudo du compte
+        const photo = okPhoto(d.photo);
+        app.setProfile({ name, photo });
+        // une fois par session : le profil public suit le pseudo et la photo du compte
         if (name && !publicSynced && !snap.metadata.fromCache) {
           publicSynced = true;
-          setDoc(publicRef(uid), { name, updated: Date.now() }).catch(() => {});
+          setDoc(publicRef(uid), { name, photo, updated: Date.now() }, { merge: true }).catch(() => {});
         }
       }, fail),
       onSnapshot(collection(db, "users", uid, "friends"), (snap) => {
@@ -304,20 +307,23 @@ export async function initSync(app) {
   }
 
   function emitFriends() {
-    const list = friendDocs.map((f) => ({ ...f, name: liveNames.get(f.uid) || f.name }));
+    const list = friendDocs.map((f) => ({ ...f, name: liveNames.get(f.uid) || f.name, photo: livePhotos.get(f.uid) || "" }));
     list.sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
     app.setFriends(list);
   }
   // suit le pseudo de chaque ami : s'il le change, on voit le nouveau
   function watchFriendNames() {
     const ids = new Set(friendDocs.map((f) => f.uid));
-    for (const [id, u] of nameUnsubs) if (!ids.has(id)) { u(); nameUnsubs.delete(id); liveNames.delete(id); }
+    for (const [id, u] of nameUnsubs) if (!ids.has(id)) { u(); nameUnsubs.delete(id); liveNames.delete(id); livePhotos.delete(id); }
     for (const f of friendDocs) {
       if (nameUnsubs.has(f.uid)) continue;
       nameUnsubs.set(f.uid, onSnapshot(publicRef(f.uid), (snap) => {
         const n = snap.exists() ? String((snap.data() || {}).name || "").slice(0, 30) : "";
-        if (!n || n === liveNames.get(f.uid)) return;
+        if (!n) return;
+        const p = okPhoto((snap.data() || {}).photo);
+        if (n === liveNames.get(f.uid) && p === (livePhotos.get(f.uid) || "")) return;
         liveNames.set(f.uid, n);
+        livePhotos.set(f.uid, p);
         // garde aussi le nouveau pseudo chez moi, pour l'avoir hors ligne
         const mine = friendDocs.find((x) => x.uid === f.uid);
         if (mine && mine.name !== n) setDoc(friendRef(f.uid), { name: n }, { merge: true }).catch(() => {});
@@ -334,12 +340,13 @@ export async function initSync(app) {
     nameUnsubs.forEach((u) => u());
     nameUnsubs.clear();
     liveNames.clear();
+    livePhotos.clear();
     friendDocs = [];
     publicSynced = false;
     unsubR = unsubS = null;
     uid = null;
     app.setFriends([]);
-    app.setProfile({ name: "" });
+    app.setProfile({ name: "", photo: "" });
   }
 
   onAuthStateChanged(auth, (user) => {
@@ -358,7 +365,14 @@ export async function initSync(app) {
     setProfile: (name) => {
       if (!uid) return;
       setDoc(profileRef(), { name, updated: Date.now() }, { merge: true }).catch(fail);
-      setDoc(publicRef(uid), { name, updated: Date.now() }).catch(fail);
+      setDoc(publicRef(uid), { name, updated: Date.now() }, { merge: true }).catch(fail);
+    },
+    // photo de profil : petite image JPEG en data URL ("" = aucune), dans mon profil et dans le profil public
+    setPhoto: (photo) => {
+      if (!uid) return;
+      photo = okPhoto(photo);
+      setDoc(profileRef(), { photo, updated: Date.now() }, { merge: true }).catch(fail);
+      setDoc(publicRef(uid), { name: myName(), photo, updated: Date.now() }, { merge: true }).catch(fail);
     },
     createInvite,
     redeemInvite,
