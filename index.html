@@ -83,6 +83,15 @@ ol.steps li::before{content:counter(s);flex:none;width:28px;height:28px;border-r
 .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;border-radius:12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 .btn.danger{color:#c0392b}
+/* boutons de la fiche recette : courses en tête, rangement, partage, puis Supprimer à l'écart */
+.ract{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.ract .btn{text-align:center;min-height:44px;padding:10px 8px}
+.ract .wide{width:100%}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rgrid.g3{grid-template-columns:repeat(3,1fr)}
+.ract #fav[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.rdanger{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);display:flex;justify-content:center}
+.rdanger .btn.danger{border-color:transparent;background:transparent;font-weight:600}
 /* form */
 form label{display:block;font-weight:600;margin:16px 0 6px;font-size:.95rem}
 form label small{font-weight:400;color:var(--muted)}
@@ -411,7 +420,7 @@ setTimeout(done,2200)})();
 </dialog>
 
 <dialog id="senddlg">
-  <h3>Envoyer à un ami</h3>
+  <h3>Partager avec un ami</h3>
   <p id="sendmsg">Ton ami reçoit sa propre copie : s’il la modifie, la tienne ne change pas.</p>
   <ul class="opts" id="sendopts"></ul>
   <div class="col">
@@ -616,15 +625,18 @@ async function viewDetail(id){
     ${lines(r.ingredients).length?`<section class="block"><h3>Ingrédients</h3><ul class="ing">${lines(r.ingredients).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></section>`:""}
     ${lines(r.steps).length?`<section class="block"><h3>Préparation</h3><ol class="steps">${lines(r.steps).map(l=>`<li><span>${esc(l)}</span></li>`).join("")}</ol></section>`:""}
     ${r.notes?`<section class="block"><h3>Notes</h3><div class="notes">${esc(r.notes)}</div></section>`:""}
-    <div class="actions">
-      <button class="btn" id="fav">${r.fav?"★ Retirer des favoris":"☆ Favori"}</button>
-      <button class="btn primary" id="cart">${shop.sel[r.id]?"✓ Dans les courses":"🛒 Ajouter aux courses"}</button>
-      <a class="btn" href="#/edit/${r.id}">✎ Modifier</a>
-      <button class="btn" id="lists" type="button">📑 Listes</button>
-      <button class="btn" id="send" type="button">📬 Envoyer à un ami</button>
-      <button class="btn" id="pdf" type="button">📄 Partager en PDF</button>
-      <button class="btn" onclick="window.print()">🖨 Imprimer</button>
-      <button class="btn danger" id="del">🗑 Supprimer</button>
+    <div class="actions ract">
+      <button class="btn primary wide" id="cart" type="button">${shop.sel[r.id]?"Dans les courses":"Ajouter aux courses"}</button>
+      <div class="rgrid g3">
+        <button class="btn" id="fav" type="button" aria-pressed="${!!r.fav}">${r.fav?"En favori":"Favori"}</button>
+        <button class="btn" id="lists" type="button">Listes</button>
+        <a class="btn" href="#/edit/${r.id}">Modifier</a>
+      </div>
+      <div class="rgrid">
+        <button class="btn" id="send" type="button">Partager</button>
+        <button class="btn" id="pdf" type="button">Télécharger</button>
+      </div>
+      <div class="rdanger"><button class="btn danger" id="del" type="button">Supprimer la recette</button></div>
     </div>`;
   view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=()=>li.classList.toggle("done"));
   view.querySelectorAll(".gallery img").forEach(im=>im.onclick=()=>{
@@ -641,7 +653,7 @@ async function viewDetail(id){
   $("#cart").onclick=()=>{
     if(shop.sel[r.id]){location.hash="#/courses";return}
     addRecipeToCart(shop,r.id,Number(r.servings)||1);saveShop();updateBadge();
-    $("#cart").textContent="✓ Dans les courses";toast("Ajoutée à la liste de courses");
+    $("#cart").textContent="Dans les courses";toast("Ajoutée à la liste de courses");
   };
   $("#del").onclick=async()=>{
     if(confirm(`Supprimer « ${r.title} » ? Cette action est définitive.`)){await delRecipe(id);toast("Recette supprimée");location.hash="#/"}
@@ -1400,7 +1412,7 @@ async function shareRecipePdf(r){
   let file=null;
   try{file=await makeRecipePdf(r)}
   catch(e){toast("Impossible de créer le PDF")}
-  if(btn){btn.disabled=false;btn.textContent="📄 Partager en PDF"}
+  if(btn){btn.disabled=false;btn.textContent="Télécharger"}
   if(!file)return;
   // iPhone / Android : feuille de partage (Messages, WhatsApp, Mail, Fichiers…)
   if(navigator.canShare&&navigator.canShare({files:[file]})){
@@ -1745,7 +1757,7 @@ async function receiveShared(m){
 }
 
 let lastInvite=null;   // dernier code créé, gardé si la page se redessine
-// Page profil (bouton « ⋯ ») : pseudo, connexion, amis, sauvegarde
+// Page profil (bouton « ⋯ ») : pseudo, connexion, amis, import
 async function viewProfile(code){
   chrome(false);
   code=cleanCode(code);
@@ -1792,22 +1804,14 @@ async function viewProfile(code){
   const importBlock=`<section class="block"><h3>Importer des recettes</h3>
       <p>Colle le texte d’une ou de plusieurs recettes (Instagram, sites, notes) : l’app les découpe et tu vérifies avant de les créer.</p>
       <a class="btn primary" href="#/importer" style="display:block;text-align:center">📋 Importer depuis un texte</a></section>`;
-  const backupBlock=`<section class="block"><h3>Sauvegarde</h3>
-      <p>Copie de secours dans un fichier (photos et listes comprises), à garder ou à importer sur un autre téléphone.</p>
-      <div class="col">
-        <button class="btn primary" type="button" id="exp">⬇ Exporter mes recettes</button>
-        <label class="btn" style="text-align:center;margin:0">⬆ Importer une sauvegarde<input type="file" id="imp" accept=".json,application/json" hidden></label>
-      </div></section>`;
   view.innerHTML=`<h2 class="title">Mon profil</h2>
     ${on?pseudoBlock+friendsBlocks+accountBlock:accountBlock+friendsBlocks}
-    ${importBlock}${backupBlock}`;
+    ${importBlock}`;
   renderSync();
   $("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
   $("#signout").onclick=async()=>{
     if(syncApi&&confirm("Se déconnecter ? Les recettes restent sur cet appareil."))await syncApi.signOut();
   };
-  $("#exp").onclick=exportBackup;
-  $("#imp").onchange=importBackup;
   if(!on)return;
   $("#pf").onsubmit=e=>{
     e.preventDefault();
@@ -1979,29 +1983,8 @@ window.addEventListener("hashchange",route);
 $("#back").onclick=()=>{ if(history.length>1)history.back(); else location.hash="#/" };
 $("#cartbtn").onclick=()=>{location.hash="#/courses"};
 
-/* ---------- backup ---------- */
+/* ---------- profil ---------- */
 $("#menu").onclick=()=>{location.hash="#/profil"};
-async function exportBackup(){
-  const data={app:"livre-recettes",version:1,exported:new Date().toISOString(),recipes:await allRecipes(),lists,tagIcons};
-  const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-  a.download="noutbook-"+new Date().toISOString().slice(0,10)+".json";
-  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-  toast(`${data.recipes.length} recette(s) exportée(s)`);
-}
-async function importBackup(e){
-  const f=e.target.files[0];e.target.value="";if(!f)return;
-  try{
-    const data=JSON.parse(await f.text());
-    if(!data||!Array.isArray(data.recipes))throw new Error("Fichier non reconnu");
-    let n=0;
-    if(data.lists&&typeof data.lists==="object"){lists=mergeLists(lists,data.lists);saveLists()}
-    if(data.tagIcons&&typeof data.tagIcons==="object"){tagIcons=mergeTagIcons(tagIcons,data.tagIcons);saveTagIcons()}
-    for(const r of data.recipes){if(r&&r.id&&r.title){await putRecipe(r);n++}}
-    toast(`${n} recette(s) importée(s) ✓`);route();
-  }catch(err){alert("Import impossible : "+err.message)}
-}
-
 /* ---------- import de recettes depuis un texte ---------- */
 // le texte collé et la relecture survivent à un aller-retour dans l'app (pas à une fermeture)
 let impDraft={text:"",items:null,list:null};
