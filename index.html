@@ -206,6 +206,7 @@ dialog{max-height:88vh;max-height:88dvh;overflow:auto;overscroll-behavior:contai
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:none;display:flex;align-items:center;gap:6px;min-height:44px;padding:8px 10px 7px;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;font-family:var(--serif);font-weight:600;font-size:.98rem;color:var(--muted);cursor:pointer;white-space:nowrap}
 .tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .lcnt{margin-left:-2px;font-family:var(--sans);font-weight:700;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .tab:active{background:var(--accent-soft);border-radius:10px 10px 0 0}
 .tab .n{font-family:var(--sans);font-size:.68rem;font-weight:800;background:var(--buy);color:#fff;border-radius:999px;min-width:18px;height:18px;line-height:18px;padding:0 5px;text-align:center}
 .tab.new{color:var(--accent)}
@@ -540,10 +541,11 @@ async function viewList(){
   const curList=ls.find(l=>l.id===filter.list);
   const unseen=rs.filter(r=>r.sharedFrom&&r.sharedNew).length;
   const inCur=rs.filter(r=>inList(r,filter.list,lists));
+  const curCount=new Set(inCur.map(r=>r.id)).size;   // count distinct : une recette compte une fois par liste
   const tabs=[["mine","Ma liste"],["shared","Partagées"],...ls.map(l=>[l.id,l.name]),["all","Tout"]];
   view.innerHTML=`
-    <nav class="tabs" id="tabs" aria-label="Listes de recettes">${tabs.map(([k,l])=>`<button type="button" class="tab ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>${esc(l)}${k==="shared"&&unseen?`<span class="n" aria-label="${unseen} nouvelle(s)">${unseen}</span>`:""}</button>`).join("")}<button type="button" class="tab new" id="newtab">＋ Liste</button></nav>
-    ${curList?`<div class="lhead"><span>${inCur.length} recette${inCur.length>1?"s":""}</span><button type="button" class="btn sm" id="lset">Renommer ou supprimer</button></div>`:""}
+    <nav class="tabs" id="tabs" aria-label="Listes de recettes">${tabs.map(([k,l])=>`<button type="button" class="tab ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>${esc(l)}${filter.list===k?` <span class="lcnt">(${curCount})</span>`:""}${k==="shared"&&unseen?`<span class="n" aria-label="${unseen} nouvelle(s)">${unseen}</span>`:""}</button>`).join("")}<button type="button" class="tab new" id="newtab">＋ Liste</button></nav>
+    ${curList?`<div class="lhead"><span></span><button type="button" class="btn sm" id="lset">Renommer ou supprimer</button></div>`:""}
     ${filter.list==="shared"?`<div class="lhead"><span>Les recettes que tes amis t’envoient arrivent ici.</span><a href="#/profil">👥 Amis</a></div>`:""}
     <input class="search" id="q" type="search" placeholder="Rechercher une recette, un ingrédient…" value="${esc(filter.q)}">
     <div class="chips" id="chips"></div>
