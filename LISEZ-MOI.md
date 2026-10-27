@@ -46,7 +46,6 @@ Utilisez bien **le même compte** sur les deux téléphones : c'est ce qui vous 
 - Hors ligne, tout reste utilisable ; les modifications partent au retour du réseau.
 - En cas de modification simultanée de la même recette, la dernière enregistrée l'emporte.
 - Photos : 6 maximum par recette, réduites automatiquement pour tenir dans la limite de 1 Mo par recette.
-- Le bouton d'export (« ⋯ » → Sauvegarde) reste utile comme copie de secours.
 
 ## Mise à jour « listes et amis » : règles Firestore à republier
 
@@ -60,7 +59,7 @@ Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'e
 - « ＋ Liste » crée une liste. Sur une recette, bouton **Listes** pour la ranger dans une ou plusieurs listes.
 - Une recette créée depuis l'onglet d'une liste y est rangée d'office.
 - « Renommer ou supprimer » sous l'onglet d'une liste. Supprimer une liste ne supprime jamais ses recettes (et « Annuler » la fait revenir).
-- Les listes sont synchronisées entre vos deux téléphones et comprises dans l'export de secours.
+- Les listes sont synchronisées entre vos deux téléphones.
 
 ## Tags
 
@@ -68,11 +67,11 @@ Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'e
 - Touche l'icône d'un tag pour la changer. L'icône vaut pour toutes les recettes qui portent ce tag.
 - Sur l'accueil, la rangée de tags filtre les recettes ; plusieurs tags = recettes qui les ont tous. Ça se combine avec la liste et la catégorie, et la recherche trouve aussi les tags.
 - Les cartes affichent jusqu'à 3 icônes de tags. Une recette envoyée à un ami garde ses tags et leurs icônes.
-- Les tags et leurs icônes sont synchronisés et compris dans l'export de secours. Rien à changer dans les règles Firestore.
+- Les tags et leurs icônes sont synchronisés. Rien à changer dans les règles Firestore.
 
 ## Amis et envoi de recettes
 
-- Bouton « ⋯ » → page **Mon profil** : pseudo, connexion / déconnexion, amis et sauvegarde.
+- Bouton « ⋯ » → page **Mon profil** : pseudo, connexion / déconnexion, amis et import de recettes.
 - Choisis d'abord ton **pseudo** : tes amis le voient, et s'il change, il change aussi chez eux.
 - **Inviter** : « Créer un code d'invitation », puis « Envoyer l'invitation » (Messages, WhatsApp…). Le code est valable 7 jours.
 - **Accepter** : ton ami ouvre NoutBook → « ⋯ » → « J'ai reçu un code », et tape le code. Vous êtes alors amis tous les deux
@@ -99,9 +98,9 @@ Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'e
 - Produits de base (sel, poivre, huile…) : jamais ajoutés automatiquement ; appui long sur une tuile pour changer.
 - Les compteurs d'achats et les produits de base sont synchronisés entre vos deux téléphones.
 
-## Partager une recette en PDF
+## Télécharger une recette en PDF
 
-- Sur la page d'une recette : bouton « Partager en PDF ». Sur iPhone, la feuille de partage s'ouvre (Messages, WhatsApp, Mail, Fichiers…).
+- Sur la page d'une recette : bouton « Télécharger ». Sur iPhone, la feuille de partage s'ouvre (Messages, WhatsApp, Mail, Fichiers…).
 - Si le partage direct n'est pas possible, une fenêtre propose de télécharger / ouvrir le PDF.
 - Fonctionne hors ligne (bibliothèque `vendor/pdf-lib.min.js` + `recipe-pdf.js`, à déposer avec le reste). Les émojis ne sont pas repris dans le PDF.
 

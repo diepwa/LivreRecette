@@ -17,7 +17,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v15`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v16`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -101,11 +101,12 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 ### Détails techniques à garder
 
 - Garder `[hidden]{display:none !important}` (sinon `.btn{display:inline-block}` écrase `hidden`).
-- Styles d'impression (`@media print`) : masquer en-tête, FAB, actions, splash et barre du bas.
+- Fiche recette : pas d'émojis sur les boutons d'action ; « Ajouter aux courses » en tête, puis Favori / Listes / Modifier, puis Partager / Télécharger, et « Supprimer la recette » en rouge, à l'écart sous un séparateur.
+- Styles d'impression (`@media print`, plus de bouton Imprimer mais l'impression du navigateur reste propre) : masquer en-tête, FAB, actions, splash et barre du bas.
 
 ## Fonctions à préserver
 
-Catégories, recherche, favoris, photos multiples (couverture = 1re), panier rapide 🛒 (accueil et page recette), page panier façon Bring (tuiles rouges à acheter, vertes « Souvent achetés » et « Dans vos recettes », barre « Il me faut… », appui long, annuler), récap des recettes du panier (affiché seulement s'il y en a au moins une), regroupement des ingrédients et quantités, produits de base exclus par défaut, copier/partager la liste, PDF, export/import JSON, thème clair/sombre, impression, synchro temps réel et hors ligne.
+Catégories, recherche, favoris, photos multiples (couverture = 1re), panier rapide 🛒 (accueil et page recette), page panier façon Bring (tuiles rouges à acheter, vertes « Souvent achetés » et « Dans vos recettes », barre « Il me faut… », appui long, annuler), récap des recettes du panier (affiché seulement s'il y en a au moins une), regroupement des ingrédients et quantités, produits de base exclus par défaut, copier/partager la liste, PDF (bouton « Télécharger »), envoi d'une copie à un ami (bouton « Partager »), thème clair/sombre, synchro temps réel et hors ligne.
 
 ## Tester avant de livrer
 
@@ -116,4 +117,4 @@ Catégories, recherche, favoris, photos multiples (couverture = 1re), panier rap
 
 ## Avec l'utilisateur
 
-Signaler tout point à risque, conseiller un export de secours (« ⋯ » → Exporter) avant une mise à jour importante, et dire quels fichiers ont changé.
+Signaler tout point à risque et dire quels fichiers ont changé. Le bouton d'export/import JSON du profil a été retiré le 2026-10-27 à la demande de Charles (les données sont dans Firestore) ; les recettes restent aussi en local dans IndexedDB.
