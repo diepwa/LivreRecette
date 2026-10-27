@@ -61,7 +61,7 @@ main{max-width:900px;margin:0 auto;padding:14px 16px}
 .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 22px;font:inherit;font-weight:600;font-size:1rem;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;text-decoration:none}
 /* detail */
 .gallery{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:var(--radius);margin-bottom:14px}
-.gallery img{flex:none;width:100%;max-height:420px;object-fit:cover;scroll-snap-align:center;border-radius:var(--radius);cursor:zoom-in}
+.gallery img{flex:none;width:100%;max-height:420px;object-fit:cover;scroll-snap-align:center;border-radius:var(--radius)}
 .gallery.multi img{width:88%}
 h2.title{font-family:var(--serif);font-size:1.8rem;margin:4px 0 6px;line-height:1.2}
 .meta{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 16px}
@@ -107,8 +107,6 @@ form textarea{min-height:130px;resize:vertical}
 .addphoto b{font-size:1.6rem;color:var(--accent);line-height:1}
 .formbar{display:flex;gap:10px;margin-top:24px}
 .formbar .btn{flex:1;text-align:center}
-.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:50}
-.lightbox img{max-width:96vw;max-height:92vh;max-height:92dvh;border-radius:8px}
 .toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:60;font-size:.9rem;display:flex;align-items:center;gap:14px;max-width:92vw;white-space:nowrap}
 .toast span{overflow:hidden;text-overflow:ellipsis}
 .toast button{background:none;border:0;color:#ffd36b;font:inherit;font-weight:700;cursor:pointer;padding:0}
@@ -311,11 +309,6 @@ dialog::backdrop{background:rgba(0,0,0,0);transition:background-color 150ms var(
 .toast.out{opacity:0;transform:translate(-50%,100%);transition-duration:150ms}
 .toast span{transition:filter 120ms ease,opacity 120ms ease}
 .toast.swap span{filter:blur(2px);opacity:.6}
-.lightbox{opacity:1;transition:opacity 200ms var(--ease-out)}
-.lightbox img{transform:none;transition:transform 200ms var(--ease-out)}
-@starting-style{.lightbox{opacity:0}.lightbox img{transform:scale(.96)}}
-.lightbox.out{opacity:0;transition-duration:150ms}
-.lightbox.out img{transform:scale(.96);transition-duration:150ms}
 /* appui long sur une tuile : un voile se remplit pendant les 520 ms, puis le menu s'ouvre */
 .tile::before{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.28);clip-path:inset(0 100% 0 0);transition:clip-path 150ms var(--ease-out);pointer-events:none}
 .tile.add::before{background:color-mix(in srgb,var(--cat) 25%,transparent)}
@@ -323,7 +316,7 @@ dialog::backdrop{background:rgba(0,0,0,0);transition:background-color 150ms var(
 @media (prefers-reduced-motion:reduce){
   /* moins de mouvement, pas zéro : on garde les fondus, on retire les déplacements et les changements de taille */
   .btn,.fab,.impcta,.tile,.cardcart,.step button,ul.pick .x,ul.shop .x,.sbtn,.tpill .ic,.icongrid button{transition:none;transform:none!important}
-  dialog,.lightbox img{transform:none!important}
+  dialog{transform:none!important}
   .toast,.toast.out{transform:translate(-50%,0)!important}
   .tile::before{clip-path:none;opacity:0;transition:opacity 150ms ease}
   .tile.lp::before{opacity:1;transition:opacity 200ms ease 320ms}
@@ -641,10 +634,6 @@ async function viewDetail(id){
       <div class="rdanger"><button class="btn danger" id="del" type="button">Supprimer la recette</button></div>
     </div>`;
   view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=()=>li.classList.toggle("done"));
-  view.querySelectorAll(".gallery img").forEach(im=>im.onclick=()=>{
-    const lb=document.createElement("div");lb.className="lightbox";lb.innerHTML=`<img src="${im.src}" alt="">`;
-    lb.onclick=()=>{lb.classList.add("out");setTimeout(()=>lb.remove(),160)};document.body.appendChild(lb);
-  });
   $("#fav").onclick=async()=>{r.fav=!r.fav;touch(r);await putRecipe(r);viewDetail(id)};
   $("#pdf").onclick=()=>shareRecipePdf(r);
   $("#lists").onclick=()=>openListsDlg(r,()=>viewDetail(id));
@@ -1898,7 +1887,6 @@ function refreshView(){
     if(/^#\/(new|edit)/.test(h))return;
     const a=document.activeElement;
     if(a&&["INPUT","TEXTAREA","SELECT"].includes(a.tagName))return;
-    if(document.querySelector(".lightbox"))return;
     const y=window.scrollY;
     route().then(()=>window.scrollTo(0,y));
   },200);
