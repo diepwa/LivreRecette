@@ -12,15 +12,15 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" crossorigin href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" crossorigin href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
 <title>NoutBook</title>
 <style>
 :root{
   --bg:#faf7f1; --card:#ffffff; --ink:#33291f; --muted:#85775f; --line:#e6dccb;
   --accent:#6b5238; --accent-ink:#fff; --accent-soft:#ece3d5; --ok:#4f7a4a;
   --radius:16px; --shadow:0 2px 10px rgba(90,65,30,.10);
-  --serif:"Fredoka","Nunito",ui-rounded,"SF Pro Rounded",system-ui,sans-serif;
-  --sans:"Nunito",ui-rounded,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:ui-rounded,"SF Pro Rounded","Nunito",-apple-system,system-ui,sans-serif;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
   --ease-out:cubic-bezier(.23,1,.32,1); --ease-in-out:cubic-bezier(.77,0,.175,1);
 }
 @media (prefers-color-scheme:dark){
@@ -321,6 +321,175 @@ dialog::backdrop{background:rgba(0,0,0,0);transition:background-color 150ms var(
   .tile::before{clip-path:none;opacity:0;transition:opacity 150ms ease}
   .tile.lp::before{opacity:1;transition:opacity 200ms ease 320ms}
 }
+/* ===== style Apple (iOS) : police système, barres translucides, listes groupées, retour au toucher. Palette crème inchangée ===== */
+:root{
+  --fill:color-mix(in srgb,var(--accent) 9%,transparent);
+  --glass:color-mix(in srgb,var(--bg) 74%,transparent);
+  --hair:color-mix(in srgb,var(--ink) 14%,transparent);
+  --danger:#d33b2f;
+}
+@media (prefers-color-scheme:dark){:root{--danger:#ff6b5e}}
+body{letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
+/* barre du haut translucide ; le trait n'apparaît que quand le contenu passe dessous */
+header.top{background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);border-bottom:.5px solid transparent;padding:calc(8px + env(safe-area-inset-top)) 10px 6px 12px;gap:6px;transition:border-color .2s}
+body.scrolled header.top{border-bottom-color:var(--hair)}
+header.top h1{font-weight:700;font-size:1.25rem;letter-spacing:-.01em;line-height:1.1}
+.logo{height:28px}
+body.home header.top{padding-left:16px}
+body.home header.top h1{font-weight:800;font-size:2.125rem;letter-spacing:-.025em;transition:font-size .25s var(--ease-out)}
+body.home .logo{height:38px;transition:height .25s var(--ease-out)}
+body.home.scrolled header.top h1{font-size:1.25rem;letter-spacing:-.01em}
+body.home.scrolled .logo{height:28px}
+.icon-btn{color:var(--accent);width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;transition:transform .1s var(--ease-out)}
+.icon-btn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn svg .f{fill:currentColor}
+#back svg{width:24px;height:24px;stroke-width:2.4}
+.icon-btn:active{background:var(--fill);transform:scale(.92)}
+.badge{background:var(--buy);color:#fff;top:3px;right:1px}
+main{padding-top:6px}
+h2.title{font-weight:800;font-size:2.125rem;letter-spacing:-.025em;line-height:1.1;margin:2px 0 10px}
+/* recherche façon iOS, au-dessus des listes */
+.search{border:0;border-radius:11px;height:38px;padding:0 12px 0 34px;background:var(--fill) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2385775f' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E") no-repeat 10px 50%/17px;letter-spacing:-.01em}
+.search::placeholder{color:var(--muted)}
+.search:focus{outline:2px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:0}
+/* listes : contrôle segmenté qui défile */
+.tabs{margin:12px 0 4px;padding:2px;border:0;gap:0;background:var(--fill);border-radius:10px}
+.tab{min-height:32px;padding:4px 12px;border:0;border-radius:8px;margin:0;font-family:var(--sans);font-weight:500;font-size:.875rem;color:var(--ink);letter-spacing:-.01em}
+.tab.on{background:var(--card);font-weight:600;box-shadow:0 1px 3px rgba(60,40,20,.14),0 0 0 .5px rgba(60,40,20,.06)}
+.tab .lcnt{color:var(--muted);font-weight:500;font-size:.8rem;margin-left:0}
+.tab:active{background:color-mix(in srgb,var(--accent) 14%,transparent);border-radius:8px}
+.tab.new{color:var(--accent);font-weight:600}
+.lhead{font-size:.8125rem;margin:10px 0 0}
+/* puces pleines, sans contour */
+.chips{gap:6px;padding:10px 0 2px}
+.chip,.chip.tg{border:0;background:var(--fill);font-size:.875rem;font-weight:500;padding:6px 13px;min-height:32px;letter-spacing:-.01em;transition:transform .1s var(--ease-out)}
+.chip.on{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.chip:active{transform:scale(.96)}
+.chips.tchips{padding-top:6px}
+/* grille : vignettes sans cadre, titre dessous (comme Photos ou Livres) */
+.grid{gap:16px 10px;margin-top:14px}
+.card{background:none;box-shadow:none;border-radius:0;overflow:visible;transition:transform .1s var(--ease-out)}
+.card:active{transform:scale(.97)}
+.card .ph{border-radius:14px;overflow:hidden;aspect-ratio:1/1;background:linear-gradient(160deg,color-mix(in srgb,var(--accent-soft) 70%,var(--card)),var(--accent-soft));font-size:2.2rem;box-shadow:inset 0 0 0 .5px var(--hair)}
+.card .body{padding:6px 2px 0}
+.card h3{font-family:var(--sans);font-weight:600;font-size:.8125rem;letter-spacing:-.01em}
+.card small{font-size:.75rem}
+.card .star,.cardcart,.tico{background:color-mix(in srgb,var(--card) 72%,transparent);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);border:0;box-shadow:0 1px 4px rgba(40,25,10,.12)}
+.card .star{top:6px;right:6px;width:26px;height:26px;font-size:.8rem;color:#e8a33a}
+.cardcart{top:6px;left:6px;width:26px;height:26px;color:var(--accent);display:flex;align-items:center;justify-content:center}
+.cardcart svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cardcart.on{background:var(--accent);color:var(--accent-ink)}
+.tico{right:6px;bottom:6px;padding:1px 6px;box-shadow:none}
+/* bouton « Nouvelle recette » centré, sur un fondu de bord */
+body.home::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(90px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 25%,color-mix(in srgb,var(--bg) 0%,transparent));pointer-events:none;z-index:4}
+.fab{z-index:5;left:0;right:0;margin:0 auto;width:max-content;display:flex;align-items:center;gap:6px;padding:0 22px;height:50px;font-weight:600;font-size:1.0625rem;letter-spacing:-.02em;white-space:nowrap;box-shadow:0 8px 24px rgba(60,40,20,.28)}
+.fab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+/* blocs : listes groupées iOS (fond carte, coins 12 px, pas d'ombre, filets fins) */
+section.block{border-radius:12px;box-shadow:none;padding:14px 16px}
+section.block h3{font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
+ul.ing li,ul.pick li,ul.shop li,ul.opts li{border-bottom:.5px solid var(--hair)}
+.rdanger{border-top:0}
+.syncbox{border-bottom:0}
+ul.ing li::before{content:"";flex:none;width:20px;height:20px;margin-top:2px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--muted) 60%,transparent)}
+ul.ing li.done::before{content:"✓";border-color:var(--accent);background:var(--accent);color:var(--accent-ink);font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+ol.steps li::before{font-size:.85rem}
+.meta{gap:6px}
+.tag{background:var(--fill);color:var(--ink);font-size:.8125rem;font-weight:500;padding:4px 11px}
+.tag.from{border:0;background:var(--fill);color:var(--muted)}
+/* boutons : pleins (accent) ou teintés (fond doux, texte accent), sans contour */
+.btn{border:0;background:var(--fill);color:var(--accent);font-weight:600;border-radius:12px;min-height:44px;letter-spacing:-.01em}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--danger);background:var(--fill)}
+.rdanger .btn.danger{background:transparent}
+.ract #fav[aria-pressed="true"]{background:var(--accent-soft);border:0;color:var(--ink)}
+.btn.sm{min-height:32px;border-radius:8px}
+/* formulaires : champs remplis, sans contour */
+form label:not(.btn){font-size:.8125rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;margin:20px 0 6px 4px}
+form label small{text-transform:none;letter-spacing:0}
+form input[type=text],form input[type=number],form input[type=email],form input[type=password],form select,form textarea,.addrow input,.implist select,.syncbox input,.tagbox{border:0;border-radius:10px;background:var(--card);min-height:44px}
+form select{-webkit-appearance:none;appearance:none;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2385775f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 10 4-4 4 4M8 14l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 10px center/18px;padding-right:34px}
+.tagbox input[type=text]{min-height:0}
+.addphoto{border:0;background:var(--card);border-radius:10px}
+.thumb{border-radius:10px}
+.tsugg button{border:0;background:var(--fill)}
+.impcta{background:var(--card);border-radius:12px;font-size:.875rem}
+/* courses : barre du bas translucide ; tuiles rouges et vert-bleu inchangées */
+.searchbar,.impbar{background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);border-top:.5px solid var(--hair);box-shadow:none}
+.sbox{background:var(--fill);border:0;border-radius:11px}
+.sbox input{padding:9px 0}
+.sugg{border-top:.5px solid var(--hair);background:var(--card)}
+.tile{border-radius:14px;box-shadow:none}
+.tsec h3,.recap h3{font-weight:700;letter-spacing:-.02em}
+.recap ul.pick li{border-radius:10px}
+.hint.box{border-radius:12px}
+.step button{border:0;background:var(--fill);color:var(--accent)}
+/* fenêtres : façon feuille iOS */
+dialog{border-radius:14px;padding:20px 18px 16px;background:color-mix(in srgb,var(--card) 92%,transparent);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:0 20px 60px rgba(20,12,4,.3)}
+dialog[open]::backdrop{background:rgba(20,12,4,.32)}
+dialog h3{font-size:1.0625rem;font-weight:700;letter-spacing:-.02em}
+dialog p{font-size:.875rem}
+.icongrid button{border:0;background:var(--fill)}
+.icongrid button[aria-pressed=true]{border:2px solid var(--accent)}
+.toast{background:color-mix(in srgb,var(--ink) 88%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);font-weight:500}
+.code{font-family:var(--serif);border-radius:12px;background:var(--card)}
+@media (prefers-color-scheme:dark){.toast button{color:#9a6418}}
+/* profil : listes groupées façon Réglages */
+.me{display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 0 2px}
+.av{flex:none;width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 70%,var(--card)),var(--accent));color:var(--accent-ink);font-family:var(--serif);font-weight:700;font-size:.9rem}
+.av.big{width:84px;height:84px;font-size:2.4rem;box-shadow:0 4px 14px rgba(60,40,20,.18)}
+.me-n{font-family:var(--serif);font-weight:800;font-size:1.6rem;letter-spacing:-.02em;line-height:1.15;margin-top:10px}
+.me-s{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.875rem;margin-top:2px}
+.me-s .sd{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.me-s #syncmsg{margin:0}
+.gh{margin:26px 16px 6px;font-size:.8125rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;display:flex;gap:6px}
+.grp{background:var(--card);border-radius:12px;overflow:hidden;margin:0}
+.grp.pad{padding:14px 16px}
+.grp.pad .hint{margin:0 0 10px}
+.gr{display:flex;align-items:center;gap:12px;min-height:46px;padding:0 12px 0 16px;width:100%;background:none;border:0;font:inherit;color:var(--ink);text-align:left;text-decoration:none;position:relative;letter-spacing:-.01em;cursor:pointer}
+.grp .gr+.gr::before{content:"";position:absolute;top:0;right:0;left:16px;border-top:.5px solid var(--hair)}
+.grp .gr.fr+.gr::before{left:60px}
+.gr .pt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+form .gr input[type=text],.gr input{flex:1;min-width:0;border:0;border-radius:0;background:none;color:var(--ink);font:inherit;font-size:1.0625rem;padding:0;height:46px;outline:none}
+.gr input::placeholder{color:var(--muted)}
+.tbtn{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;font-size:1.0625rem;padding:8px 4px;cursor:pointer}
+.tbtn:disabled,.gr:disabled{opacity:.4;cursor:default}
+.gr.act{color:var(--accent);font-weight:500}
+.gr.act svg{width:30px;height:30px;margin:0 1px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.gr.link:active,.gr.fr:active,.gr.act:active:not(:disabled),.gr.danger:active{background:var(--fill)}
+.chev{color:color-mix(in srgb,var(--muted) 70%,transparent);display:flex}
+.chev svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.gr.danger{justify-content:center;color:var(--danger);font-weight:500}
+.gf{margin:7px 16px 0;font-size:.8125rem;color:var(--muted);line-height:1.4}
+.gf:empty{display:none}
+#inv .code{margin:10px 0 8px}
+/* alertes et feuilles d'action iOS (iosAlert) */
+.ios-scrim{position:fixed;inset:0;z-index:100;background:rgba(20,12,4,.32);display:flex;align-items:center;justify-content:center;animation:ia-fade .2s ease-out}
+.ios-scrim.sheet{align-items:flex-end;padding:0 8px calc(8px + env(safe-area-inset-bottom))}
+.ios-scrim.out{opacity:0;transition:opacity .18s}
+.ios-alert{width:270px;animation:ia-zoom .25s var(--ease-out)}
+.ios-sheet{width:100%;max-width:440px;display:flex;flex-direction:column;gap:8px;animation:ia-up .3s var(--ease-out)}
+@keyframes ia-fade{from{opacity:0}}
+@keyframes ia-zoom{from{transform:scale(1.12);opacity:0}}
+@keyframes ia-up{from{transform:translateY(100%)}}
+.ia-box{background:color-mix(in srgb,var(--card) 86%,transparent);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);border-radius:14px;overflow:hidden;text-align:center}
+.ia-t{font-weight:600;font-size:1.0625rem;padding:19px 16px 0;letter-spacing:-.02em}
+.ios-sheet .ia-t{font-size:.8125rem;color:var(--muted);padding-top:14px}
+.ia-m{font-size:.8125rem;padding:2px 16px 0}
+.ios-sheet .ia-m{color:var(--muted)}
+.ia-in{display:block;width:calc(100% - 32px);margin:14px 16px 0;padding:7px 8px;border:.5px solid var(--hair);border-radius:7px;background:var(--card);color:var(--ink);font:inherit;font-size:1rem;outline:none}
+.ia-a{display:flex;flex-direction:column;margin-top:18px}
+.ios-sheet .ia-a{margin-top:14px}
+.ia-a button,.ia-c{border:0;background:none;font:inherit;font-size:1.0625rem;color:var(--accent);min-height:44px;box-shadow:inset 0 .5px 0 var(--hair);cursor:pointer;letter-spacing:-.02em}
+.ios-sheet .ia-a button{min-height:56px;font-size:1.25rem}
+.ia-a.two{flex-direction:row}
+.ia-a.two button{flex:1}
+.ia-a.two button+button{border-left:.5px solid var(--hair)}
+.ia-a button.b{font-weight:600}
+.ia-a button.dg{color:var(--danger)}
+.ia-a button:active,.ia-c:active{background:var(--fill)}
+.ia-c{background:var(--card);border-radius:14px;min-height:56px;font-size:1.25rem;font-weight:600;box-shadow:none}
+@media (prefers-reduced-transparency:reduce){header.top,.searchbar,.impbar{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}.ia-box,dialog{background:var(--card)}}
+@media (prefers-reduced-motion:reduce){body.home header.top h1,body.home .logo,.card,.chip,.icon-btn{transition:none}.card:active,.chip:active{transform:none}.ios-alert,.ios-sheet{animation:none}}
 @media print{#splash{display:none}.searchbar{display:none}}
 @media print{.impbar,.impcta{display:none}}
 @media print{header.top,.fab,.actions{display:none}body{background:#fff;color:#000}section.block{box-shadow:none;border:1px solid #ccc}}
@@ -337,13 +506,13 @@ s.addEventListener("pointerdown",function(){s.classList.add("skip")});
 setTimeout(done,2200)})();
 </script>
 <header class="top">
-  <button class="icon-btn" id="back" hidden aria-label="Retour">←</button>
+  <button class="icon-btn" id="back" hidden aria-label="Retour"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
   <h1><a href="#/"><img class="logo" src="icons/nout.png" alt="" width="32" height="32">NoutBook</a></h1>
-  <button class="icon-btn" id="cartbtn" aria-label="Liste de courses">🛒<span class="badge" id="badge" hidden></span></button>
-  <button class="icon-btn" id="menu" aria-label="Mon profil">⋯<span class="dot" id="dot" hidden></span></button>
+  <button class="icon-btn" id="cartbtn" aria-label="Liste de courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.2l2.3 11h10.3l2-8H6.3"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="16.5" cy="19.5" r="1.3"/></svg><span class="badge" id="badge" hidden></span></button>
+  <button class="icon-btn" id="menu" aria-label="Mon profil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="f" cx="8" cy="12" r=".7"/><circle class="f" cx="12" cy="12" r=".7"/><circle class="f" cx="16" cy="12" r=".7"/></svg><span class="dot" id="dot" hidden></span></button>
 </header>
 <main id="view"></main>
-<a class="fab" id="fab" href="#/new">＋ Nouvelle recette</a>
+<a class="fab" id="fab" href="#/new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nouvelle recette</a>
 
 <dialog id="pdfdlg">
   <h3>PDF prêt</h3>
@@ -516,10 +685,14 @@ const touch=r=>{r.updated=(Number(r.updated)||0)+1};
 /* ---------- views ---------- */
 const view=$("#view");
 function chrome(isHome){
+  document.body.classList.toggle("home",isHome);
   $("#back").hidden=isHome;
   $("#fab").hidden=!isHome;
   updateBadge();
 }
+const CART_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.2l2.3 11h10.3l2-8H6.3"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="16.5" cy="19.5" r="1.3"/></svg>`;
+// barre du haut : trait fin et grand titre réduit seulement quand le contenu passe dessous
+addEventListener("scroll",()=>document.body.classList.toggle("scrolled",scrollY>8),{passive:true});
 function updateBadge(){
   const n=Object.keys(shop.sel).length,b=$("#badge");
   b.hidden=!n;b.textContent=n;
@@ -537,10 +710,10 @@ async function viewList(){
   const curCount=new Set(inCur.map(r=>r.id)).size;   // count distinct : une recette compte une fois par liste
   const tabs=[["mine","Ma liste"],["shared","Partagées"],...ls.map(l=>[l.id,l.name]),["all","Tout"]];
   view.innerHTML=`
+    <input class="search" id="q" type="search" placeholder="Rechercher une recette, un ingrédient…" value="${esc(filter.q)}">
     <nav class="tabs" id="tabs" aria-label="Listes de recettes">${tabs.map(([k,l])=>`<button type="button" class="tab ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>${esc(l)}${filter.list===k?` <span class="lcnt">(${curCount})</span>`:""}${k==="shared"&&unseen?`<span class="n" aria-label="${unseen} nouvelle(s)">${unseen}</span>`:""}</button>`).join("")}<button type="button" class="tab new" id="newtab">＋ Liste</button></nav>
     ${curList?`<div class="lhead"><span></span><button type="button" class="btn sm" id="lset">Renommer ou supprimer</button></div>`:""}
     ${filter.list==="shared"?`<div class="lhead"><span>Les recettes que tes amis t’envoient arrivent ici.</span><a href="#/profil">👥 Amis</a></div>`:""}
-    <input class="search" id="q" type="search" placeholder="Rechercher une recette, un ingrédient…" value="${esc(filter.q)}">
     <div class="chips" id="chips"></div>
     <div class="chips tchips" id="tchips" aria-label="Filtrer par tag"></div>
     <div id="results"></div>`;
@@ -581,7 +754,7 @@ async function viewList(){
           <div class="body"><h3>${esc(r.title)}</h3><small>${r.sharedFrom&&r.sharedNew?'<b class="nw">Nouvelle · </b>':""}${filter.list==="shared"&&senderName(r)?esc(deNom(senderName(r))):esc(r.category||"")}${r.time&&filter.list!=="shared"?" · "+esc(r.time):""}</small></div>
         </a>
         ${r.fav?'<span class="star">★</span>':""}
-        <button type="button" class="cardcart ${shop.sel[r.id]?"on":""}" data-id="${r.id}" aria-label="${shop.sel[r.id]?"Retirer des courses":"Ajouter aux courses"}">${shop.sel[r.id]?"✓":"🛒"}</button>
+        <button type="button" class="cardcart ${shop.sel[r.id]?"on":""}" data-id="${r.id}" aria-label="${shop.sel[r.id]?"Retirer des courses":"Ajouter aux courses"}">${shop.sel[r.id]?"✓":CART_SVG}</button>
       </div>`).join("")}</div>`;
   };
   draw();
@@ -595,7 +768,7 @@ async function viewList(){
     saveShop();updateBadge();
     const on=!!shop.sel[r.id];
     b.classList.toggle("on",on);
-    b.textContent=on?"✓":"🛒";
+    b.innerHTML=on?"✓":CART_SVG;
     b.setAttribute("aria-label",on?"Retirer des courses":"Ajouter aux courses");
   };
   $("#q").oninput=e=>{filter.q=e.target.value;draw()};
@@ -1749,72 +1922,93 @@ async function receiveShared(m){
 
 let lastInvite=null;   // dernier code créé, gardé si la page se redessine
 // Page profil (bouton « ⋯ ») : pseudo, connexion, amis, import
+/* ---------- alertes et feuilles d'action façon iOS ---------- */
+const CHEV_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>`;
+// résout {i,value} (i = index du bouton touché) ou null si on touche à côté ; sheet:true = menu qui monte du bas
+function iosAlert({title,msg="",input=null,actions,sheet=false}){
+  return new Promise(res=>{
+    const w=document.createElement("div");w.className="ios-scrim"+(sheet?" sheet":"");
+    const btn=(a,cls="")=>`<button type="button" data-i="${actions.indexOf(a)}" class="${cls} ${a.danger?"dg":""} ${a.bold?"b":""}">${esc(a.label)}</button>`;
+    w.innerHTML=`<div class="ios-${sheet?"sheet":"alert"}" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
+      <div class="ia-box"><div class="ia-t">${esc(title)}</div>${msg?`<div class="ia-m">${esc(msg)}</div>`:""}${input?`<input class="ia-in" type="text" maxlength="30" value="${esc(input.value||"")}" placeholder="${esc(input.placeholder||"")}" enterkeyhint="done">`:""}
+      <div class="ia-a ${!sheet&&actions.length===2?"two":""}">${actions.filter(a=>!(sheet&&a.cancel)).map(a=>btn(a)).join("")}</div></div>
+      ${sheet?actions.filter(a=>a.cancel).map(a=>btn(a,"ia-c")).join(""):""}</div>`;
+    document.body.appendChild(w);
+    const inp=w.querySelector(".ia-in");
+    if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length)}else w.querySelector("button").focus();
+    let done=false;
+    const close=i=>{if(done)return;done=true;w.classList.add("out");setTimeout(()=>w.remove(),180);res(i==null?null:{i,value:inp?inp.value.trim():""})};
+    w.onclick=e=>{const b=e.target.closest("button[data-i]");if(b)close(+b.dataset.i);else if(e.target===w)close(null)};
+    w.onkeydown=e=>{
+      if(e.key==="Escape")close(null);
+      else if(e.key==="Enter"&&inp){e.preventDefault();close(actions.findIndex(a=>a.bold))}
+    };
+  });
+}
 async function viewProfile(code){
   chrome(false);
   code=cleanCode(code);
   const on=signedIn(),named=!!profile.name;
   const st=syncState.state;
-  const pseudoBlock=`<section class="block"><h3>Pseudo</h3>
-      <p>C’est le nom que tes amis voient. Si tu le changes, il change aussi chez eux.</p>
-      <form class="addrow" id="pf" autocomplete="off" style="margin:0">
-        <input id="pname" type="text" maxlength="30" placeholder="Ton pseudo" value="${esc(profile.name)}" autocomplete="nickname">
-        <button class="btn primary" type="submit">Enregistrer</button>
-      </form></section>`;
-  const accountBlock=`<section class="block"><h3>${on?"Compte":"Connexion"}</h3>
-      <p class="hint" id="syncmsg" aria-live="polite"></p>
-      <form id="authf" class="syncbox" style="border:0;margin:0;padding:0" hidden>
+  const ini=n=>esc((n||"?").trim().charAt(0).toUpperCase()||"?");
+  // déconnecté : connexion d'abord, les amis ensuite
+  const accountBlock=`<h4 class="gh">Connexion</h4>
+    <div class="grp pad"><p class="hint" id="syncmsg" aria-live="polite"></p>
+      <form id="authf" class="syncbox" hidden>
         <input type="email" id="aemail" placeholder="E-mail du compte" autocomplete="username" required>
         <input type="password" id="apass" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password" minlength="6" required>
         <p class="autherr" id="autherr" role="alert"></p>
         <button class="btn primary" type="submit" style="width:100%">Se connecter</button>
-      </form>
-      <button class="btn" type="button" id="signout" hidden>Se déconnecter</button>
-    </section>`;
-  const needName=named?"":`<p class="fhint">Choisis d’abord ton pseudo, plus haut.</p>`;
-  const friendsBlocks=on?`
-    <section class="block"><h3>Mes amis <small class="muted">· ${friends.length}</small></h3>
-      ${friends.length?`<ul class="pick" id="flist">${friends.map(f=>`<li><span class="pt">${esc(f.name||"Ami")}</span><button type="button" class="x" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}">✕</button></li>`).join("")}</ul>`
-        :`<p class="muted" style="margin:0">Personne pour l’instant. Invite un ami ou tape le code qu’il t’a envoyé.</p>`}
-    </section>
-    <section class="block"><h3>Ajouter un ami</h3>
-      <p>Crée un code et envoie-le à ton ami. Il est valable 7 jours et sert à plusieurs amis.</p>
-      <div id="inv"></div>
-      <button class="btn primary" type="button" id="mkinv" ${named?"":"disabled"} ${lastInvite?"hidden":""}>Créer un code d’invitation</button>
-      ${needName}
-      <h3 style="margin-top:18px">J’ai reçu un code</h3>
-      <form class="addrow" id="cf" autocomplete="off" style="margin:0">
-        <input id="icode" type="text" maxlength="12" placeholder="ABCD-EFGH" autocapitalize="characters" autocorrect="off" spellcheck="false" value="${esc(fmtCode(code))}">
-        <button class="btn primary" type="submit" ${named?"":"disabled"}>Ajouter</button>
-      </form>
-      <p class="fhint" id="cmsg" role="status">${named?"":"Choisis d’abord ton pseudo, plus haut."}</p>
-    </section>`
-    :`<section class="block"><h3>Amis</h3>
-      <p style="margin:0">Connecte-toi pour ajouter des amis et leur envoyer des recettes.</p>
-      ${code?`<p style="margin:12px 0 0">Code d’invitation reçu :</p><div class="code">${esc(fmtCode(code))}</div><p class="hint" style="margin:0">Si NoutBook est installé sur ton écran d’accueil, ouvre-le, puis « ⋯ » → « J’ai reçu un code », et tape ce code.</p>`:""}
-    </section>`;
-  const importBlock=`<section class="block"><h3>Importer des recettes</h3>
-      <p>Colle le texte d’une ou de plusieurs recettes (Instagram, sites, notes) : l’app les découpe et tu vérifies avant de les créer.</p>
-      <a class="btn primary" href="#/importer" style="display:block;text-align:center">📋 Importer depuis un texte</a></section>`;
-  view.innerHTML=`<h2 class="title">Mon profil</h2>
-    ${on?pseudoBlock+friendsBlocks+accountBlock:accountBlock+friendsBlocks}
-    ${importBlock}`;
+      </form></div>
+    <h4 class="gh">Amis</h4>
+    <div class="grp pad"><p style="margin:0">Connecte-toi pour ajouter des amis et leur envoyer des recettes.</p>
+      ${code?`<p style="margin:12px 0 0">Code d’invitation reçu :</p><div class="code">${esc(fmtCode(code))}</div><p class="hint" style="margin:0">Si NoutBook est installé sur ton écran d’accueil, ouvre-le, puis « ⋯ » → « J’ai reçu un code », et tape ce code.</p>`:""}</div>`;
+  // connecté : façon Réglages, en listes groupées
+  const signedBlock=`<div class="me"><div class="av big" aria-hidden="true">${ini(profile.name)}</div>
+      <div class="me-n">${esc(profile.name||"Sans pseudo")}</div>
+      <div class="me-s"><span class="sd"></span><span id="syncmsg" aria-live="polite"></span></div></div>
+    <h4 class="gh">Pseudo</h4>
+    ${named?`<div class="grp"><button type="button" class="gr link" id="pedit" aria-label="Modifier ton pseudo : ${esc(profile.name)}"><span class="pt">${esc(profile.name)}</span><span class="chev">${CHEV_SVG}</span></button></div>
+      <p class="gf">C’est le nom que tes amis voient. Touche-le pour le changer.</p>`
+    :`<form class="grp" id="pf" autocomplete="off"><div class="gr"><input id="pname" type="text" maxlength="30" placeholder="Choisis ton pseudo" enterkeyhint="done" autocomplete="nickname" aria-label="Pseudo"></div></form>
+      <p class="gf">C’est le nom que tes amis voient. Valide avec la touche Entrée.</p>`}
+    <h4 class="gh">Mes amis <span>${friends.length}</span></h4>
+    <div class="grp" id="flist">
+      ${friends.map(f=>`<button type="button" class="gr fr" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}"><span class="av" aria-hidden="true">${ini(f.name)}</span><span class="pt">${esc(f.name||"Ami")}</span></button>`).join("")||`<div class="gr muted">Personne pour l’instant.</div>`}
+      <button type="button" class="gr act" id="mkinv" ${named?"":"disabled"} ${lastInvite?"hidden":""}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Inviter un ami</span></button>
+    </div>
+    <div id="inv"></div>
+    <p class="gf">${friends.length?"Touche un ami pour le retirer. ":""}Un code d’invitation est valable 7 jours et sert à plusieurs amis.${named?"":" Choisis d’abord ton pseudo."}</p>
+    <h4 class="gh">J’ai reçu un code</h4>
+    <form class="grp" id="cf" autocomplete="off"><div class="gr"><input id="icode" type="text" maxlength="12" placeholder="ABCD-EFGH" autocapitalize="characters" autocorrect="off" spellcheck="false" value="${esc(fmtCode(code))}" aria-label="Code d’invitation"><button class="tbtn" type="submit" ${named?"":"disabled"}>Ajouter</button></div></form>
+    <p class="gf fhint" id="cmsg" role="status"></p>
+    <div class="grp" style="margin-top:28px"><button class="gr danger" type="button" id="signout">Se déconnecter</button></div>`;
+  view.innerHTML=`<h2 class="title">Mon profil</h2>${on?signedBlock:accountBlock}`;
   renderSync();
-  $("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
+  if(!on){$("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};return}
   $("#signout").onclick=async()=>{
-    if(syncApi&&confirm("Se déconnecter ? Les recettes restent sur cet appareil."))await syncApi.signOut();
+    if(!syncApi)return;
+    const r=await iosAlert({sheet:true,title:"Se déconnecter ?",msg:"Les recettes restent sur cet appareil.",actions:[{label:"Se déconnecter",danger:true},{label:"Annuler",cancel:true}]});
+    if(r&&r.i===0)await syncApi.signOut();
   };
-  if(!on)return;
-  $("#pf").onsubmit=e=>{
-    e.preventDefault();
-    const n=$("#pname").value.trim().slice(0,30);if(!n){$("#pname").focus();return}
-    if(n===profile.name){toast("Pseudo inchangé");return}
+  const saveName=n=>{
+    n=n.trim().slice(0,30);if(!n)return false;
+    if(n===profile.name){toast("Pseudo inchangé");return true}
     profile={...profile,name:n};syncApi.setProfile(n);toast("Pseudo enregistré ✓");
-    $("#pname").blur();viewProfile(code);
+    viewProfile(code);return true;
   };
-  const fl=$("#flist");
-  if(fl)fl.onclick=e=>{
-    const b=e.target.closest("button[data-id]");if(!b)return;
+  if($("#pf"))$("#pf").onsubmit=e=>{e.preventDefault();if(!saveName($("#pname").value))$("#pname").focus();else $("#pname").blur()};
+  if($("#pedit"))$("#pedit").onclick=async()=>{
+    const r1=await iosAlert({title:"Modifier ton pseudo ?",msg:"Tes amis verront le nouveau nom.",actions:[{label:"Annuler",cancel:true},{label:"Modifier",bold:true}]});
+    if(!r1||r1.i!==1)return;
+    const r2=await iosAlert({title:"Nouveau pseudo",input:{value:profile.name,placeholder:"Ton pseudo"},actions:[{label:"Annuler",cancel:true},{label:"OK",bold:true}]});
+    if(r2&&r2.i===1)saveName(r2.value);
+  };
+  $("#flist").onclick=async e=>{
+    const b=e.target.closest(".fr[data-id]");if(!b)return;
     const f=friends.find(x=>x.uid===b.dataset.id);if(!f)return;
+    const r=await iosAlert({sheet:true,title:`Retirer ${f.name||"cet ami"} de tes amis ?`,msg:"Vous ne pourrez plus vous envoyer de recettes.",actions:[{label:"Retirer de mes amis",danger:true},{label:"Annuler",cancel:true}]});
+    if(!r||r.i!==0)return;
     syncApi.removeFriend(f.uid);
     toastUndo("Retiré de tes amis : "+(f.name||"ami"),()=>syncApi.restoreFriend(f));
   };
@@ -1835,7 +2029,7 @@ async function viewProfile(code){
       lastInvite=await syncApi.createInvite();
       if(document.body.contains(b)){showInvite(lastInvite);b.hidden=true}else refreshView();
     }catch(err){
-      b.disabled=false;b.textContent="Créer un code d’invitation";
+      b.disabled=false;b.textContent="Inviter un ami";
       toast(err&&err.message||"Création impossible, réessaie avec du réseau.");
     }
   };

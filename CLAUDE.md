@@ -17,7 +17,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v19`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v20`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -47,7 +47,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 
 ### Direction visuelle
 
-- Papier crème et encre brune, comme un carnet de cuisine. Les photos des recettes apportent la couleur ; l'interface reste sobre autour.
+- Papier crème et encre brune, comme un carnet de cuisine, mis en forme **à la manière d'iOS** (depuis le 2026-10-27, demande de Charles) : barres translucides floutées, police système, listes groupées façon Réglages, contrôle segmenté, alertes et feuilles d'action iOS (`iosAlert()`), retour au toucher immédiat. Les photos des recettes apportent la couleur ; l'interface reste sobre autour.
 - Formes rondes et douces : polices arrondies, coins arrondis partout, pastilles en `999px`.
 - Deux exceptions colorées assumées, propres au panier façon Bring : tuiles rouges « à acheter » et tuiles vert-bleu « catalogue ». Ne pas les ramener dans la palette brune.
 
@@ -61,15 +61,18 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 
 ### Typographie
 
-- Google Fonts : Fredoka (titres, `--serif`, graisse 600-700) et Nunito (texte, `--sans`). Replis `ui-rounded` / `SF Pro Rounded` pour garder l'aspect arrondi hors ligne.
+- Police système d'Apple : SF Pro (`--sans`, `-apple-system`) pour le texte, SF Pro Rounded (`--serif`, `ui-rounded`) pour les titres et l'avatar. Nunito (Google Fonts) ne sert que de repli hors appareils Apple. Fredoka n'est plus chargée.
+- Approche iOS de la typo : grands titres `2.125rem` graisse 800 avec interlettrage négatif (`-.025em`), texte proche de `0`, petits titres de groupe en majuscules `.8125rem` gris.
 - Échelle utilisée : titre de recette `1.8rem`, en-tête `1.35rem`, titres de bloc `1.15–1.2rem`, texte `1rem`, secondaire `.85–.9rem`. Les tuiles et cartes de la grille descendent à `.62–.78rem` pour tenir à 3-4 colonnes sur iPhone : ne pas descendre plus bas.
 - Champs de saisie à `1rem` minimum (en dessous, iOS zoome à la saisie).
 
 ### Formes, ombres, espacements
 
-- Rayons : `--radius` 16px (cartes, blocs, dialogues, galerie), 12px (boutons, champs, tuiles, vignettes), 10px (petits boutons), `999px` (pastilles, recherche, FAB, toast).
-- Ombre unique `--shadow` (`0 2px 10px` brun à 10 %), plus forte seulement pour ce qui flotte (FAB, barre du bas, dialogues).
-- Séparateurs de liste en pointillés `1px dashed var(--line)`.
+- Rayons : 14px (vignettes, tuiles, alertes, fenêtres), 12px (blocs et listes groupées, boutons), 10–11px (champs, recherche, contrôle segmenté), `999px` (puces, bouton « Nouvelle recette », toast).
+- Presque pas d'ombres : les blocs sont des listes groupées sur fond crème. Ombre seulement pour ce qui flotte (bouton « Nouvelle recette », fenêtres). Remplissages doux `--fill` (accent à 9 %) pour les boutons secondaires, puces et champs ; matériaux translucides `--glass` pour l'en-tête et les barres du bas, avec repli `prefers-reduced-transparency`.
+- Séparateurs fins `.5px solid var(--hair)` (plus de pointillés). L'en-tête n'a de trait que quand le contenu défile dessous (`body.scrolled`).
+- Icônes de l'en-tête, du panier des vignettes et du bouton « + » : petits SVG au trait teintés `--accent` (style SF Symbols). Les émojis d'aliments restent sur les tuiles et vignettes.
+- Profil connecté façon Réglages : pseudo modifiable au toucher (alerte de confirmation puis alerte avec champ, pas de bouton Enregistrer visible), amis retirés au toucher après feuille de confirmation (pas de croix), pas de bloc d'import (l'import reste dans « Nouvelle recette »).
 - Marges de page 16px, largeur max 900px, grilles à espacement 8px (12px au-delà de 640px).
 
 ### Mise en page et ergonomie mobile
