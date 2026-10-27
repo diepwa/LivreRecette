@@ -21,6 +21,7 @@
   --radius:16px; --shadow:0 2px 10px rgba(90,65,30,.10);
   --serif:"Fredoka","Nunito",ui-rounded,"SF Pro Rounded",system-ui,sans-serif;
   --sans:"Nunito",ui-rounded,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --ease-out:cubic-bezier(.23,1,.32,1); --ease-in-out:cubic-bezier(.77,0,.175,1);
 }
 @media (prefers-color-scheme:dark){
   :root{--bg:#1b1712; --card:#26201a; --ink:#f0e8da; --muted:#b3a68f; --line:#3a3228; --accent:#d9c3a0; --accent-ink:#1b1712; --accent-soft:#3a3126; --shadow:0 2px 10px rgba(0,0,0,.4)}
@@ -236,16 +237,16 @@ section.block p{margin:0 0 12px}
 .icongrid button[aria-pressed=true]{border:2px solid var(--accent);background:var(--accent-soft)}
 .tab:focus-visible,ul.opts button:focus-visible,.btn:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* écran de lancement : le chat, NoutBook écrit lettre par lettre, puis un cercle qui s'agrandit jusqu'à l'accueil */
-#splash{position:fixed;inset:0;z-index:9999;background:#ece3d5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden}
-#splash .ring{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:var(--bg);transform:scale(0);animation:splash-ring .8s cubic-bezier(.65,0,.35,1) 1.7s forwards}
-#splash .fg{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;animation:splash-out .3s ease-in 1.8s forwards}
-#splash img{width:min(64vw,300px);height:auto;opacity:0;transform:scale(.7);animation:splash-in .55s cubic-bezier(.2,1.3,.4,1) .1s forwards}
+/* le cercle découpe le splash lui-même (clip-path) : c'est le vrai accueil qui apparaît dessous. Toucher l'écran passe l'animation */
+#splash{position:fixed;inset:0;z-index:9999;background:#ece3d5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden;clip-path:circle(150% at 50% 50%);animation:splash-open .6s var(--ease-in-out) 1.05s forwards}
+#splash.skip{animation:splash-open .3s var(--ease-out) forwards}
+#splash .fg{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px}
+#splash img{width:min(64vw,300px);height:auto;opacity:0;transform:scale(.7);animation:splash-in .5s cubic-bezier(.2,1.3,.4,1) .05s forwards}
 #splash .stext{display:flex;font-family:var(--serif);font-weight:700;font-size:2.1rem;letter-spacing:.03em;color:#4a3a28;line-height:1}
-#splash .stext span{opacity:0;transform:translateY(7px) rotate(-5deg);animation:splash-letter .2s ease-out forwards;animation-delay:calc(.75s + var(--i)*.1s)}
+#splash .stext span{opacity:0;transform:translateY(7px) rotate(-5deg);animation:splash-letter .2s var(--ease-out) forwards;animation-delay:calc(.45s + var(--i)*.06s)}
 @keyframes splash-in{to{opacity:1;transform:scale(1)}}
 @keyframes splash-letter{to{opacity:1;transform:none}}
-@keyframes splash-out{to{opacity:0;transform:scale(1.06)}}
-@keyframes splash-ring{to{transform:scale(60)}}
+@keyframes splash-open{to{clip-path:circle(0% at 50% 50%)}}
 @media (prefers-color-scheme:dark){#splash{background:#26201a}#splash .stext{color:#f0e8da}}
 @media (prefers-reduced-motion:reduce){#splash{display:none}}
 /* import de recettes depuis un texte */
@@ -283,17 +284,54 @@ section.block p{margin:0 0 12px}
 .impbar .btn{flex:1;text-align:center;min-height:46px}
 .impbar .btn.primary{flex:2}
 .btn:disabled{opacity:.5;cursor:default}
+/* mouvement (philosophie Emil Kowalski) : retour immédiat au toucher, entrées/sorties courtes, rien sur les actions très fréquentes */
+.btn,.fab,.impcta,.tile,.cardcart,.step button,ul.pick .x,ul.shop .x,.sbtn,.tpill .ic,.icongrid button{transition:transform 160ms var(--ease-out)}
+.btn:active:not(:disabled),.fab:active{transform:scale(.97)}
+.tile{transition-duration:120ms}
+.cardcart:active,.step button:active,ul.pick .x:active,ul.shop .x:active,.sbtn:active,.tpill .ic:active,.icongrid button:active{transform:scale(.92)}
+ul.shop li:active,ul.ing li:active{background:var(--accent-soft)}
+dialog[open]{opacity:1;transform:none;transition:opacity 200ms var(--ease-out),transform 200ms var(--ease-out),overlay 200ms allow-discrete,display 200ms allow-discrete}
+@starting-style{dialog[open]{opacity:0;transform:scale(.96)}}
+dialog{opacity:0;transform:scale(.96);transition:opacity 150ms var(--ease-out),transform 150ms var(--ease-out),overlay 150ms allow-discrete,display 150ms allow-discrete}
+dialog[open]::backdrop{background:rgba(0,0,0,.5);transition:background-color 200ms var(--ease-out),overlay 200ms allow-discrete,display 200ms allow-discrete}
+@starting-style{dialog[open]::backdrop{background:rgba(0,0,0,0)}}
+dialog::backdrop{background:rgba(0,0,0,0);transition:background-color 150ms var(--ease-out),overlay 150ms allow-discrete,display 150ms allow-discrete}
+.toast{opacity:1;transform:translate(-50%,0);transition:opacity 250ms var(--ease-out),transform 250ms var(--ease-out)}
+@starting-style{.toast{opacity:0;transform:translate(-50%,100%)}}
+.toast.out{opacity:0;transform:translate(-50%,100%);transition-duration:150ms}
+.toast span{transition:filter 120ms ease,opacity 120ms ease}
+.toast.swap span{filter:blur(2px);opacity:.6}
+.lightbox{opacity:1;transition:opacity 200ms var(--ease-out)}
+.lightbox img{transform:none;transition:transform 200ms var(--ease-out)}
+@starting-style{.lightbox{opacity:0}.lightbox img{transform:scale(.96)}}
+.lightbox.out{opacity:0;transition-duration:150ms}
+.lightbox.out img{transform:scale(.96);transition-duration:150ms}
+/* appui long sur une tuile : un voile se remplit pendant les 520 ms, puis le menu s'ouvre */
+.tile::before{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.28);clip-path:inset(0 100% 0 0);transition:clip-path 150ms var(--ease-out);pointer-events:none}
+.tile.add::before{background:color-mix(in srgb,var(--cat) 25%,transparent)}
+.tile.lp::before{clip-path:inset(0 0 0 0);transition:clip-path 400ms linear 120ms}
+@media (prefers-reduced-motion:reduce){
+  /* moins de mouvement, pas zéro : on garde les fondus, on retire les déplacements et les changements de taille */
+  .btn,.fab,.impcta,.tile,.cardcart,.step button,ul.pick .x,ul.shop .x,.sbtn,.tpill .ic,.icongrid button{transition:none;transform:none!important}
+  dialog,.lightbox img{transform:none!important}
+  .toast,.toast.out{transform:translate(-50%,0)!important}
+  .tile::before{clip-path:none;opacity:0;transition:opacity 150ms ease}
+  .tile.lp::before{opacity:1;transition:opacity 200ms ease 320ms}
+}
 @media print{#splash{display:none}.searchbar{display:none}}
 @media print{.impbar,.impcta{display:none}}
 @media print{header.top,.fab,.actions{display:none}body{background:#fff;color:#000}section.block{box-shadow:none;border:1px solid #ccc}}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><span class="ring"></span><div class="fg"><img src="icons/splash.png" alt=""><div class="stext"><span style="--i:0">N</span><span style="--i:1">o</span><span style="--i:2">u</span><span style="--i:3">t</span><span style="--i:4">B</span><span style="--i:5">o</span><span style="--i:6">o</span><span style="--i:7">k</span></div></div></div>
+<div id="splash" aria-hidden="true"><div class="fg"><img src="icons/splash.png" alt=""><div class="stext"><span style="--i:0">N</span><span style="--i:1">o</span><span style="--i:2">u</span><span style="--i:3">t</span><span style="--i:4">B</span><span style="--i:5">o</span><span style="--i:6">o</span><span style="--i:7">k</span></div></div></div>
 <script>
 (function(){var s=document.getElementById("splash");
 try{if(sessionStorage.getItem("splash-vu")){s.remove();return}sessionStorage.setItem("splash-vu","1")}catch(e){}
-setTimeout(function(){s.remove()},2800)})();
+var done=function(){s.remove()};
+s.addEventListener("animationend",function(e){if(e.target===s)done()});
+s.addEventListener("pointerdown",function(){s.classList.add("skip")});
+setTimeout(done,2200)})();
 </script>
 <header class="top">
   <button class="icon-btn" id="back" hidden aria-label="Retour">←</button>
@@ -428,7 +466,27 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const lines=t=>String(t||"").split("\n").map(l=>l.trim()).filter(Boolean);
-function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+/* un seul toast à l'écran : il entre et sort par le bas, change de texte sur place, et son minuteur s'arrête quand l'app passe en arrière-plan */
+let toastEl=null,toastLeft=0,toastAt=0,toastT=null;
+function toastHide(){
+  clearTimeout(toastT);const t=toastEl;if(!t)return;toastEl=null;
+  t.classList.add("out");setTimeout(()=>t.remove(),160);
+}
+function toastRun(ms){toastLeft=ms;toastAt=Date.now();clearTimeout(toastT);toastT=setTimeout(toastHide,ms)}
+document.addEventListener("visibilitychange",()=>{
+  if(!toastEl)return;
+  if(document.hidden){clearTimeout(toastT);toastLeft=Math.max(0,toastLeft-(Date.now()-toastAt))}
+  else toastRun(Math.max(toastLeft,1500));
+});
+function toastShow(msg,ms,undo){
+  let t=toastEl;
+  if(t){t.classList.add("swap");requestAnimationFrame(()=>requestAnimationFrame(()=>t&&t.classList.remove("swap")))}
+  else{t=toastEl=document.createElement("div");t.className="toast";document.body.appendChild(t)}
+  const s=document.createElement("span");s.textContent=msg;t.replaceChildren(s);
+  if(undo){const b=document.createElement("button");b.type="button";b.textContent="Annuler";b.onclick=()=>{toastHide();undo()};t.append(b)}
+  toastRun(ms);
+}
+function toast(m){toastShow(m,2200)}
 function resizeImage(file,max=1024,q=.75){
   return new Promise((res,rej)=>{
     const url=URL.createObjectURL(file),img=new Image();
@@ -571,7 +629,7 @@ async function viewDetail(id){
   view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=()=>li.classList.toggle("done"));
   view.querySelectorAll(".gallery img").forEach(im=>im.onclick=()=>{
     const lb=document.createElement("div");lb.className="lightbox";lb.innerHTML=`<img src="${im.src}" alt="">`;
-    lb.onclick=()=>lb.remove();document.body.appendChild(lb);
+    lb.onclick=()=>{lb.classList.add("out");setTimeout(()=>lb.remove(),160)};document.body.appendChild(lb);
   });
   $("#fav").onclick=async()=>{r.fav=!r.fav;touch(r);await putRecipe(r);viewDetail(id)};
   $("#pdf").onclick=()=>shareRecipePdf(r);
@@ -1365,15 +1423,7 @@ function openPdfDialog(file){
   $("#pdfdlg").showModal();
 }
 
-function toastUndo(msg,fn){
-  document.querySelectorAll(".toast").forEach(t=>t.remove());
-  const t=document.createElement("div");t.className="toast";
-  const s=document.createElement("span");s.textContent=msg;
-  const b=document.createElement("button");b.type="button";b.textContent="Annuler";
-  b.onclick=()=>{t.remove();fn()};
-  t.append(s,b);document.body.appendChild(t);
-  setTimeout(()=>t.remove(),4500);
-}
+function toastUndo(msg,fn){toastShow(msg,4500,fn)}
 async function copyText(t){
   try{await navigator.clipboard.writeText(t);return true}catch(e){}
   try{
@@ -1511,11 +1561,13 @@ async function viewCourses(){
     $("#tdclose").onclick=()=>dlg.close();
     dlg.showModal();
   };
-  const stop=()=>clearTimeout(lpTimer);
+  let lpTile=null;
+  const stop=()=>{clearTimeout(lpTimer);if(lpTile){lpTile.classList.remove("lp");lpTile=null}};
   bind("pointerdown",e=>{
     lpFired=false;stop();
     const t=e.target.closest(".tile[data-k]");if(!t)return;
-    lpTimer=setTimeout(()=>{lpFired=true;openMenu(t)},520);
+    lpTile=t;t.classList.add("lp");
+    lpTimer=setTimeout(()=>{lpFired=true;stop();openMenu(t)},520);
   });
   ["pointerup","pointercancel","pointerleave"].forEach(ev=>bind(ev,stop));
   bind("contextmenu",e=>{if(e.target.closest(".tile"))e.preventDefault()});
