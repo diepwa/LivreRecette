@@ -156,6 +156,9 @@ ul.pick .x{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:p
 .dot{position:absolute;top:6px;right:5px;width:11px;height:11px;border-radius:50%;border:2px solid var(--bg);background:var(--muted)}
 .dot.green{background:#3f9d55}.dot.orange{background:#e0a030}.dot.red{background:#d64545}
 dialog{max-height:88vh;max-height:88dvh;overflow:auto;overscroll-behavior:contain}
+/* fenêtres avec un champ de saisie : ancrées en haut, pour rester visibles quand le clavier iPhone monte */
+#namedlg,#listdlg{margin:calc(env(safe-area-inset-top) + 48px) auto auto;max-height:min(70vh,calc(100dvh - 340px))}
+.ios-scrim.kb{align-items:flex-start;padding-top:calc(env(safe-area-inset-top) + 64px)}
 .syncbox{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .syncbox .hint{margin:0 0 10px}
 .syncbox input{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1rem;margin-bottom:8px}
@@ -1933,7 +1936,7 @@ const CHEV_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 
 // résout {i,value} (i = index du bouton touché) ou null si on touche à côté ; sheet:true = menu qui monte du bas
 function iosAlert({title,msg="",input=null,actions,sheet=false}){
   return new Promise(res=>{
-    const w=document.createElement("div");w.className="ios-scrim"+(sheet?" sheet":"");
+    const w=document.createElement("div");w.className="ios-scrim"+(sheet?" sheet":"")+(input?" kb":"");
     const btn=(a,cls="")=>`<button type="button" data-i="${actions.indexOf(a)}" class="${cls} ${a.danger?"dg":""} ${a.bold?"b":""}">${esc(a.label)}</button>`;
     w.innerHTML=`<div class="ios-${sheet?"sheet":"alert"}" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
       <div class="ia-box"><div class="ia-t">${esc(title)}</div>${msg?`<div class="ia-m">${esc(msg)}</div>`:""}${input?`<input class="ia-in" type="text" maxlength="30" value="${esc(input.value||"")}" placeholder="${esc(input.placeholder||"")}" enterkeyhint="done">`:""}
