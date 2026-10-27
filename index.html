@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ece3d5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1b1712" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2162,6 +2162,9 @@ function viewImportText(){
 /* ---------- boot ---------- */
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+// pas de zoom : iOS ignore user-scalable=no, on bloque donc aussi le pincement à la main
+for(const ev of ["gesturestart","gesturechange","gestureend"])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
+document.addEventListener("touchmove",e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
 route();
 bootSync();
 </script>
