@@ -86,6 +86,7 @@ Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'e
 - Colle le texte d’une recette (légende Instagram, page d’un site, note) ou de plusieurs à la suite. Le bouton « 📄 Fichiers texte » ajoute des fichiers `.txt`.
 - L’app repère le titre, « Pour 4 personnes », les durées, les intertitres « Ingrédients », « Préparation », « Astuce »… Les conseils et l’intro vont dans « Notes », les hashtags qui correspondent à tes tags deviennent des tags.
 - Plusieurs recettes : elles sont reconnues à chaque nouvel intertitre « Ingrédients ». Si deux recettes se mélangent, sépare-les par une ligne `---`.
+- « Ranger dans » : choisis une liste existante ou crée-en une (« ＋ Nouvelle liste… ») ; toutes les recettes importées y vont, et l’accueil s’ouvre ensuite sur cette liste.
 - Tu vérifies et corriges chaque recette avant de la créer. Une recette au même nom qu’une recette existante est décochée : rien n’est jamais remplacé.
 - Tout se fait sur le téléphone, sans réseau. Les photos s’ajoutent ensuite depuis la recette (« Modifier »).
 

@@ -251,6 +251,9 @@ section.block p{margin:0 0 12px}
 .impcta>span:first-child{font-size:1.5rem;flex:none}
 .impcta b{color:var(--accent)}
 .impcta:active{transform:scale(.98)}
+.implist{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.implist label{font-weight:600;font-size:.95rem;flex:none}
+.implist select{flex:1;min-width:0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1rem}
 .imp{padding:10px 14px 12px}
 .imp.off{opacity:.55}
 .imphead{display:flex;align-items:center;gap:4px}
@@ -1951,7 +1954,9 @@ async function viewImport(){
   if(!impDraft.items)return viewImportText();
   const rs=await allRecipes();
   const have=new Set(rs.map(r=>tagKey(r.title)).filter(Boolean));
-  const items=impDraft.items,list=impDraft.list&&lists[impDraft.list]&&!lists[impDraft.list].deleted?lists[impDraft.list]:null;
+  const items=impDraft.items;
+  const listOk=id=>!!id&&!!lists[id]&&!lists[id].deleted;
+  if(!listOk(impDraft.list))impDraft.list="";
   const isDup=(it,i)=>{const k=tagKey(it.title);return !!k&&(have.has(k)||items.slice(0,i).some(o=>o.on&&tagKey(o.title)===k))};
   const one=items.length===1;
   const sum=it=>{
@@ -1988,7 +1993,9 @@ async function viewImport(){
   const nDup=items.filter(it=>it.dup).length;
   view.innerHTML=`
     <h2 class="title">${one?"Vérifie la recette":"Vérifie les recettes"}</h2>
-    <p class="hint">${one?"Corrige ce qui doit l’être, puis crée-la. Tu pourras ajouter des photos ensuite.":`J’ai trouvé ${items.length} recettes${nDup?`, dont ${nDup} déjà dans ton livre (décochée${nDup>1?"s":""})`:""}. Décoche celles que tu ne veux pas.`}${list?` Elles iront dans la liste « ${esc(list.name)} ».`:""}</p>
+    <p class="hint">${one?"Corrige ce qui doit l’être, puis crée-la. Tu pourras ajouter des photos ensuite.":`J’ai trouvé ${items.length} recettes${nDup?`, dont ${nDup} déjà dans ton livre (décochée${nDup>1?"s":""})`:""}. Décoche celles que tu ne veux pas.`}</p>
+    <div class="implist"><label for="impl">Ranger dans</label>
+      <select id="impl"><option value="">Aucune liste</option>${activeLists(lists).map(l=>`<option value="${esc(l.id)}" ${l.id===impDraft.list?"selected":""}>${esc(l.name)}</option>`).join("")}<option value="+">＋ Nouvelle liste…</option></select></div>
     <form id="impr" autocomplete="off">${items.map(card).join("")}</form>
     <div class="impspace"></div>
     <div class="impbar"><div>
@@ -1996,6 +2003,12 @@ async function viewImport(){
       <button class="btn primary" type="submit" form="impr" id="impgo"></button>
     </div></div>`;
   const go=$("#impgo");
+  $("#impl").onchange=e=>{
+    const v=e.target.value;
+    if(v!=="+"){impDraft.list=v;return}
+    e.target.value=impDraft.list;   // en attendant le nom (ou si on annule)
+    askName("Nouvelle liste","",n=>{impDraft.list=createList(n);viewImport()});
+  };
   const label=()=>{const n=nOn();go.disabled=!n;go.textContent=!n?"Rien à créer":n===1?"Créer la recette":`Créer les ${n} recettes`};
   label();
   const refreshCard=sec=>{
@@ -2042,7 +2055,7 @@ async function viewImport(){
         const rec={id:uid(),title:it.title.trim().slice(0,120),category:CATS.includes(it.category)?it.category:"Plat",
           time:it.time.trim(),servings:it.servings,ingredients:it.ingredients,steps:it.steps,notes:it.notes.trim(),
           photos:[],fav:false,tags:it.tags.slice(),created:now-made.length,updated:now-made.length};
-        if(list)rec.lists=[impDraft.list];
+        if(listOk(impDraft.list))rec.lists=[impDraft.list];
         await putRecipe(rec);
         made.push(rec);it.on=false;it.made=true;
       }
@@ -2052,6 +2065,7 @@ async function viewImport(){
       alert(`${made.length} recette(s) créée(s), puis un souci : ${err.message}`);
       return impDraft.items.length?viewImport():(location.hash="#/");
     }
+    if(listOk(impDraft.list)){filter.list=impDraft.list;filter.cat="all";filter.tags=[];filter.q=""}
     impDraft={text:"",items:null,list:null};
     toast(made.length===1?"Recette créée ✓":`${made.length} recettes créées ✓`);
     location.hash=made.length===1?"#/r/"+made[0].id:"#/";
