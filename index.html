@@ -349,10 +349,26 @@ header.top h1 .hsw:active{transform:scale(.97);opacity:.7}
 header.top h1 .hchev{flex:none;display:inline-flex;color:var(--muted);align-self:center}
 header.top h1 .hchev svg{width:.5em;height:.5em;min-width:13px;min-height:13px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 header.top h1 .hsw.in .ht,header.top h1 .hsw.in .hc{animation:swin .22s var(--ease-out)}
+.lmenu-scrim{position:fixed;inset:0;z-index:100;animation:ia-fade .15s ease-out}
+.lmenu-scrim.out{opacity:0;transition:opacity .15s}
+.lmenu{position:fixed;width:min(290px,calc(100vw - 16px));max-height:min(62vh,460px);overflow-y:auto;-webkit-overflow-scrolling:touch;background:color-mix(in srgb,var(--card) 95%,transparent);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);border-radius:14px;box-shadow:0 10px 40px rgba(20,12,4,.22),0 0 0 .5px var(--hair);transform-origin:16px 0;animation:lm-in .22s var(--ease-out)}
+@keyframes lm-in{from{opacity:0;transform:scale(.9) translateY(-6px)}}
+.lmi{display:flex;align-items:center;gap:6px;width:100%;min-height:46px;padding:0 14px 0 8px;border:0;background:none;font:inherit;font-size:1.0625rem;letter-spacing:-.02em;color:var(--ink);text-align:left;cursor:pointer}
+.lmi+.lmi{box-shadow:inset 0 .5px 0 var(--hair)}
+.lmi:active{background:var(--fill)}
+.lmi .ck{width:22px;flex:none;display:flex;color:var(--accent)}
+.lmi .ck svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.lmi .pt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lmi.on .pt{font-weight:600}
+.lmi .lc{color:var(--muted);font-size:.9375rem;flex:none}
+.lmi .n{background:var(--buy);color:#fff;font-size:.75rem;font-weight:600;border-radius:10px;min-width:20px;padding:1px 6px;text-align:center;flex:none}
+.lmi .ln{display:flex;flex:none;color:var(--accent);margin-left:4px}
+.lmi .ln svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lsep{height:7px;background:color-mix(in srgb,var(--ink) 7%,transparent)}
 main.swin{animation:swfade .24s var(--ease-out)}
 @keyframes swin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes swfade{from{opacity:.35}to{opacity:1}}
-@media (prefers-reduced-motion:reduce){header.top h1 .hsw,header.top h1 .hsw.in .ht,header.top h1 .hsw.in .hc,main.swin{animation:none;transition:none}}
+@media (prefers-reduced-motion:reduce){header.top h1 .hsw,header.top h1 .hsw.in .ht,header.top h1 .hsw.in .hc,main.swin,.lmenu,.lmenu-scrim{animation:none;transition:none}}
 header.top h1 .hc{font-family:var(--sans);font-weight:500;font-size:.5em;color:var(--muted);letter-spacing:0;align-self:center;flex:none}
 #addbtn svg{stroke-width:2.2}
 .icon-btn{color:var(--accent);width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;transition:transform .1s var(--ease-out)}
@@ -807,8 +823,31 @@ function updateBadge(){
 const isHome=()=>["","#","#/"].includes(location.hash);
 const LIST_NAMES={mine:"Ma liste",shared:"Partagées",all:"Toutes les recettes"};
 const listName=(k,l)=>l?l.name:LIST_NAMES[k]||"Ma liste";
-// ordre du défilement au toucher du grand titre : le même que la page Listes
-const listOrder=ls=>["mine","shared","all",...ls.map(l=>l.id)];
+// menu du grand titre de l'accueil : toutes les listes, dans l'ordre de la page Listes
+function openListMenu(rs,ls,unseen){
+  const btn=$("#hsw");if(!btn||document.querySelector(".lmenu"))return;
+  const count=k=>new Set(rs.filter(r=>inList(r,k,lists)).map(r=>r.id)).size;
+  const item=k=>{
+    const l=ls.find(x=>x.id===k),on=filter.list===k;
+    return `<button type="button" role="menuitemradio" aria-checked="${on}" class="lmi${on?" on":""}" data-l="${esc(k)}">
+      <span class="ck" aria-hidden="true">${on?CHECK_SVG:""}</span><span class="pt">${esc(listName(k,l))}</span>${k==="shared"&&unseen?`<span class="n">${unseen}</span>`:""}<span class="lc">${count(k)}</span><span class="ln" aria-hidden="true">${LIST_ICONS[l?"list":k]}</span></button>`;
+  };
+  const w=document.createElement("div");w.className="lmenu-scrim";
+  const r=btn.getBoundingClientRect();
+  w.innerHTML=`<div class="lmenu" role="menu" aria-label="Choisir une liste" style="top:${Math.round(r.bottom+6)}px;left:${Math.max(8,Math.round(r.left-4))}px">
+    ${["mine","shared","all"].map(item).join("")}${ls.length?`<div class="lsep" role="separator"></div>${ls.map(l=>item(l.id)).join("")}`:""}</div>`;
+  document.body.appendChild(w);btn.setAttribute("aria-expanded","true");
+  (w.querySelector(".lmi.on")||w.querySelector(".lmi")).focus({preventScroll:true});
+  let done=false;
+  const close=k=>{
+    if(done)return;done=true;btn.setAttribute("aria-expanded","false");
+    w.classList.add("out");setTimeout(()=>w.remove(),160);
+    if(k&&k!==filter.list){filter.list=k;filter.cat="all";filter.tags=[];switchAnim=true;window.scrollTo(0,0);viewList()}
+  };
+  w.onclick=e=>{const b=e.target.closest(".lmi");close(b?b.dataset.l:null)};
+  w.onkeydown=e=>{if(e.key==="Escape")close(null)};
+  addEventListener("hashchange",()=>close(null),{once:true});
+}
 const SWAP_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 9 4-4 4 4M8 15l4 4 4-4"/></svg>`;
 let switchAnim=false;
 function setListsBadge(n){const b=$("#lbadge");b.hidden=!n;b.textContent=n;b.setAttribute("aria-label",n+" recette(s) reçue(s)")}
@@ -822,9 +861,8 @@ async function viewList(){
   const unseen=rs.filter(r=>r.sharedFrom&&r.sharedNew).length;
   const inCur=rs.filter(r=>inList(r,filter.list,lists));
   const curCount=new Set(inCur.map(r=>r.id)).size;   // count distinct : une recette compte une fois par liste
-  const order=listOrder(ls),nxt=order[(order.indexOf(filter.list)+1)%order.length];
-  $("#htitle").innerHTML=`${LOGO}<button type="button" class="hsw${switchAnim?" in":""}" id="hsw" aria-label="${esc(listName(filter.list,curList))}, ${curCount} recette(s). Toucher pour passer à ${esc(listName(nxt,ls.find(l=>l.id===nxt)))}"><span class="ht">${esc(listName(filter.list,curList))}</span><span class="hc">${curCount}</span><span class="hchev" aria-hidden="true">${SWAP_SVG}</span></button>`;
-  $("#hsw").onclick=()=>{filter.list=nxt;filter.cat="all";filter.tags=[];switchAnim=true;window.scrollTo(0,0);viewList()};
+  $("#htitle").innerHTML=`${LOGO}<button type="button" class="hsw${switchAnim?" in":""}" id="hsw" aria-haspopup="menu" aria-expanded="false" aria-label="${esc(listName(filter.list,curList))}, ${curCount} recette(s). Choisir une autre liste"><span class="ht">${esc(listName(filter.list,curList))}</span><span class="hc">${curCount}</span><span class="hchev" aria-hidden="true">${SWAP_SVG}</span></button>`;
+  $("#hsw").onclick=()=>openListMenu(rs,ls,unseen);
   if(switchAnim){switchAnim=false;view.classList.add("swin");setTimeout(()=>view.classList.remove("swin"),260)}
   setListsBadge(unseen);
   view.innerHTML=`
@@ -2646,7 +2684,7 @@ const CLICK_BOX={sendopts:"choisir un ami (partage)",listopts:"choisir une liste
   picklist:"choisir une recette (planning)",sugg:"suggestion d'article",tsugg:"suggestion de tag",chips:"filtre catégorie",
   tchips:"filtre tag",tpills:"retirer un tag (formulaire)",lmine:"choisir une liste"};
 const CLICK_CLS=[["cl","carte recette"],["cardcart","panier (carte)"],["tile","tuile du panier"],["pslot","créneau repas"],
-  ["pt","recette du planning"],["pcart","voir le panier (planning)"],["lrow","choisir une liste"],["hsw","liste suivante (titre)"],["lmore","options de la liste"],
+  ["pt","recette du planning"],["pcart","voir le panier (planning)"],["lrow","choisir une liste"],["hsw","menu des listes (titre)"],["lmi","choisir une liste (menu du titre)"],["lmore","options de la liste"],
   ["fr","ami"],["impcta","importer des recettes"],["impcb","cocher une recette (import)"],["ic","icône de tag"],["rm","retirer un tag"],
   ["tag","tag de la fiche"],["ricon","modifier la recette"]];
 function clickName(el){
