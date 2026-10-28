@@ -1024,7 +1024,8 @@ async function viewForm(id){
     });
     if(!rec.title){$("#title").focus();return}
     try{await putRecipe(rec)}catch(err){alert("Impossible d’enregistrer (espace plein ?). "+err.message);return}
-    track(r?"Recette modifiée":"Recette créée",{photos:photos.length,tags:tags.length,source:"manuel"});
+    if(r)track("Recette modifiée",{photos:photos.length,tags:tags.length});
+    else track("recipe_add",{source:"manuel",photos:photos.length,tags:tags.length});
     toast("Recette enregistrée ✓");
     location.hash="#/r/"+rec.id;
   };
@@ -2215,7 +2216,7 @@ function openSendDlg(r){
     const to=friends.filter(f=>sel.has(f.uid));
     d.close();
     syncApi.sendRecipe(to,r);
-    track("Recette partagée",{destinataires:to.length});
+    track("recipe_share",{destinataires:to.length});
     toast("Copie envoyée à "+to.map(f=>f.name||"ton ami").join(", "));
   };
   $("#sendclose").onclick=()=>d.close();
@@ -2807,6 +2808,7 @@ async function viewImport(){
         if(listOk(impDraft.list))rec.lists=[impDraft.list];
         await putRecipe(rec);
         made.push(rec);it.on=false;it.made=true;
+        track("recipe_add",{source:"import",photos:0,tags:rec.tags.length});
       }
     }catch(err){
       // ce qui est créé reste créé ; la relecture ne garde que le reste, pour ne rien créer deux fois
