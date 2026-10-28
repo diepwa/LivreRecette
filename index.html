@@ -191,7 +191,6 @@ dialog{max-height:88vh;max-height:88dvh;overflow:auto;overscroll-behavior:contai
 .sugg h3{font-family:var(--serif);font-size:.95rem;margin:0 0 8px}
 .sbtn{width:46px;height:46px;border-radius:50%;border:0;background:var(--cat);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;flex:none;padding:0}
 .btn.sm{padding:7px 12px;font-size:.85rem;border-radius:10px}
-.actions.tight{flex-wrap:nowrap;gap:8px}
 .recap{margin:16px 0 4px}
 .recap h3{font-family:var(--serif);font-size:1rem;font-weight:600;margin:0 0 8px;display:flex;align-items:center;gap:6px}
 .recap ul.pick{display:flex;flex-direction:column;gap:6px}
@@ -624,15 +623,6 @@ setTimeout(done,2200)})();
     <button class="btn primary" type="button" id="pdfshare" hidden>Partager…</button>
     <a class="btn" id="pdfdl" style="text-align:center">Télécharger / ouvrir le PDF</a>
     <button class="btn" type="button" id="pdfclose">Fermer</button>
-  </div>
-</dialog>
-
-<dialog id="cleardlg">
-  <h3>Vider la liste ?</h3>
-  <p>Les recettes ajoutées et les produits de la liste seront retirés. Les repas planifiés restent. Ton historique d’achats est conservé.</p>
-  <div class="row2">
-    <button class="btn" type="button" id="clearno">Annuler</button>
-    <button class="btn primary" type="button" id="clearyes">Oui, vider</button>
   </div>
 </dialog>
 
@@ -1844,13 +1834,8 @@ async function viewCourses(){
     cw.innerHTML=`
       <section class="tsec">
         <h3>À acheter <span class="cnt">${items.length}</span></h3>
-        ${items.length?`<div class="tgrid">${items.map(i=>tile("buy",i)).join("")}</div>
-          <p class="hint">Touche une tuile quand c’est dans ton chariot. Appui long : options.</p>`
+        ${items.length?`<div class="tgrid">${items.map(i=>tile("buy",i)).join("")}</div>`
           :`<p class="hint box">${selected.length?"Tout est dans le chariot 🎉":"Ta liste est vide. Touche un produit ci-dessous, cherche-le avec « Il me faut… », ou ajoute une recette depuis l’accueil."}</p>`}
-        <div class="actions tight" style="margin-top:10px">
-          <button class="btn sm primary" type="button" id="copy" ${items.length?"":"disabled"}>📋 Copier la liste</button>
-          <button class="btn sm danger" type="button" id="clear" ${cur.manual.length||shop.extra.length||Object.keys(shop.have).length?"":"disabled"}>Vider</button>
-        </div>
       </section>
       ${cur.meals.length?`<section class="recap">
         <h3>Repas planifiés <small class="muted">· ${cur.meals.length}</small></h3>
@@ -1876,7 +1861,6 @@ async function viewCourses(){
     drawCat();
     window.scrollTo(0,y);
 
-    const text=()=>items.map(i=>i.qty?`${i.name} (${i.qty})`:i.name).join("\n");
     cw.querySelectorAll("ul.pick li[data-slot]").forEach(li=>{
       li.querySelector("[data-unplan]").onclick=()=>{unplan(li.dataset.slot);draw()};
     });
@@ -1888,17 +1872,6 @@ async function viewCourses(){
       });
       li.querySelector("[data-rm]").onclick=()=>{removeRecipeFromCart(shop,id,planned().length);saveShop();updateBadge();draw()};
     });
-    $("#copy").onclick=async()=>{toast(await copyText(text())?"Liste copiée ✓":"Copie impossible")};
-    $("#clear").onclick=()=>{
-      const cd=$("#cleardlg");
-      $("#clearno").onclick=()=>cd.close();
-      $("#clearyes").onclick=()=>{
-        cd.close();
-        shop=normalizeShop({freq:shop.freq,basics:shop.basics});
-        saveShop();updateBadge();draw();
-      };
-      cd.showModal();
-    };
   };
 
   const bind=(ev,fn)=>{cw.addEventListener(ev,fn);sugg.addEventListener(ev,fn)};
@@ -2660,8 +2633,7 @@ function bootAnalytics(){
 const CLICK_ID={
   back:"retour",addbtn:"nouvelle recette",del:"supprimer la recette",cart:"panier (fiche)",fav:"favori",lists:"ranger dans une liste",
   send:"partager avec un ami",pdf:"télécharger en PDF",signout:"se déconnecter",pedit:"modifier le pseudo",avbtn:"photo de profil",
-  mkinv:"inviter un ami",addfr:"ajouter un ami",newlistrow:"nouvelle liste",cpp:"copier le pseudo",copy:"copier la liste de courses",
-  clear:"vider le panier",clearyes:"confirmer vider le panier",clearno:"annuler vider le panier",wnow:"cette semaine",
+  mkinv:"inviter un ami",addfr:"ajouter un ami",newlistrow:"nouvelle liste",cpp:"copier le pseudo",wnow:"cette semaine",
   wprev:"semaine précédente",wnext:"semaine suivante",sendgo:"envoyer la recette",sendclose:"fermer partage",
   sendfriends:"ajouter un ami (partage)",pdfdl:"télécharger le PDF",pdfshare:"partager le PDF",pdfclose:"fermer PDF",
   impgo:"créer les recettes importées",impback:"retour au texte (import)",impcancel:"annuler l'import",imppaste:"coller (import)",

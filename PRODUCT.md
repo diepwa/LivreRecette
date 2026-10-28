@@ -34,7 +34,7 @@ Un seul objet, privé, qui relie les recettes du foyer à sa liste de courses : 
 
 - Recettes saisies à la main par le foyer (titre, catégorie, temps, personnes, ingrédients, étapes, notes, jusqu'à 6 photos).
 - Panier façon Bring : tuiles « à acheter », produits « Souvent achetés » classés par nombre d'achats, ingrédients des recettes, barre « Il me faut… », produits de base (sel, poivre, huile…) exclus par défaut.
-- Partage actuel d'une recette vers l'extérieur : PDF envoyé par la feuille de partage iOS (Messages, WhatsApp, Mail, Fichiers). Copier/partager la liste de courses.
+- Partage actuel d'une recette vers l'extérieur : PDF envoyé par la feuille de partage iOS (Messages, WhatsApp, Mail, Fichiers).
 - Export/import JSON comme copie de secours, impression.
 
 ## Capabilities and Constraints

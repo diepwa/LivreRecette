@@ -18,7 +18,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v30`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v31`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -31,7 +31,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 - Tout nouveau champ est optionnel avec une valeur par défaut à la lecture. Ne jamais renommer ni supprimer un champ existant.
 - Un document Firestore fait au plus 1 Mo : 6 photos max par recette, recompressées par `fitPhotos`. Ne pas augmenter sans autre stockage.
 - Planning : localStorage `livre-planning` et Firestore `users/{uid}/meta/plan` (`setDoc` merge:true), `slots` = {`AAAA-MM-JJ_l|d`: {id, n, updated}} ; un repas retiré reste en `id:""` daté (fusion par `mergePlan`, le plus récent gagne). Les repas à venir (`upcomingMeals`, aujourd'hui compris) s'ajoutent à la sélection du panier sans toucher à `shop.sel` (`effectiveSel`, personnes additionnées) : un téléphone pas à jour ne les voit pas dans son panier. Planifier un repas remet ses ingrédients en « à acheter » (retire leurs clés de `have`).
-- Panier : `sel` {id: personnes} (Firestore : `[{id,n}]`), `have` {clé: true}, `extra` [noms] (tableau de chaînes), `freq` {clé: {n,last,name}} (fusion par maximum, jamais vidé, même par « Vider »), `basics` {clé: bool}. Clé produit = `nameKey(nom)` ; ne pas la changer sans migration. `normalizeShop()` migre l'ancien format.
+- Panier : `sel` {id: personnes} (Firestore : `[{id,n}]`), `have` {clé: true}, `extra` [noms] (tableau de chaînes), `freq` {clé: {n,last,name}} (fusion par maximum, jamais vidé), `basics` {clé: bool}. Clé produit = `nameKey(nom)` ; ne pas la changer sans migration. `normalizeShop()` migre l'ancien format.
 
 ## Design
 
@@ -114,7 +114,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 
 ## Fonctions à préserver
 
-Catégories, recherche, favoris, photos multiples (couverture = 1re), panier rapide 🛒 (accueil et page recette), page panier façon Bring (tuiles rouges à acheter, vertes « Souvent achetés » et « Dans vos recettes », barre « Il me faut… », appui long, annuler), récap des recettes du panier (affiché seulement s'il y en a au moins une), regroupement des ingrédients et quantités, produits de base exclus par défaut, copier/partager la liste, PDF (bouton « Télécharger »), envoi d'une copie à un ami (bouton « Partager »), thème clair/sombre, synchro temps réel et hors ligne.
+Catégories, recherche, favoris, photos multiples (couverture = 1re), panier rapide 🛒 (accueil et page recette), page panier façon Bring (tuiles rouges à acheter, vertes « Souvent achetés » et « Dans vos recettes », barre « Il me faut… », appui long, annuler ; plus de texte d'aide ni de boutons « Copier la liste » et « Vider » depuis le 2026-10-28, à la demande de Charles), récap des recettes du panier (affiché seulement s'il y en a au moins une), regroupement des ingrédients et quantités, produits de base exclus par défaut, PDF (bouton « Télécharger »), envoi d'une copie à un ami (bouton « Partager »), thème clair/sombre, synchro temps réel et hors ligne.
 
 ## Tester avant de livrer
 
