@@ -17,7 +17,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v22`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v23`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -78,7 +78,8 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 ### Mise en page et ergonomie mobile
 
 - Mobile d'abord, portrait. Accueil en grille 3 colonnes (4 à 640px, 5 à 900px), tuiles du panier en 4 colonnes (5 à 560px, 6 à 760px).
-- Respecter les zones sûres iOS (`env(safe-area-inset-*)`) pour l'en-tête collant, le FAB, la barre « Il me faut… » et le toast.
+- Navigation par barre d'onglets fixe en bas (`#tabbar`, depuis le 2026-10-28) : Recettes (`#/`, ouvre sur « Ma liste »), Listes (`#/listes`, choix de la liste affichée, renommer/supprimer via « ⋯ »), Panier (`#/courses`), Profil (`#/profil`). Pages racines : grand titre dans l'en-tête et « + » en haut à droite (plus de bouton flottant « Nouvelle recette »). La barre est masquée dans les formulaires (`chrome({bar:false})`) et quand le clavier est ouvert (`body.kb`).
+- Respecter les zones sûres iOS (`env(safe-area-inset-*)`) pour l'en-tête collant, la barre d'onglets, la barre « Il me faut… » (posée sur la barre d'onglets) et le toast.
 - Zoom désactivé (viewport `user-scalable=no` + blocage du pincement en JS, double-tap coupé par `touch-action:manipulation`) : tout doit rester lisible sans zoomer. Les photos de la fiche ne s'ouvrent plus en grand au toucher (retiré le 2026-10-27 à la demande de Charles).
 - Cibles tactiles d'au moins 32px, 40px pour les boutons d'icône. Retour au toucher par `:active` (fond accent doux ou `scale(.96)` sur les tuiles), pas de survol requis.
 - Actions destructrices réversibles : toast avec « Annuler » plutôt qu'une confirmation quand c'est possible.
@@ -105,8 +106,8 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 ### Détails techniques à garder
 
 - Garder `[hidden]{display:none !important}` (sinon `.btn{display:inline-block}` écrase `hidden`).
-- Fiche recette : pas d'émojis sur les boutons d'action ; « Ajouter aux courses » en tête, puis Favori / Listes / Modifier, puis Partager / Télécharger, et « Supprimer la recette » en rouge, à l'écart sous un séparateur.
-- Styles d'impression (`@media print`, plus de bouton Imprimer mais l'impression du navigateur reste propre) : masquer en-tête, FAB, actions, splash et barre du bas.
+- Fiche recette (depuis le 2026-10-28) : sous le titre, une rangée d'icônes rondes sans texte (libellé en `aria-label`) : Panier (bascule), Favori (bascule, étoile pleine), Listes, Partager (copie à un ami), Télécharger (PDF). En bas de page, deux icônes : Modifier et Supprimer (rouge, feuille de confirmation iOS).
+- Styles d'impression (`@media print`, plus de bouton Imprimer mais l'impression du navigateur reste propre) : masquer en-tête, barre d'onglets, actions, splash et barre du bas.
 
 ## Fonctions à préserver
 

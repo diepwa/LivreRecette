@@ -182,7 +182,7 @@ dialog{max-height:88vh;max-height:88dvh;overflow:auto;overscroll-behavior:contai
 .tile .tq{font-size:.7rem;opacity:.95;font-weight:600}
 .tile .tb{position:absolute;top:3px;left:3px;font-size:.62rem;background:rgba(0,0,0,.3);padding:1px 5px;border-radius:999px}
 .hint.box{background:var(--card);border-radius:12px;padding:14px;text-align:center;margin:0}
-.searchbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(0,0,0,.12)}
+.searchbar{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom));z-index:20;background:var(--card);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(0,0,0,.12)}
 .searchbar form{max-width:900px;margin:0 auto;display:flex;gap:10px;align-items:center}
 .sbox{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:0 14px;margin:0}
 .sbox input{flex:1;min-width:0;border:0;background:none;color:var(--ink);font:inherit;font-size:1rem;padding:12px 0;outline:none}
@@ -338,11 +338,15 @@ header.top{background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1
 body.scrolled header.top{border-bottom-color:var(--hair)}
 header.top h1{font-weight:700;font-size:1.25rem;letter-spacing:-.01em;line-height:1.1}
 .logo{height:28px}
-body.home header.top{padding-left:16px}
-body.home header.top h1{font-weight:800;font-size:2.125rem;letter-spacing:-.025em;transition:font-size .25s var(--ease-out)}
-body.home .logo{height:38px;transition:height .25s var(--ease-out)}
-body.home.scrolled header.top h1{font-size:1.25rem;letter-spacing:-.01em}
-body.home.scrolled .logo{height:28px}
+body.root header.top{padding-left:16px}
+body.root header.top h1{font-weight:800;font-size:2.125rem;letter-spacing:-.025em;transition:font-size .25s var(--ease-out)}
+body.root .logo{height:34px;transition:height .25s var(--ease-out)}
+body.root.scrolled header.top h1{font-size:1.25rem;letter-spacing:-.01em}
+body.root.scrolled .logo{height:26px}
+header.top h1{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px}
+header.top h1 .ht{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header.top h1 .hc{font-family:var(--sans);font-weight:500;font-size:.5em;color:var(--muted);letter-spacing:0;align-self:center;flex:none}
+#addbtn svg{stroke-width:2.2}
 .icon-btn{color:var(--accent);width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;transition:transform .1s var(--ease-out)}
 .icon-btn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .icon-btn svg .f{fill:currentColor}
@@ -383,10 +387,53 @@ h2.title{font-weight:800;font-size:2.125rem;letter-spacing:-.025em;line-height:1
 .cardcart svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .cardcart.on{background:var(--accent);color:var(--accent-ink)}
 .tico{right:6px;bottom:6px;padding:1px 6px;box-shadow:none}
-/* bouton « Nouvelle recette » centré, sur un fondu de bord */
-body.home::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(90px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 25%,color-mix(in srgb,var(--bg) 0%,transparent));pointer-events:none;z-index:4}
-.fab{z-index:5;left:0;right:0;margin:0 auto;width:max-content;display:flex;align-items:center;gap:6px;padding:0 22px;height:50px;font-weight:600;font-size:1.0625rem;letter-spacing:-.02em;white-space:nowrap;box-shadow:0 8px 24px rgba(60,40,20,.28)}
-.fab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+/* barre d'onglets du bas, façon iOS : icônes au trait, libellé dessous, onglet actif teinté */
+:root{--tabh:50px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;padding:0 4px env(safe-area-inset-bottom);background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);border-top:.5px solid var(--hair)}
+.tabbar a{position:relative;flex:1;max-width:160px;height:var(--tabh);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding-top:2px;color:color-mix(in srgb,var(--muted) 85%,transparent);text-decoration:none;font-size:.625rem;font-weight:500;letter-spacing:.01em;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tabbar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:transform .12s var(--ease-out)}
+.tabbar svg .f{fill:currentColor;stroke:none}
+.tabbar a.on{color:var(--accent)}
+.tabbar a.on svg{stroke-width:2}
+.tabbar a:active svg{transform:scale(.88)}
+.tabbar .tbadge{position:absolute;top:3px;left:calc(50% + 7px);background:var(--buy);color:#fff;font-size:.625rem;font-weight:700;border-radius:999px;min-width:17px;height:17px;line-height:17px;text-align:center;padding:0 5px}
+.tabbar .dot{top:5px;right:auto;left:calc(50% + 7px);border-color:var(--bg)}
+body.notab .tabbar,body.kb .tabbar{display:none}
+body{padding-bottom:calc(var(--tabh) + 24px + env(safe-area-inset-bottom))}
+body.notab{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.toast{bottom:calc(var(--tabh) + 14px + env(safe-area-inset-bottom))}
+body.notab .toast{bottom:calc(100px + env(safe-area-inset-bottom))}
+body.courses .toast{bottom:calc(var(--tabh) + 80px + env(safe-area-inset-bottom))}
+/* fiche recette : rangée d'icônes rondes */
+.rbar{display:flex;justify-content:center;gap:14px;margin:4px 0 18px}
+.ricon{width:52px;height:52px;border-radius:50%;border:0;background:var(--fill);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:transform .12s var(--ease-out),background-color .15s;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ricon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ricon:active{transform:scale(.9)}
+.ricon.on{background:var(--accent);color:var(--accent-ink)}
+#fav.on{background:#e8a33a;color:#fff}
+#fav.on svg{fill:currentColor}
+.ricon.dg{color:var(--danger)}
+.ricon.busy{opacity:.5;animation:ri-pulse 1s ease-in-out infinite alternate}
+@keyframes ri-pulse{to{opacity:.25}}
+.rfoot{margin:22px 0 4px;gap:28px}
+@media (max-width:350px){.rbar{gap:10px}.ricon{width:46px;height:46px}}
+@media (prefers-reduced-motion:reduce){.ricon{transition:none}.ricon:active{transform:none}}
+/* page Listes */
+.lrow .ln{flex:none;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--fill);color:var(--accent)}
+.lrow .ln svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lrow .lc{color:var(--muted);font-variant-numeric:tabular-nums}
+.lrow .n{font-size:.68rem;font-weight:800;background:var(--buy);color:#fff;border-radius:999px;min-width:18px;height:18px;line-height:18px;padding:0 5px;text-align:center}
+.lrow.on .pt{font-weight:600}
+.lrow .ck{color:var(--accent);display:flex}
+.lrow .ck svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.lwrap{display:flex;align-items:stretch;position:relative}
+.lwrap .gr{flex:1;min-width:0}
+.grp .lwrap+.lwrap::before,.grp .lwrap+.gr::before,.grp .gr+.lwrap::before{content:"";position:absolute;top:0;right:0;left:58px;border-top:.5px solid var(--hair);z-index:1}
+.lmore{flex:none;width:44px;border:0;background:none;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.lmore svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8}
+.lmore svg .f{fill:currentColor;stroke:none}
+.lmore:active{background:var(--fill)}
+.grp .gr.lrow+.gr.lrow::before{left:58px}
 /* blocs : listes groupées iOS (fond carte, coins 12 px, pas d'ombre, filets fins) */
 section.block{border-radius:12px;box-shadow:none;padding:14px 16px}
 section.block h3{font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
@@ -419,6 +466,9 @@ form select{-webkit-appearance:none;appearance:none;background:var(--card) url("
 /* courses : barre du bas translucide ; tuiles rouges et vert-bleu inchangées */
 .searchbar,.impbar{background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);border-top:.5px solid var(--hair);box-shadow:none}
 .sbox{background:var(--fill);border:0;border-radius:11px}
+.searchbar{padding-bottom:10px}
+body.kb .searchbar{padding-bottom:10px}
+body.courses .tabbar{border-top-color:transparent}
 .sbox input{padding:9px 0}
 .sugg{border-top:.5px solid var(--hair);background:var(--card)}
 .tile{border-radius:14px;box-shadow:none}
@@ -497,11 +547,11 @@ form .gr input[type=text],.gr input{flex:1;min-width:0;border:0;border-radius:0;
 .ia-a button.dg{color:var(--danger)}
 .ia-a button:active,.ia-c:active{background:var(--fill)}
 .ia-c{background:var(--card);border-radius:14px;min-height:56px;font-size:1.25rem;font-weight:600;box-shadow:none}
-@media (prefers-reduced-transparency:reduce){header.top,.searchbar,.impbar{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}.ia-box,dialog{background:var(--card)}}
-@media (prefers-reduced-motion:reduce){body.home header.top h1,body.home .logo,.card,.chip,.icon-btn{transition:none}.card:active,.chip:active{transform:none}.ios-alert,.ios-sheet{animation:none}}
+@media (prefers-reduced-transparency:reduce){header.top,.searchbar,.impbar,.tabbar{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}.ia-box,dialog{background:var(--card)}}
+@media (prefers-reduced-motion:reduce){body.root header.top h1,body.root .logo,.card,.chip,.icon-btn{transition:none}.card:active,.chip:active{transform:none}.ios-alert,.ios-sheet{animation:none}}
 @media print{#splash{display:none}.searchbar{display:none}}
 @media print{.impbar,.impcta{display:none}}
-@media print{header.top,.fab,.actions{display:none}body{background:#fff;color:#000}section.block{box-shadow:none;border:1px solid #ccc}}
+@media print{header.top,.tabbar,.actions{display:none}body{background:#fff;color:#000}section.block{box-shadow:none;border:1px solid #ccc}}
 </style>
 </head>
 <body>
@@ -516,12 +566,16 @@ setTimeout(done,2200)})();
 </script>
 <header class="top">
   <button class="icon-btn" id="back" hidden aria-label="Retour"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
-  <h1><a href="#/"><img class="logo" src="icons/nout.png" alt="" width="32" height="32">NoutBook</a></h1>
-  <button class="icon-btn" id="cartbtn" aria-label="Liste de courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.2l2.3 11h10.3l2-8H6.3"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="16.5" cy="19.5" r="1.3"/></svg><span class="badge" id="badge" hidden></span></button>
-  <button class="icon-btn" id="menu" aria-label="Mon profil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="f" cx="8" cy="12" r=".7"/><circle class="f" cx="12" cy="12" r=".7"/><circle class="f" cx="16" cy="12" r=".7"/></svg><span class="dot" id="dot" hidden></span></button>
+  <h1 id="htitle"></h1>
+  <button class="icon-btn" id="addbtn" hidden aria-label="Nouvelle recette"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
 </header>
 <main id="view"></main>
-<a class="fab" id="fab" href="#/new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nouvelle recette</a>
+<nav class="tabbar" id="tabbar" aria-label="Navigation">
+  <a href="#/" data-tab="recettes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h10.5a1.5 1.5 0 0 1 1.5 1.5v15H7.2A2.2 2.2 0 0 1 5 17.8V4.5a1 1 0 0 1 1-1z"/><path d="M5 17.8A2.2 2.2 0 0 1 7.2 15.6H18"/><path d="M9 7.5h5.5M9 10.5h4"/></svg><span>Recettes</span></a>
+  <a href="#/listes" data-tab="listes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6.5H20M9.5 12H20M9.5 17.5H20"/><circle class="f" cx="5" cy="6.5" r="1.3"/><circle class="f" cx="5" cy="12" r="1.3"/><circle class="f" cx="5" cy="17.5" r="1.3"/></svg><span>Listes</span><b class="tbadge" id="lbadge" hidden></b></a>
+  <a href="#/courses" data-tab="panier"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5h18l-1.8 9a1.8 1.8 0 0 1-1.8 1.5H6.6a1.8 1.8 0 0 1-1.8-1.5z"/><path d="m8 9.5 3-6M16 9.5l-3-6M9 13v3.5M12 13v3.5M15 13v3.5"/></svg><span>Panier</span><b class="tbadge" id="badge" hidden></b></a>
+  <a href="#/profil" data-tab="profil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="f" cx="8" cy="12" r="1"/><circle class="f" cx="12" cy="12" r="1"/><circle class="f" cx="16" cy="12" r="1"/></svg><span>Profil</span><i class="dot" id="dot" hidden></i></a>
+</nav>
 
 <dialog id="pdfdlg">
   <h3>PDF prêt</h3>
@@ -579,16 +633,6 @@ setTimeout(done,2200)})();
       <button class="btn primary" type="submit">Valider</button>
     </div>
   </form>
-</dialog>
-
-<dialog id="lsetdlg">
-  <h3 id="lsett"></h3>
-  <p>Supprimer la liste ne supprime pas ses recettes : elles restent dans ton livre.</p>
-  <div class="col">
-    <button class="btn" type="button" id="lsetren">Renommer la liste</button>
-    <button class="btn danger" type="button" id="lsetdel">Supprimer la liste</button>
-    <button class="btn" type="button" id="lsetclose">Fermer</button>
-  </div>
 </dialog>
 
 <dialog id="senddlg">
@@ -693,12 +737,25 @@ const touch=r=>{r.updated=(Number(r.updated)||0)+1};
 
 /* ---------- views ---------- */
 const view=$("#view");
-function chrome(isHome){
-  document.body.classList.toggle("home",isHome);
-  $("#back").hidden=isHome;
-  $("#fab").hidden=!isHome;
+// en-tête et barre du bas selon la page : tab = onglet actif, title = grand titre (pages racines), add = action du « + »
+function chrome({tab=null,title="",root=false,add=null,back=!root,bar=true,cls=""}={}){
+  const b=document.body;
+  b.classList.toggle("home",tab==="recettes"&&root);
+  b.classList.toggle("root",root);
+  b.classList.toggle("notab",!bar);
+  b.classList.toggle("courses",cls==="courses");
+  $("#back").hidden=!back;
+  $("#htitle").innerHTML=title;
+  const ab=$("#addbtn");ab.hidden=!add;
+  if(add){ab.setAttribute("aria-label",add.label);ab.onclick=add.fn}
+  document.querySelectorAll("#tabbar a").forEach(a=>{const on=a.dataset.tab===tab;a.classList.toggle("on",on);if(on)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   updateBadge();
 }
+// clavier ouvert : la barre d'onglets s'efface (sinon elle flotte au-dessus du clavier sur iPhone)
+const typing=el=>el&&(el.tagName==="TEXTAREA"||el.tagName==="SELECT"||el.tagName==="INPUT"&&!["checkbox","radio","button","submit","file","range"].includes(el.type));
+document.addEventListener("focusin",e=>{if(typing(e.target))document.body.classList.add("kb")});
+document.addEventListener("focusout",()=>setTimeout(()=>{if(!typing(document.activeElement))document.body.classList.remove("kb")},60));
+const LOGO=`<img class="logo" src="icons/nout.png" alt="" width="32" height="32">`;
 const CART_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.2l2.3 11h10.3l2-8H6.3"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="16.5" cy="19.5" r="1.3"/></svg>`;
 // barre du haut : trait fin et grand titre réduit seulement quand le contenu passe dessous
 addEventListener("scroll",()=>document.body.classList.toggle("scrolled",scrollY>8),{passive:true});
@@ -707,29 +764,27 @@ function updateBadge(){
   b.hidden=!n;b.textContent=n;
 }
 
+const isHome=()=>["","#","#/"].includes(location.hash);
+const LIST_NAMES={mine:"Ma liste",shared:"Partagées",all:"Toutes les recettes"};
+const listName=(k,l)=>l?l.name:LIST_NAMES[k]||"Ma liste";
+function setListsBadge(n){const b=$("#lbadge");b.hidden=!n;b.textContent=n;b.setAttribute("aria-label",n+" recette(s) reçue(s)")}
 async function viewList(){
-  chrome(true);
+  chrome({tab:"recettes",root:true,add:{label:"Nouvelle recette",fn:()=>{location.hash="#/new"}}});
   const rs=(await allRecipes()).sort((a,b)=>(b.updated||0)-(a.updated||0));
-  if(/^#\/(r\/|new|edit|courses|profil|ami|importer)/.test(location.hash))return;   // on a changé de page pendant le chargement
+  if(!isHome())return;   // on a changé de page pendant le chargement
   const ls=activeLists(lists);
   if(!["mine","shared","all"].includes(filter.list)&&!ls.some(l=>l.id===filter.list))filter.list="mine";
   const curList=ls.find(l=>l.id===filter.list);
   const unseen=rs.filter(r=>r.sharedFrom&&r.sharedNew).length;
   const inCur=rs.filter(r=>inList(r,filter.list,lists));
   const curCount=new Set(inCur.map(r=>r.id)).size;   // count distinct : une recette compte une fois par liste
-  const tabs=[["mine","Ma liste"],["shared","Partagées"],...ls.map(l=>[l.id,l.name]),["all","Tout"]];
+  $("#htitle").innerHTML=`${LOGO}<span class="ht">${esc(listName(filter.list,curList))}</span><span class="hc">${curCount}</span>`;
+  setListsBadge(unseen);
   view.innerHTML=`
     <input class="search" id="q" type="search" placeholder="Rechercher une recette, un ingrédient…" value="${esc(filter.q)}">
-    <nav class="tabs" id="tabs" aria-label="Listes de recettes">${tabs.map(([k,l])=>`<button type="button" class="tab ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>${esc(l)}${filter.list===k?` <span class="lcnt">(${curCount})</span>`:""}${k==="shared"&&unseen?`<span class="n" aria-label="${unseen} nouvelle(s)">${unseen}</span>`:""}</button>`).join("")}<button type="button" class="tab new" id="newtab">＋ Liste</button></nav>
-    ${curList?`<div class="lhead"><span></span><button type="button" class="btn sm" id="lset">Renommer ou supprimer</button></div>`:""}
-    ${filter.list==="shared"?`<div class="lhead"><span>Les recettes que tes amis t’envoient arrivent ici.</span><a href="#/profil">👥 Amis</a></div>`:""}
     <div class="chips" id="chips"></div>
     <div class="chips tchips" id="tchips" aria-label="Filtrer par tag"></div>
     <div id="results"></div>`;
-  $("#tabs").onclick=e=>{const b=e.target.closest(".tab[data-l]");if(!b)return;filter.list=b.dataset.l;viewList()};
-  const on=$("#tabs .tab.on");if(on&&on.offsetLeft+on.offsetWidth>$("#tabs").clientWidth)$("#tabs").scrollLeft=on.offsetLeft-16;
-  $("#newtab").onclick=()=>askName("Nouvelle liste","",n=>{filter.list=createList(n);viewList()});
-  if(curList)$("#lset").onclick=()=>openListSettings(curList.id);
   const chips=[["all","Toutes"],["fav","★ Favoris"],...CATS.map(c=>[c,c])];
   $("#chips").innerHTML=chips.map(([k,l])=>`<button class="chip ${filter.cat===k?"on":""}" data-k="${esc(k)}">${esc(l)}</button>`).join("");
   $("#chips").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;filter.cat=b.dataset.k;viewList()};
@@ -744,16 +799,16 @@ async function viewList(){
   const draw=()=>{
     const list=filterRecipes(rs,filter,lists);
     if((filter.list==="all"||filter.list==="mine")&&!rs.length){
-      $("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>Ton livre est vide pour l’instant.</b><br>Ajoute ta première recette avec le bouton ci-dessous.</p></div>`;return;
+      $("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>Ton livre est vide pour l’instant.</b><br>Ajoute ta première recette avec le bouton + en haut.</p></div>`;return;
     }
     if(filter.list==="mine"&&!inCur.length){
-      $("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>Tu n’as pas encore de recette à toi.</b><br>Ajoute-la avec le bouton ci-dessous. Celles que tes amis t’envoient sont dans « Partagées ».</p></div>`;return;
+      $("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>Tu n’as pas encore de recette à toi.</b><br>Ajoute-la avec le bouton + en haut. Celles que tes amis t’envoient sont dans « Partagées ».</p></div>`;return;
     }
     if(filter.list==="shared"&&!inCur.length){
       $("#results").innerHTML=`<div class="empty"><div class="big">📬</div><p><b>Aucune recette reçue pour l’instant.</b><br>Quand un ami t’envoie une recette, sa copie arrive ici.${friends.length?"":`<br><a href="#/profil">Ajoute un ami</a> pour commencer.`}</p></div>`;return;
     }
     if(curList&&!inCur.length){
-      $("#results").innerHTML=`<div class="empty"><div class="big">📑</div><p><b>Cette liste est vide.</b><br>Ouvre une recette et touche « Listes » pour la ranger ici, ou crée une recette depuis cet onglet.</p></div>`;return;
+      $("#results").innerHTML=`<div class="empty"><div class="big">📑</div><p><b>Cette liste est vide.</b><br>Ouvre une recette et touche « Listes » pour la ranger ici, ou touche + pour en créer une.</p></div>`;return;
     }
     if(!list.length){$("#results").innerHTML=`<div class="empty"><div class="big">🔍</div><p>Aucune recette ne correspond.</p></div>`;return}
     $("#results").innerHTML=`<div class="grid">${list.map(r=>`
@@ -783,8 +838,19 @@ async function viewList(){
   $("#q").oninput=e=>{filter.q=e.target.value;draw()};
 }
 
+// fiche recette : actions en icônes rondes (style iOS), libellé dans aria-label
+const RI={
+  cart:`<svg viewBox="0 0 24 24"><path d="M3 9.5h18l-1.8 9a1.8 1.8 0 0 1-1.8 1.5H6.6a1.8 1.8 0 0 1-1.8-1.5z"/><path d="m8 9.5 3-6M16 9.5l-3-6M9 13v3.5M12 13v3.5M15 13v3.5"/></svg>`,
+  fav:`<svg viewBox="0 0 24 24"><path d="m12 3.8 2.5 5.2 5.6.7-4.1 3.9 1 5.6L12 16.5l-5 2.7 1-5.6-4.1-3.9 5.6-.7z"/></svg>`,
+  lists:`<svg viewBox="0 0 24 24"><path d="M4 6.5h11M4 12h11M4 17.5h7M18 14.5v6M15 17.5h6"/></svg>`,
+  send:`<svg viewBox="0 0 24 24"><path d="M12 14.5V3.5M8 7.5l4-4 4 4"/><path d="M7.5 10.5H6a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 6 20.5h12a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5h-1.5"/></svg>`,
+  pdf:`<svg viewBox="0 0 24 24"><path d="M12 3.5v11M8 10.5l4 4 4-4M4.5 15.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"/></svg>`,
+  edit:`<svg viewBox="0 0 24 24"><path d="M4.5 19.5h4l10-10a2.8 2.8 0 0 0-4-4l-10 10z"/><path d="m13 7 4 4"/></svg>`,
+  del:`<svg viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5V4.5h5v2M6.5 6.5l1 13h9l1-13M10 10.5v6M14 10.5v6"/></svg>`
+};
+const ricon=(id,label,svg,on=false,onLabel="")=>`<button type="button" class="ricon ${on?"on":""}" id="${id}" aria-label="${esc(on&&onLabel?onLabel:label)}" ${id==="cart"||id==="fav"?`aria-pressed="${on}"`:""} title="${esc(label)}">${svg}</button>`;
 async function viewDetail(id){
-  chrome(false);
+  chrome({tab:"recettes"});
   const r=await getRecipe(id);
   if(!r){location.hash="#/";return}
   const ph=r.photos||[];
@@ -799,24 +865,14 @@ async function viewDetail(id){
       ${recipeLists(r).filter(l=>lists[l]&&!lists[l].deleted).map(l=>`<a class="tag" href="#/" data-l="${esc(l)}">📑 ${esc(lists[l].name)}</a>`).join("")}
       ${r.sharedFrom&&typeof r.sharedFrom==="object"?`<span class="tag from">📬 Reçue${senderName(r)?" "+esc(deNom(senderName(r))):""}${r.sharedFrom.at?" le "+new Date(r.sharedFrom.at).toLocaleDateString("fr-FR",{day:"numeric",month:"long"}):""}</span>`:""}
     </div>
+    <div class="rbar" role="group" aria-label="Actions">${ricon("cart","Ajouter au panier",RI.cart,!!shop.sel[r.id],shop.sel[r.id]?"Retirer du panier":"")}${ricon("fav","Favori",RI.fav,!!r.fav,r.fav?"Retirer des favoris":"")}${ricon("lists","Ranger dans une liste",RI.lists)}${ricon("send","Partager avec un ami",RI.send)}${ricon("pdf","Télécharger en PDF",RI.pdf)}</div>
     ${lines(r.ingredients).length?`<section class="block"><h3>Ingrédients</h3><ul class="ing">${lines(r.ingredients).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></section>`:""}
     ${lines(r.steps).length?`<section class="block"><h3>Préparation</h3><ol class="steps">${lines(r.steps).map(l=>`<li><span>${esc(l)}</span></li>`).join("")}</ol></section>`:""}
     ${r.notes?`<section class="block"><h3>Notes</h3><div class="notes">${esc(r.notes)}</div></section>`:""}
-    <div class="actions ract">
-      <button class="btn primary wide" id="cart" type="button">${shop.sel[r.id]?"Dans les courses":"Ajouter aux courses"}</button>
-      <div class="rgrid g3">
-        <button class="btn" id="fav" type="button" aria-pressed="${!!r.fav}">${r.fav?"En favori":"Favori"}</button>
-        <button class="btn" id="lists" type="button">Listes</button>
-        <a class="btn" href="#/edit/${r.id}">Modifier</a>
-      </div>
-      <div class="rgrid">
-        <button class="btn" id="send" type="button">Partager</button>
-        <button class="btn" id="pdf" type="button">Télécharger</button>
-      </div>
-      <div class="rdanger"><button class="btn danger" id="del" type="button">Supprimer la recette</button></div>
-    </div>`;
+    <div class="rbar rfoot actions"><a class="ricon" href="#/edit/${r.id}" aria-label="Modifier la recette">${RI.edit}</a><button type="button" class="ricon dg" id="del" aria-label="Supprimer la recette">${RI.del}</button></div>`;
   view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=()=>li.classList.toggle("done"));
-  $("#fav").onclick=async()=>{r.fav=!r.fav;touch(r);await putRecipe(r);viewDetail(id)};
+  const flip=(b,on,label,offLabel)=>{b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);b.setAttribute("aria-label",on?label:offLabel)};
+  $("#fav").onclick=async()=>{r.fav=!r.fav;touch(r);await putRecipe(r);flip($("#fav"),r.fav,"Retirer des favoris","Favori");toast(r.fav?"Ajoutée aux favoris ★":"Retirée des favoris")};
   $("#pdf").onclick=()=>shareRecipePdf(r);
   $("#lists").onclick=()=>openListsDlg(r,()=>viewDetail(id));
   $("#send").onclick=()=>openSendDlg(r);
@@ -824,17 +880,19 @@ async function viewDetail(id){
   view.querySelectorAll("a.tag[data-t]").forEach(a=>a.onclick=e=>{e.preventDefault();filter={...filter,list:"all",cat:"all",q:"",tags:[a.dataset.t]};location.hash="#/"});
   if(r.sharedFrom&&r.sharedNew){r.sharedNew=false;touch(r);putRecipe(r)}
   $("#cart").onclick=()=>{
-    if(shop.sel[r.id]){location.hash="#/courses";return}
-    addRecipeToCart(shop,r.id,Number(r.servings)||1);saveShop();updateBadge();
-    $("#cart").textContent="Dans les courses";toast("Ajoutée à la liste de courses");
+    const on=!shop.sel[r.id];
+    if(on)addRecipeToCart(shop,r.id,Number(r.servings)||1);else removeRecipeFromCart(shop,r.id);
+    saveShop();updateBadge();flip($("#cart"),on,"Retirer du panier","Ajouter au panier");
+    toast(on?"Ajoutée au panier":"Retirée du panier");
   };
   $("#del").onclick=async()=>{
-    if(confirm(`Supprimer « ${r.title} » ? Cette action est définitive.`)){await delRecipe(id);toast("Recette supprimée");location.hash="#/"}
+    const a=await iosAlert({sheet:true,title:`Supprimer « ${r.title} » ?`,msg:"Cette action est définitive.",actions:[{label:"Supprimer la recette",danger:true},{label:"Annuler",cancel:true}]});
+    if(a&&a.i===0){await delRecipe(id);toast("Recette supprimée");location.hash="#/"}
   };
 }
 
 async function viewForm(id){
-  chrome(false);
+  chrome({bar:false});
   const r=id?await getRecipe(id):null;
   if(id&&!r){location.hash="#/";return}
   const rec=r||{id:uid(),title:"",category:"Plat",time:"",servings:"",ingredients:"",steps:"",notes:"",photos:[],fav:false,created:Date.now()};
@@ -1581,11 +1639,11 @@ async function makeRecipePdf(r){
 }
 async function shareRecipePdf(r){
   const btn=$("#pdf");
-  if(btn){btn.disabled=true;btn.textContent="Création du PDF…"}
+  if(btn){btn.disabled=true;btn.classList.add("busy")}
   let file=null;
   try{file=await makeRecipePdf(r)}
   catch(e){toast("Impossible de créer le PDF")}
-  if(btn){btn.disabled=false;btn.textContent="Télécharger"}
+  if(btn){btn.disabled=false;btn.classList.remove("busy")}
   if(!file)return;
   // iPhone / Android : feuille de partage (Messages, WhatsApp, Mail, Fichiers…)
   if(navigator.canShare&&navigator.canShare({files:[file]})){
@@ -1620,7 +1678,7 @@ async function copyText(t){
 }
 
 async function viewCourses(){
-  chrome(false);
+  chrome({tab:"panier",root:true,title:"Liste de courses",cls:"courses"});
   const rs=(await allRecipes()).sort((a,b)=>norm(a.title).localeCompare(norm(b.title),"fr"));
   updateBadge();
   view.innerHTML=`<div id="cw"></div>
@@ -1634,7 +1692,7 @@ async function viewCourses(){
   const followKb=()=>{
     if(!document.body.contains(sbar)){if(vv){vv.removeEventListener("resize",followKb);vv.removeEventListener("scroll",followKb)}return}
     const kb=vv?Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop)):0;
-    sbar.style.bottom=kb+"px";
+    sbar.style.bottom=kb>40?kb+"px":"";   // sans clavier : posée sur la barre d'onglets
     sbar.style.setProperty("--vvh",(vv?vv.height:window.innerHeight)+"px");
   };
   if(vv){vv.addEventListener("resize",followKb);vv.addEventListener("scroll",followKb);followKb()}
@@ -1679,7 +1737,6 @@ async function viewCourses(){
     compute();
     const {selected,items}=cur;
     cw.innerHTML=`
-      <h2 class="title">Liste de courses</h2>
       <section class="tsec">
         <h3>À acheter <span class="cnt">${items.length}</span></h3>
         ${items.length?`<div class="tgrid">${items.map(i=>tile("buy",i)).join("")}</div>
@@ -1820,17 +1877,56 @@ function askName(title,value,ok){
   $("#namef").onsubmit=e=>{e.preventDefault();const v=i.value.trim();if(!v)return;d.close();ok(v)};
   d.showModal();i.focus();
 }
-function openListSettings(id){
-  const d=$("#lsetdlg"),l=lists[id];if(!l)return;
-  $("#lsett").textContent="📑 "+l.name;
-  $("#lsetclose").onclick=()=>d.close();
-  $("#lsetren").onclick=()=>{d.close();askName("Renommer la liste",l.name,n=>{l.name=n.slice(0,40);l.updated=Date.now();saveLists();viewList()})};
-  $("#lsetdel").onclick=()=>{
-    d.close();
-    l.deleted=true;l.updated=Date.now();saveLists();filter.list="mine";viewList();
-    toastUndo("Liste supprimée : "+l.name,()=>{l.deleted=false;l.updated=Date.now();saveLists();filter.list=id;viewList()});
+async function openListSettings(id){
+  const l=lists[id];if(!l)return;
+  const r=await iosAlert({sheet:true,title:l.name,msg:"Supprimer la liste ne supprime pas ses recettes.",actions:[{label:"Renommer la liste"},{label:"Supprimer la liste",danger:true},{label:"Annuler",cancel:true}]});
+  if(!r)return;
+  if(r.i===0)askName("Renommer la liste",l.name,n=>{l.name=n.slice(0,40);l.updated=Date.now();saveLists();refreshView()});
+  else if(r.i===1){
+    l.deleted=true;l.updated=Date.now();saveLists();if(filter.list===id)filter.list="mine";refreshView();
+    toastUndo("Liste supprimée : "+l.name,()=>{l.deleted=false;l.updated=Date.now();saveLists();refreshView()});
+  }
+}
+/* page Listes (onglet du bas) : choisir la liste affichée dans Recettes */
+const LIST_ICONS={
+  mine:`<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/></svg>`,
+  shared:`<svg viewBox="0 0 24 24"><path d="M4 13.5 6.5 5h11l2.5 8.5V19H4z"/><path d="M4 13.5h4.5l1 2h5l1-2H20"/></svg>`,
+  all:`<svg viewBox="0 0 24 24"><path d="M4 6.5C6.5 5 9.5 5 12 6.8 14.5 5 17.5 5 20 6.5V19c-2.5-1.5-5.5-1.5-8 .3-2.5-1.8-5.5-1.8-8-.3z"/><path d="M12 6.8v12.5"/></svg>`,
+  list:`<svg viewBox="0 0 24 24"><path d="M9.5 7H19M9.5 12H19M9.5 17H19"/><path d="M5 7h.01M5 12h.01M5 17h.01" stroke-width="2.6"/></svg>`
+};
+const CHECK_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>`;
+const MORE_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="f" cx="8" cy="12" r="1"/><circle class="f" cx="12" cy="12" r="1"/><circle class="f" cx="16" cy="12" r="1"/></svg>`;
+async function viewLists(){
+  const newList=()=>askName("Nouvelle liste","",n=>{filter.list=createList(n);filter.cat="all";filter.tags=[];location.hash="#/"});
+  chrome({tab:"listes",root:true,title:"Listes",add:{label:"Nouvelle liste",fn:newList}});
+  const rs=await allRecipes();
+  if(location.hash!=="#/listes")return;
+  const ls=activeLists(lists);
+  if(!["mine","shared","all"].includes(filter.list)&&!ls.some(l=>l.id===filter.list))filter.list="mine";
+  const count=k=>new Set(rs.filter(r=>inList(r,k,lists)).map(r=>r.id)).size;
+  const unseen=rs.filter(r=>r.sharedFrom&&r.sharedNew).length;
+  setListsBadge(unseen);
+  const row=(k,name,icon,extra="")=>`<button type="button" class="gr lrow ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>
+      <span class="ln" aria-hidden="true">${icon}</span><span class="pt">${esc(name)}</span>${extra}<span class="lc">${count(k)}</span>${filter.list===k?`<span class="ck">${CHECK_SVG}</span>`:`<span class="chev">${CHEV_SVG}</span>`}</button>`;
+  view.innerHTML=`
+    <div class="grp" id="lgrp">
+      ${row("mine","Ma liste",LIST_ICONS.mine)}
+      ${row("shared","Partagées",LIST_ICONS.shared,unseen?`<span class="n" aria-label="${unseen} nouvelle(s)">${unseen}</span>`:"")}
+      ${row("all","Toutes les recettes",LIST_ICONS.all)}
+    </div>
+    <h4 class="gh">Mes listes</h4>
+    <div class="grp" id="lmine">
+      ${ls.map(l=>`<div class="lwrap">${row(l.id,l.name,LIST_ICONS.list)}<button type="button" class="lmore" data-set="${esc(l.id)}" aria-label="Renommer ou supprimer ${esc(l.name)}">${MORE_SVG}</button></div>`).join("")}
+      <button type="button" class="gr act" id="newlistrow"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Nouvelle liste</span></button>
+    </div>`;
+  const pick=e=>{
+    const m=e.target.closest(".lmore[data-set]");if(m){openListSettings(m.dataset.set);return}
+    const b=e.target.closest(".lrow[data-l]");if(!b)return;
+    if(filter.list!==b.dataset.l){filter.list=b.dataset.l;filter.cat="all";filter.tags=[]}
+    location.hash="#/";
   };
-  d.showModal();
+  $("#lgrp").onclick=$("#lmine").onclick=pick;
+  $("#newlistrow").onclick=newList;
 }
 function openListsDlg(r,after){
   const d=$("#listdlg");
@@ -1955,7 +2051,7 @@ function iosAlert({title,msg="",input=null,actions,sheet=false}){
   });
 }
 async function viewProfile(code){
-  chrome(false);
+  chrome({tab:"profil",root:true,title:"Profil"});
   code=cleanCode(code);
   const on=signedIn(),named=!!profile.name;
   const st=syncState.state;
@@ -1993,7 +2089,7 @@ async function viewProfile(code){
     <form class="grp" id="cf" autocomplete="off"><div class="gr"><input id="icode" type="text" maxlength="12" placeholder="ABCD-EFGH" autocapitalize="characters" autocorrect="off" spellcheck="false" value="${esc(fmtCode(code))}" aria-label="Code d’invitation"><button class="tbtn" type="submit" ${named?"":"disabled"}>Ajouter</button></div></form>
     <p class="gf fhint" id="cmsg" role="status"></p>
     <div class="grp" style="margin-top:28px"><button class="gr danger" type="button" id="signout">Se déconnecter</button></div>`;
-  view.innerHTML=`<h2 class="title">Mon profil</h2>${on?signedBlock:accountBlock}`;
+  view.innerHTML=on?signedBlock:accountBlock;
   renderSync();
   if(!on){$("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};return}
   $("#signout").onclick=async()=>{
@@ -2195,6 +2291,7 @@ async function route(){
     if((m=h.match(/^#\/r\/(.+)$/)))await viewDetail(m[1]);
     else if(h==="#/new")await viewForm();
     else if(h==="#/courses")await viewCourses();
+    else if(h==="#/listes")await viewLists();
     else if((m=h.match(/^#\/edit\/(.+)$/)))await viewForm(m[1]);
     else if(h==="#/profil"||h==="#/amis")await viewProfile();
     else if(h==="#/importer")await viewImport();
@@ -2206,15 +2303,15 @@ async function route(){
 }
 window.addEventListener("hashchange",route);
 $("#back").onclick=()=>{ if(history.length>1)history.back(); else location.hash="#/" };
-$("#cartbtn").onclick=()=>{location.hash="#/courses"};
+// toucher l'onglet de la page en cours : remonter en haut
+$("#tabbar").addEventListener("click",e=>{const a=e.target.closest("a[data-tab]");if(a&&a.classList.contains("on")&&(location.hash||"#/")===a.getAttribute("href")){e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})}});
 
 /* ---------- profil ---------- */
-$("#menu").onclick=()=>{location.hash="#/profil"};
 /* ---------- import de recettes depuis un texte ---------- */
 // le texte collé et la relecture survivent à un aller-retour dans l'app (pas à une fermeture)
 let impDraft={text:"",items:null,list:null};
 async function viewImport(){
-  chrome(false);
+  chrome({bar:false});
   if(!impDraft.items)return viewImportText();
   const rs=await allRecipes();
   const have=new Set(rs.map(r=>tagKey(r.title)).filter(Boolean));
