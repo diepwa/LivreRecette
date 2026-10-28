@@ -2524,21 +2524,46 @@ async function bootSync(){
       getProfile:()=>profile,receiveShared,shareable,toast,pseudoKey,
       setPseudoTaken:t=>{if(t!==pseudoTaken){pseudoTaken=t;if(PROFILE_RE.test(location.hash))refreshView()}},
       getTagIcons:()=>tagIcons,setTagIcons:applyRemoteTagIcons,tagIconsFor,
-      getPlan:()=>plan,setPlan:applyRemotePlan
+      getPlan:()=>plan,setPlan:applyRemotePlan,setUser:anaSetUser
     });
   }catch(e){setStatus({state:"off"})}
 }
 
 /* ---------- statistiques d'usage (Amplitude, anonymes : voir analytics.js) ---------- */
-// jamais de contenu de recette, de pseudo ni d'e-mail dans les propriétés
-let anaQ=[],anaTrack=null;
-function track(name,props){if(anaTrack)anaTrack(name,props);else if(anaQ&&anaQ.length<50)anaQ.push([name,props])}
+// jamais de contenu de recette, de pseudo ni d'e-mail dans les propriétés ; user_id = uid Firebase
+let anaQ=[],ana=null,anaUser;
+function track(name,props){if(ana)ana.track(name,props);else if(anaQ&&anaQ.length<50)anaQ.push([name,props])}
+function anaSetUser(id){anaUser=id;if(ana)ana.setUserId(id)}
 function bootAnalytics(){
-  import("./analytics.js").then(m=>m.initAnalytics()).catch(()=>null).then(t=>{
-    const q=anaQ||[];anaQ=null;anaTrack=t;
-    if(t)for(const [n,p] of q)t(n,p);
+  import("./analytics.js").then(m=>m.initAnalytics()).catch(()=>null).then(a=>{
+    const q=anaQ||[];anaQ=null;ana=a;
+    if(!a)return;
+    if(anaUser!==undefined)a.setUserId(anaUser);
+    for(const [n,p] of q)a.track(n,p);
   });
 }
+// boutons touchés : nom technique stable (id, onglet ou classe) ; libellé seulement pour les boutons fixes
+// (ceux qui ont un id), jamais pour les cartes, tuiles, amis, tags… qui affichent des données
+const CLICK_SKIP_CLS=new Set(["on","gr","btn","sm","primary","danger","dg","b","full","busy"]);
+const CLICK_NO_LABEL=new Set(["pedit"]);   // affiche le pseudo
+function clickInfo(el){
+  const p={ecran:screenName(location.hash||"#/")};
+  if(el.id){
+    p.bouton=el.id;
+    if(!CLICK_NO_LABEL.has(el.id)){const l=(el.getAttribute("aria-label")||el.textContent||"").replace(/\s+/g," ").trim().slice(0,40);if(l)p.libelle=l}
+  }else if(el.dataset.tab)p.bouton="onglet "+el.dataset.tab;
+  else if(el.type==="submit"){const f=el.closest("form");p.bouton="valider"+(f&&f.id?" · "+f.id:"");p.libelle=el.textContent.replace(/\s+/g," ").trim().slice(0,40)}
+  else{
+    const c=[...el.classList].find(c=>!CLICK_SKIP_CLS.has(c));
+    const box=el.parentElement&&el.parentElement.closest("[id]");
+    p.bouton=(c||el.tagName.toLowerCase())+(box&&box.id!=="view"?" · "+box.id:"");
+  }
+  return p;
+}
+document.addEventListener("click",e=>{
+  const el=e.target.closest&&e.target.closest("button,a,[role=button],[role=checkbox]");
+  if(el)track("Bouton touché",clickInfo(el));
+},true);
 const screenName=h=>/^#\/r\//.test(h)?"fiche":h==="#/new"?"nouvelle recette":/^#\/edit\//.test(h)?"modifier recette"
   :({"#/courses":"panier","#/listes":"listes","#/planning":"planning","#/profil":"profil","#/amis":"profil","#/importer":"import"})[h]
   ||(/^#\/(ami|ajout)\//.test(h)?"invitation":"recettes");
