@@ -31,7 +31,7 @@ export async function initSync(app) {
 
   const { initializeApp } = appMod;
   const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } = authMod;
-  const { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, deleteDoc, onSnapshot, Timestamp } = fsMod;
+  const { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, getDocFromServer, deleteDoc, onSnapshot, Timestamp } = fsMod;
 
   const fb = initializeApp(cfg);
   const auth = getAuth(fb);
@@ -136,16 +136,26 @@ export async function initSync(app) {
   // ---------- amis et partage ----------
   const myName = () => (app.getProfile().name || "").trim();
   // attend le serveur au plus 12 s : hors ligne, une lecture ou une écriture attendrait indéfiniment
-  const net = (p) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error("Pas de réseau : réessaie quand tu seras connecté."), { code: "offline" })), 12000))]);
-  const rulesErr = (e) => ((e && e.code) || "").includes("permission-denied")
-    ? new Error("Refusé : les règles Firestore ne sont pas à jour.") : e;
+  const net = (p) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(offlineErr()), 12000))]);
+  const offlineErr = () => Object.assign(new Error("Pas de réseau : réessaie quand tu seras connecté."), { code: "offline" });
+  // erreurs Firestore en français : hors ligne (« client is offline » en anglais sinon), règles pas à jour
+  const rulesErr = (e) => {
+    const c = (e && e.code) || "";
+    if (c === "offline" || c.includes("unavailable") || /offline/i.test((e && e.message) || "")) return offlineErr();
+    if (c.includes("permission-denied")) return new Error("Refusé : les règles Firestore ne sont pas à jour.");
+    return e;
+  };
+  // l'annuaire se lit sur le serveur, jamais dans le cache : hors ligne, on le dit tout de suite au lieu de croire un pseudo libre
+  const readPseudo = async (k) => {
+    if (navigator.onLine === false) throw offlineErr();
+    try { return await net(getDocFromServer(pseudoRef(k))); } catch (e) { throw rulesErr(e); }
+  };
 
   // réserve le pseudo dans l'annuaire (et libère l'ancien) ; refuse s'il appartient à un autre compte
   async function claimPseudo(name, oldName) {
     const k = keyOf(name);
     if (k.length < 2) throw new Error("Ton pseudo doit contenir au moins 2 lettres ou chiffres.");
-    let snap;
-    try { snap = await net(getDoc(pseudoRef(k))); } catch (e) { throw rulesErr(e); }
+    const snap = await readPseudo(k);
     if (snap.exists() && (snap.data() || {}).uid !== uid) throw Object.assign(new Error(`Le pseudo « ${name} » est déjà pris.`), { code: "taken" });
     try { await net(setDoc(pseudoRef(k), { uid, name, updated: Date.now() })); } catch (e) { throw rulesErr(e); }
     const ok = oldName && keyOf(oldName);
@@ -158,9 +168,8 @@ export async function initSync(app) {
     const k = keyOf(input);
     if (k.length < 2) throw new Error("Tape le pseudo de ton ami.");
     if (k === keyOf(myName())) throw new Error("C'est ton propre pseudo.");
-    let snap;
-    try { snap = await net(getDoc(pseudoRef(k))); }
-    catch (e) { throw (e && e.code === "offline") ? e : rulesErr(e); }
+    if (!myName()) throw new Error("Choisis d'abord ton pseudo.");
+    const snap = await readPseudo(k);
     const p = snap.exists() ? snap.data() || {} : null;
     if (!p || typeof p.uid !== "string") throw new Error(`Personne n'a le pseudo « ${String(input).trim()} ».`);
     if (p.uid === uid) throw new Error("C'est ton propre pseudo.");
@@ -317,11 +326,12 @@ export async function initSync(app) {
         }
         app.setPlan(snap.data() || {});
       }, fail),
-      onSnapshot(profileRef(), (snap) => {
+      // includeMetadataChanges : on sait quand le serveur a confirmé qu'il n'y a pas encore de pseudo
+      onSnapshot(profileRef(), { includeMetadataChanges: true }, (snap) => {
         const d = snap.exists() ? snap.data() : {};
         const name = typeof d.name === "string" ? d.name : "";
         const photo = okPhoto(d.photo);
-        app.setProfile({ name, photo });
+        app.setProfile({ name, photo }, !snap.metadata.fromCache);
         // une fois par session : le profil public suit le pseudo et la photo du compte
         if (name && !publicSynced && !snap.metadata.fromCache) {
           publicSynced = true;

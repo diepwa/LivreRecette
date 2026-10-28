@@ -17,7 +17,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v25`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v27`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -73,7 +73,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 - Presque pas d'ombres : les blocs sont des listes groupées sur fond crème. Ombre seulement pour ce qui flotte (bouton « Nouvelle recette », fenêtres). Remplissages doux `--fill` (accent à 9 %) pour les boutons secondaires, puces et champs ; matériaux translucides `--glass` pour l'en-tête et les barres du bas, avec repli `prefers-reduced-transparency`.
 - Séparateurs fins `.5px solid var(--hair)` (plus de pointillés). L'en-tête n'a de trait que quand le contenu défile dessous (`body.scrolled`).
 - Icônes de l'en-tête, du panier des vignettes et du bouton « + » : petits SVG au trait teintés `--accent` (style SF Symbols). Les émojis d'aliments restent sur les tuiles et vignettes.
-- Profil connecté façon Réglages : pseudo modifiable au toucher (alerte de confirmation puis alerte avec champ, pas de bouton Enregistrer visible), amis retirés au toucher après feuille de confirmation (pas de croix), « Ajouter un ami » (alerte avec champ pseudo) et « Inviter un ami » (feuille de partage : pseudo + lien), pas de textes d'aide sous les groupes, pas de bloc d'import (l'import reste dans « Nouvelle recette »).
+- Profil connecté façon Réglages : pseudo choisi au toucher de la ligne « Choisir ton pseudo » (alerte avec champ, rouverte tant que le pseudo est refusé) et modifiable au toucher (alerte de confirmation puis alerte avec champ ; pas de champ en ligne, car le « OK » du clavier iPhone ne l'envoyait pas), « Ajouter un ami » et « Inviter un ami » toujours actifs (sans pseudo, ils demandent d'abord d'en choisir un ; « Ajouter un ami » accepte aussi le lien ou le message d'invitation collé), « Chargement… » tant que le serveur n'a pas confirmé l'absence de pseudo, amis retirés au toucher après feuille de confirmation (pas de croix), « Ajouter un ami » (alerte avec champ pseudo) et « Inviter un ami » (feuille de partage : pseudo + lien), pas de textes d'aide sous les groupes, pas de bloc d'import (l'import reste dans « Nouvelle recette »).
 - Marges de page 16px, largeur max 900px, grilles à espacement 8px (12px au-delà de 640px).
 
 ### Mise en page et ergonomie mobile
