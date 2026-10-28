@@ -385,6 +385,7 @@ export async function initSync(app) {
 
   onAuthStateChanged(auth, (user) => {
     stop();
+    if (app.setUser) app.setUser(user ? user.uid : null);
     if (!user) { app.setStatus({ state: "signedout" }); return; }
     start(user);
   });

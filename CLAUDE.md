@@ -11,14 +11,14 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 - `firebase-config.js` : vraie config du projet `recettes-cedd9`. Ne pas la vider ni la remplacer par des valeurs d'exemple (ces valeurs ne sont pas secrètes).
 - `firestore.rules` : accès réservé à `request.auth.uid == uid`. Ne jamais assouplir.
 - `recipe-pdf.js` + `vendor/pdf-lib.min.js` (pdf-lib 1.17.1, MIT) : export PDF d'une recette, hors ligne. Polices standard WinAnsi, les émojis sont retirés.
-- `analytics.js` + `analytics-config.js` + `vendor/amplitude.min.js` (@amplitude/analytics-browser 2.48.1, MIT, empaqueté avec esbuild en module ESM) : statistiques d'usage anonymes, chargées à la demande. Clé du projet Amplitude de Charles (région EU) ; clé vide = désactivé. Appel depuis `index.html` par `track(nom, propriétés)`. Vie privée : aucun `userId`, e-mail, pseudo, titre ni contenu de recette dans les événements ; IP non enregistrée ; capture automatique (clics, formulaires, pages, URL) et configuration distante désactivées, seules les sessions sont suivies. Événements : App ouverte, Écran vu, Recette créée/modifiée, Recettes importées, Recette ajoutée au panier, Repas planifié, Ami ajouté, Recette partagée, Recette reçue, PDF téléchargé.
+- `analytics.js` + `analytics-config.js` + `vendor/amplitude.min.js` (@amplitude/analytics-browser 2.48.1, MIT, empaqueté avec esbuild en module ESM) : statistiques d'usage anonymes, chargées à la demande. Clé du projet Amplitude de Charles (région EU) ; clé vide = désactivé. Appel depuis `index.html` par `track(nom, propriétés)`. `user_id` = uid Firebase du compte (`setUser` appelé par sync.js à la connexion/déconnexion), à la demande de Charles le 2026-10-28. Jamais d'e-mail, pseudo, titre ni contenu de recette dans les événements ; IP non enregistrée ; capture automatique d'Amplitude et configuration distante désactivées (seules les sessions). Événements : App ouverte, Écran vu (`ecran`), Bouton touché (`bouton` = id, onglet ou classe · conteneur ; `libelle` seulement pour les boutons à id fixe, sauf `CLICK_NO_LABEL`), Recette créée/modifiée, Recettes importées, Recette ajoutée au panier, Repas planifié, Ami ajouté, Recette partagée, Recette reçue, PDF téléchargé. Nouveau bouton avec un id dont le texte montre des données : l'ajouter à `CLICK_NO_LABEL`.
 - `sw.js` : service worker (cache d'abord, mise à jour en arrière-plan).
 - `manifest.json`, `icons/` (dont `apple-touch-icon.png` 180×180, `splash.png`, `nout.png`).
 - `LISEZ-MOI.md` : mode d'emploi pour l'utilisateur (Firebase, installation iPhone, panier, PDF).
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v26`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v27`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
