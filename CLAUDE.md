@@ -17,7 +17,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v23`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v24`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -26,7 +26,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 ## Données (noms internes figés)
 
 - IndexedDB `livre-recettes` (version 1, store `recipes`, keyPath `id`), localStorage `livre-courses`, marqueur d'export `app:"livre-recettes"`. Ne pas les renommer malgré le nom NoutBook. Pour changer le schéma : incrémenter la version IndexedDB avec un `onupgradeneeded` qui conserve l'existant.
-- Firestore : `users/{uid}/recipes/{id}` et `users/{uid}/meta/shop`. `meta/shop` s'écrit avec `setDoc(..., {merge:true})` pour qu'un téléphone pas à jour n'efface pas les champs qu'il ne connaît pas.
+- Firestore : `users/{uid}/recipes/{id}` et `users/{uid}/meta/shop`. Amis : annuaire `pseudos/{clé}` = `{uid, name}` (clé = `pseudoKey(nom)`, pseudo unique, réservé avant d'enregistrer le pseudo), ajout d'ami par pseudo (`addFriendByPseudo`, message `type:"friend"` avec `pseudo`), lien d'invitation `#/ajout/<pseudo>`. Les anciens codes d'invitation (`invites/`, `#/ami/<code>`) restent acceptés mais ne sont plus créés. `meta/shop` s'écrit avec `setDoc(..., {merge:true})` pour qu'un téléphone pas à jour n'efface pas les champs qu'il ne connaît pas.
 - Tout nouveau champ est optionnel avec une valeur par défaut à la lecture. Ne jamais renommer ni supprimer un champ existant.
 - Un document Firestore fait au plus 1 Mo : 6 photos max par recette, recompressées par `fitPhotos`. Ne pas augmenter sans autre stockage.
 - Panier : `sel` {id: personnes} (Firestore : `[{id,n}]`), `have` {clé: true}, `extra` [noms] (tableau de chaînes), `freq` {clé: {n,last,name}} (fusion par maximum, jamais vidé, même par « Vider »), `basics` {clé: bool}. Clé produit = `nameKey(nom)` ; ne pas la changer sans migration. `normalizeShop()` migre l'ancien format.
@@ -72,7 +72,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 - Presque pas d'ombres : les blocs sont des listes groupées sur fond crème. Ombre seulement pour ce qui flotte (bouton « Nouvelle recette », fenêtres). Remplissages doux `--fill` (accent à 9 %) pour les boutons secondaires, puces et champs ; matériaux translucides `--glass` pour l'en-tête et les barres du bas, avec repli `prefers-reduced-transparency`.
 - Séparateurs fins `.5px solid var(--hair)` (plus de pointillés). L'en-tête n'a de trait que quand le contenu défile dessous (`body.scrolled`).
 - Icônes de l'en-tête, du panier des vignettes et du bouton « + » : petits SVG au trait teintés `--accent` (style SF Symbols). Les émojis d'aliments restent sur les tuiles et vignettes.
-- Profil connecté façon Réglages : pseudo modifiable au toucher (alerte de confirmation puis alerte avec champ, pas de bouton Enregistrer visible), amis retirés au toucher après feuille de confirmation (pas de croix), pas de bloc d'import (l'import reste dans « Nouvelle recette »).
+- Profil connecté façon Réglages : pseudo modifiable au toucher (alerte de confirmation puis alerte avec champ, pas de bouton Enregistrer visible), amis retirés au toucher après feuille de confirmation (pas de croix), « Ajouter un ami » (alerte avec champ pseudo) et « Inviter un ami » (feuille de partage : pseudo + lien), pas de textes d'aide sous les groupes, pas de bloc d'import (l'import reste dans « Nouvelle recette »).
 - Marges de page 16px, largeur max 900px, grilles à espacement 8px (12px au-delà de 640px).
 
 ### Mise en page et ergonomie mobile

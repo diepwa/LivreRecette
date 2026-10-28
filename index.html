@@ -1328,6 +1328,8 @@ function sharedCopy(src,m,now){
 const CODE_ABC="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const cleanCode=s=>String(s||"").toUpperCase().split("").filter(c=>CODE_ABC.includes(c)).join("");
 const fmtCode=c=>c.length===8?c.slice(0,4)+"-"+c.slice(4):c;
+// clé d'un pseudo dans l'annuaire : minuscules, sans accents ni espaces (« Chloé B. » → « chloeb »), 30 car. max
+const pseudoKey=n=>stripAcc(n).replace(/[^a-z0-9]/g,"").slice(0,30);
 // « de Bob », « d’Alice »
 const deNom=n=>(/^[aeiouyhàâäéèêëîïôöùûüœ]/i.test(n)?"d’":"de ")+n;
 /* ---- import de recettes à partir d'un texte (Instagram, site, notes…) ---- */
@@ -1994,7 +1996,7 @@ function openSendDlg(r){
     go.textContent=sel.size>1?`Envoyer à ${sel.size} amis`:"Envoyer";
   };
   const ok=signedIn();
-  msg.textContent=!ok?"Connecte-toi d’abord (bouton « ⋯ » → Mon profil) pour envoyer des recettes à tes amis."
+  msg.textContent=!ok?"Connecte-toi d’abord (onglet Profil) pour envoyer des recettes à tes amis."
     :!friends.length?"Tu n’as pas encore d’ami dans NoutBook. Ajoute-en un pour lui envoyer cette recette."
     :"Ton ami reçoit sa propre copie : s’il la modifie, la tienne ne change pas.";
   $("#sendopts").hidden=go.hidden=!ok||!friends.length;
@@ -2025,8 +2027,8 @@ async function receiveShared(m){
   refreshView();
 }
 
-let lastInvite=null;   // dernier code créé, gardé si la page se redessine
-// Page profil (bouton « ⋯ ») : pseudo, connexion, amis, import
+let pseudoTaken=false;    // le pseudo du compte appartient déjà à un autre compte dans l'annuaire
+let linkDone="";         // lien d'ajout d'ami déjà traité (pas de nouvelle question si la page se redessine)
 /* ---------- alertes et feuilles d'action façon iOS ---------- */
 const CHEV_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>`;
 // résout {i,value} (i = index du bouton touché) ou null si on touche à côté ; sheet:true = menu qui monte du bas
@@ -2035,7 +2037,7 @@ function iosAlert({title,msg="",input=null,actions,sheet=false}){
     const w=document.createElement("div");w.className="ios-scrim"+(sheet?" sheet":"")+(input?" kb":"");
     const btn=(a,cls="")=>`<button type="button" data-i="${actions.indexOf(a)}" class="${cls} ${a.danger?"dg":""} ${a.bold?"b":""}">${esc(a.label)}</button>`;
     w.innerHTML=`<div class="ios-${sheet?"sheet":"alert"}" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
-      <div class="ia-box"><div class="ia-t">${esc(title)}</div>${msg?`<div class="ia-m">${esc(msg)}</div>`:""}${input?`<input class="ia-in" type="text" maxlength="30" value="${esc(input.value||"")}" placeholder="${esc(input.placeholder||"")}" enterkeyhint="done">`:""}
+      <div class="ia-box"><div class="ia-t">${esc(title)}</div>${msg?`<div class="ia-m">${esc(msg)}</div>`:""}${input?`<input class="ia-in" type="text" maxlength="30" value="${esc(input.value||"")}" placeholder="${esc(input.placeholder||"")}" enterkeyhint="done" ${input.plain?'autocapitalize="off" autocorrect="off" spellcheck="false"':""}>`:""}
       <div class="ia-a ${!sheet&&actions.length===2?"two":""}">${actions.filter(a=>!(sheet&&a.cancel)).map(a=>btn(a)).join("")}</div></div>
       ${sheet?actions.filter(a=>a.cancel).map(a=>btn(a,"ia-c")).join(""):""}</div>`;
     document.body.appendChild(w);
@@ -2050,14 +2052,21 @@ function iosAlert({title,msg="",input=null,actions,sheet=false}){
     };
   });
 }
-async function viewProfile(code){
+// lien d'invitation : ouvre NoutBook et propose d'ajouter l'ami (#/ajout/<pseudo>)
+const inviteUrl=name=>location.origin+location.pathname+"#/ajout/"+encodeURIComponent(name);
+async function addFriend(p){
+  try{toast(`${await syncApi.addFriendByPseudo(p)} est maintenant ton ami ✓`)}
+  catch(err){toast(err&&err.message||"Ajout impossible, réessaie avec du réseau.")}
+}
+async function viewProfile(link={}){
   chrome({tab:"profil",root:true,title:"Profil"});
-  code=cleanCode(code);
+  const code=cleanCode(link.code||""),addP=String(link.add||"").trim().slice(0,30);
   const on=signedIn(),named=!!profile.name;
-  const st=syncState.state;
   const ini=(n,ph)=>ph&&/^data:image\//.test(ph)?`<img src="${esc(ph)}" alt="" draggable="false">`:esc((n||"?").trim().charAt(0).toUpperCase()||"?");
   const CAM_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
-  // déconnecté : connexion d'abord, les amis ensuite
+  const PLUS_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>`;
+  const SHARE_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M8 7.5l4-4 4 4"/><path d="M7 11H5.5v9.5h13V11H17"/></svg>`;
+  // déconnecté : connexion d'abord ; un lien d'ami reçu reste affiché
   const accountBlock=`<h4 class="gh">Connexion</h4>
     <div class="grp pad"><p class="hint" id="syncmsg" aria-live="polite"></p>
       <form id="authf" class="syncbox" hidden>
@@ -2066,32 +2075,31 @@ async function viewProfile(code){
         <p class="autherr" id="autherr" role="alert"></p>
         <button class="btn primary" type="submit" style="width:100%">Se connecter</button>
       </form></div>
-    <h4 class="gh">Amis</h4>
-    <div class="grp pad"><p style="margin:0">Connecte-toi pour ajouter des amis et leur envoyer des recettes.</p>
-      ${code?`<p style="margin:12px 0 0">Code d’invitation reçu :</p><div class="code">${esc(fmtCode(code))}</div><p class="hint" style="margin:0">Si NoutBook est installé sur ton écran d’accueil, ouvre-le, puis « ⋯ » → « J’ai reçu un code », et tape ce code.</p>`:""}</div>`;
-  // connecté : façon Réglages, en listes groupées
+    ${addP||code?`<h4 class="gh">Invitation</h4>
+    <div class="grp pad"><p style="margin:0">${addP?`Pour ajouter <b>${esc(addP)}</b>, ouvre NoutBook, va dans Profil → Ajouter un ami et tape ce pseudo.`:`Code reçu : <b>${esc(fmtCode(code))}</b>. Ouvre NoutBook et connecte-toi pour l’utiliser.`}</p>
+      ${addP?`<button class="btn" type="button" id="cpp" style="width:100%;margin-top:12px">Copier le pseudo</button>`:""}</div>`:""}`;
+  // connecté : façon Réglages, en listes groupées, sans texte d'aide
   const signedBlock=`<div class="me"><button type="button" class="av big av-btn" id="avbtn" aria-label="${profile.photo?"Changer ta photo de profil":"Ajouter une photo de profil"}">${ini(profile.name,profile.photo)}<span class="cam">${CAM_SVG}</span></button><input type="file" id="pfile" accept="image/*" aria-hidden="true" tabindex="-1">
       <div class="me-n">${esc(profile.name||"Sans pseudo")}</div>
       <div class="me-s"><span class="sd"></span><span id="syncmsg" aria-live="polite"></span></div></div>
     <h4 class="gh">Pseudo</h4>
-    ${named?`<div class="grp"><button type="button" class="gr link" id="pedit" aria-label="Modifier ton pseudo : ${esc(profile.name)}"><span class="pt">${esc(profile.name)}</span><span class="chev">${CHEV_SVG}</span></button></div>
-      <p class="gf">C’est le nom que tes amis voient. Touche-le pour le changer.</p>`
-    :`<form class="grp" id="pf" autocomplete="off"><div class="gr"><input id="pname" type="text" maxlength="30" placeholder="Choisis ton pseudo" enterkeyhint="done" autocomplete="nickname" aria-label="Pseudo"></div></form>
-      <p class="gf">C’est le nom que tes amis voient. Valide avec la touche Entrée.</p>`}
+    ${named?`<div class="grp"><button type="button" class="gr link" id="pedit" aria-label="Modifier ton pseudo : ${esc(profile.name)}"><span class="pt">${esc(profile.name)}</span><span class="chev">${CHEV_SVG}</span></button></div>`
+    :`<form class="grp" id="pf" autocomplete="off"><div class="gr"><input id="pname" type="text" maxlength="30" placeholder="Choisis ton pseudo" enterkeyhint="done" autocomplete="nickname" aria-label="Pseudo"></div></form>`}
+    ${pseudoTaken?`<p class="gf fhint err">Un autre compte a déjà ce pseudo : choisis-en un autre pour que tes amis te trouvent.</p>`:""}
     <h4 class="gh">Mes amis <span>${friends.length}</span></h4>
     <div class="grp" id="flist">
-      ${friends.map(f=>`<button type="button" class="gr fr" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}"><span class="av" aria-hidden="true">${ini(f.name,f.photo)}</span><span class="pt">${esc(f.name||"Ami")}</span></button>`).join("")||`<div class="gr muted">Personne pour l’instant.</div>`}
-      <button type="button" class="gr act" id="mkinv" ${named?"":"disabled"} ${lastInvite?"hidden":""}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Inviter un ami</span></button>
+      ${friends.map(f=>`<button type="button" class="gr fr" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}"><span class="av" aria-hidden="true">${ini(f.name,f.photo)}</span><span class="pt">${esc(f.name||"Ami")}</span></button>`).join("")}
+      <button type="button" class="gr act" id="addfr" ${named?"":"disabled"}>${PLUS_SVG}<span>Ajouter un ami</span></button>
+      <button type="button" class="gr act" id="mkinv" ${named?"":"disabled"}>${SHARE_SVG}<span>Inviter un ami</span></button>
     </div>
-    <div id="inv"></div>
-    <p class="gf">${friends.length?"Touche un ami pour le retirer. ":""}Un code d’invitation est valable 7 jours et sert à plusieurs amis.${named?"":" Choisis d’abord ton pseudo."}</p>
-    <h4 class="gh">J’ai reçu un code</h4>
-    <form class="grp" id="cf" autocomplete="off"><div class="gr"><input id="icode" type="text" maxlength="12" placeholder="ABCD-EFGH" autocapitalize="characters" autocorrect="off" spellcheck="false" value="${esc(fmtCode(code))}" aria-label="Code d’invitation"><button class="tbtn" type="submit" ${named?"":"disabled"}>Ajouter</button></div></form>
-    <p class="gf fhint" id="cmsg" role="status"></p>
     <div class="grp" style="margin-top:28px"><button class="gr danger" type="button" id="signout">Se déconnecter</button></div>`;
   view.innerHTML=on?signedBlock:accountBlock;
   renderSync();
-  if(!on){$("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};return}
+  if(!on){
+    $("#authf").onsubmit=e=>{e.preventDefault();doAuth("signIn")};
+    if($("#cpp"))$("#cpp").onclick=async()=>toast(await copyText(addP)?"Pseudo copié ✓":"Copie impossible");
+    return;
+  }
   $("#signout").onclick=async()=>{
     if(!syncApi)return;
     const r=await iosAlert({sheet:true,title:"Se déconnecter ?",msg:"Les recettes restent sur cet appareil.",actions:[{label:"Se déconnecter",danger:true},{label:"Annuler",cancel:true}]});
@@ -2099,7 +2107,7 @@ async function viewProfile(code){
   };
   const setPhoto=async p=>{
     profile={...profile,photo:p};syncApi.setPhoto(p);
-    toast(p?"Photo enregistrée ✓":"Photo retirée");viewProfile(code);
+    toast(p?"Photo enregistrée ✓":"Photo retirée");refreshView();
   };
   $("#avbtn").onclick=async()=>{
     if(!profile.photo){$("#pfile").click();return}
@@ -2111,13 +2119,16 @@ async function viewProfile(code){
     const file=e.target.files&&e.target.files[0];e.target.value="";if(!file)return;
     try{setPhoto(await avatarFromFile(file))}catch(err){toast("Cette image n’a pas pu être lue")}
   };
-  const saveName=n=>{
+  // le pseudo est réservé dans l'annuaire avant d'être enregistré : deux comptes ne peuvent pas avoir le même
+  const saveName=async n=>{
     n=n.trim().slice(0,30);if(!n)return false;
-    if(n===profile.name){toast("Pseudo inchangé");return true}
-    profile={...profile,name:n};syncApi.setProfile(n);toast("Pseudo enregistré ✓");
-    viewProfile(code);return true;
+    if(n===profile.name&&!pseudoTaken){toast("Pseudo inchangé");return true}
+    try{await syncApi.setProfile(n,profile.name)}
+    catch(err){toast(err&&err.message||"Pseudo non enregistré, réessaie avec du réseau.");return false}
+    profile={...profile,name:n};pseudoTaken=false;toast("Pseudo enregistré ✓");
+    refreshView();return true;
   };
-  if($("#pf"))$("#pf").onsubmit=e=>{e.preventDefault();if(!saveName($("#pname").value))$("#pname").focus();else $("#pname").blur()};
+  if($("#pf"))$("#pf").onsubmit=async e=>{e.preventDefault();const i=$("#pname");if(!await saveName(i.value))i.focus();else i.blur()};
   if($("#pedit"))$("#pedit").onclick=async()=>{
     const r1=await iosAlert({title:"Modifier ton pseudo ?",msg:"Tes amis verront le nouveau nom.",actions:[{label:"Annuler",cancel:true},{label:"Modifier",bold:true}]});
     if(!r1||r1.i!==1)return;
@@ -2127,45 +2138,35 @@ async function viewProfile(code){
   $("#flist").onclick=async e=>{
     const b=e.target.closest(".fr[data-id]");if(!b)return;
     const f=friends.find(x=>x.uid===b.dataset.id);if(!f)return;
-    const r=await iosAlert({sheet:true,title:`Retirer ${f.name||"cet ami"} de tes amis ?`,msg:"Vous ne pourrez plus vous envoyer de recettes.",actions:[{label:"Retirer de mes amis",danger:true},{label:"Annuler",cancel:true}]});
+    const r=await iosAlert({sheet:true,title:`Retirer ${f.name||"cet ami"} de tes amis ?`,actions:[{label:"Retirer de mes amis",danger:true},{label:"Annuler",cancel:true}]});
     if(!r||r.i!==0)return;
     syncApi.removeFriend(f.uid);
     toastUndo("Retiré de tes amis : "+(f.name||"ami"),()=>syncApi.restoreFriend(f));
   };
-  const showInvite=c=>{
-    const url=location.origin+location.pathname+"#/ami/"+c;
-    const txt=`Ajoute-moi comme ami sur NoutBook pour qu’on s’échange des recettes : dans l’app, « ⋯ » → « J’ai reçu un code », puis tape ${fmtCode(c)}.\n${url}`;
-    $("#inv").innerHTML=`<div class="code">${esc(fmtCode(c))}</div><div class="row2" style="margin-bottom:10px"><button class="btn primary" type="button" id="invshare">Envoyer l’invitation</button><button class="btn" type="button" id="invcopy">Copier</button></div>`;
-    $("#invshare").onclick=async()=>{
-      if(navigator.share){try{await navigator.share({text:txt});return}catch(err){if(err&&err.name==="AbortError")return}}
-      toast(await copyText(txt)?"Invitation copiée ✓":"Copie impossible");
-    };
-    $("#invcopy").onclick=async()=>toast(await copyText(txt)?"Invitation copiée ✓":"Copie impossible");
+  $("#addfr").onclick=async()=>{
+    const r=await iosAlert({title:"Ajouter un ami",input:{placeholder:"Son pseudo",plain:true},actions:[{label:"Annuler",cancel:true},{label:"Ajouter",bold:true}]});
+    if(r&&r.i===1&&r.value)addFriend(r.value);
   };
-  if(lastInvite)showInvite(lastInvite);
   $("#mkinv").onclick=async()=>{
-    const b=$("#mkinv");b.disabled=true;b.textContent="Création…";
-    try{
-      lastInvite=await syncApi.createInvite();
-      if(document.body.contains(b)){showInvite(lastInvite);b.hidden=true}else refreshView();
-    }catch(err){
-      b.disabled=false;b.textContent="Inviter un ami";
-      toast(err&&err.message||"Création impossible, réessaie avec du réseau.");
+    const url=inviteUrl(profile.name);
+    const txt=`Ajoute-moi sur NoutBook pour qu’on s’échange des recettes ! Mon pseudo : ${profile.name}\n${url}`;
+    if(navigator.share){try{await navigator.share({text:txt});return}catch(err){if(err&&err.name==="AbortError")return}}
+    toast(await copyText(txt)?"Invitation copiée ✓":"Copie impossible");
+  };
+  // arrivée par un lien d'ami : on propose l'ajout une seule fois
+  const key=addP?"p:"+pseudoKey(addP):code?"c:"+code:"";
+  if(key&&linkDone!==key&&(named||!addP)){   // sans pseudo (ou profil pas encore chargé), on attend
+    linkDone=key;
+    history.replaceState(null,"","#/profil");
+    if(addP){
+      if(pseudoKey(addP)===pseudoKey(profile.name))return;
+      const r=await iosAlert({title:`Ajouter ${addP} à tes amis ?`,msg:"Vous pourrez vous envoyer des recettes.",actions:[{label:"Annuler",cancel:true},{label:"Ajouter",bold:true}]});
+      if(r&&r.i===1)addFriend(addP);
+    }else if(code.length===8){
+      try{toast(`${await syncApi.redeemInvite(code)||"Ton ami"} est maintenant ton ami ✓`)}
+      catch(err){toast(err&&err.message||"Ce code n’a pas marché.")}
     }
-  };
-  $("#cf").onsubmit=async e=>{
-    e.preventDefault();
-    const c=cleanCode($("#icode").value),msg=$("#cmsg");
-    msg.className="fhint";
-    if(c.length!==8){msg.className="fhint err";msg.textContent="Le code fait 8 caractères, par exemple ABCD-EFGH.";return}
-    msg.textContent="Vérification du code…";
-    try{
-      const name=await syncApi.redeemInvite(c);
-      if(location.hash!=="#/profil")history.replaceState(null,"","#/profil");
-      toast(`${name||"Ton ami"} est maintenant ton ami ✓`);
-      $("#icode").blur();viewProfile();
-    }catch(err){msg.className="fhint err";msg.textContent=err&&err.message||"Ce code n’a pas marché."}
-  };
+  }
 }
 
 /* ---------- photos : rester sous la limite de 1 Mo par recette ---------- */
@@ -2222,7 +2223,7 @@ function refreshView(){
     route().then(()=>window.scrollTo(0,y));
   },200);
 }
-const PROFILE_RE=/^#\/(profil|ami)/;
+const PROFILE_RE=/^#\/(profil|ami|ajout)/;
 let wasSignedIn=false;
 function setStatus(st){
   syncState=st;renderSync();
@@ -2276,7 +2277,8 @@ async function bootSync(){
       getLists:()=>lists,setLists:applyRemoteLists,
       setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&(PROFILE_RE.test(location.hash)||/^#\/(r\/|$)/.test(location.hash||"#/")))refreshView()},
       setProfile:p=>{const ch=p.name!==profile.name||(p.photo||"")!==(profile.photo||"");profile={photo:"",...p};if(ch&&PROFILE_RE.test(location.hash))refreshView()},
-      getProfile:()=>profile,receiveShared,shareable,toast,
+      getProfile:()=>profile,receiveShared,shareable,toast,pseudoKey,
+      setPseudoTaken:t=>{if(t!==pseudoTaken){pseudoTaken=t;if(PROFILE_RE.test(location.hash))refreshView()}},
       getTagIcons:()=>tagIcons,setTagIcons:applyRemoteTagIcons,tagIconsFor
     });
   }catch(e){setStatus({state:"off"})}
@@ -2295,7 +2297,8 @@ async function route(){
     else if((m=h.match(/^#\/edit\/(.+)$/)))await viewForm(m[1]);
     else if(h==="#/profil"||h==="#/amis")await viewProfile();
     else if(h==="#/importer")await viewImport();
-    else if((m=h.match(/^#\/ami\/([A-Za-z0-9-]+)$/)))await viewProfile(m[1]);
+    else if((m=h.match(/^#\/ami\/([A-Za-z0-9-]+)$/)))await viewProfile({code:m[1]});
+    else if((m=h.match(/^#\/ajout\/(.+)$/))){let p=m[1];try{p=decodeURIComponent(p)}catch(e){}await viewProfile({add:p})}
     else await viewList();
   }catch(err){
     view.innerHTML=`<div class="empty"><div class="big">⚠️</div><p>Un souci est survenu : ${esc(err.message)}</p></div>`;
