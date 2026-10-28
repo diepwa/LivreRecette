@@ -2640,22 +2640,48 @@ function bootAnalytics(){
     for(const [n,p] of q)a.track(n,p);
   });
 }
-// boutons touchés : nom technique stable (id, onglet ou classe) ; libellé seulement pour les boutons fixes
-// (ceux qui ont un id), jamais pour les cartes, tuiles, amis, tags… qui affichent des données
-const CLICK_SKIP_CLS=new Set(["on","gr","btn","sm","primary","danger","dg","b","full","busy"]);
-const CLICK_NO_LABEL=new Set(["pedit"]);   // affiche le pseudo
+// boutons touchés : nom lisible et fixe, jamais le texte d'une carte, d'une tuile, d'un ami ou d'un tag
+const CLICK_ID={
+  back:"retour",addbtn:"nouvelle recette",del:"supprimer la recette",cart:"panier (fiche)",fav:"favori",lists:"ranger dans une liste",
+  send:"partager avec un ami",pdf:"télécharger en PDF",signout:"se déconnecter",pedit:"modifier le pseudo",avbtn:"photo de profil",
+  mkinv:"inviter un ami",addfr:"ajouter un ami",newlistrow:"nouvelle liste",cpp:"copier le pseudo",copy:"copier la liste de courses",
+  clear:"vider le panier",clearyes:"confirmer vider le panier",clearno:"annuler vider le panier",wnow:"cette semaine",
+  wprev:"semaine précédente",wnext:"semaine suivante",sendgo:"envoyer la recette",sendclose:"fermer partage",
+  sendfriends:"ajouter un ami (partage)",pdfdl:"télécharger le PDF",pdfshare:"partager le PDF",pdfclose:"fermer PDF",
+  impgo:"créer les recettes importées",impback:"retour au texte (import)",impcancel:"annuler l'import",imppaste:"coller (import)",
+  tdbasic:"produit de base (tuile)",tdskip:"retirer sans compter (tuile)",tdclose:"fermer tuile",nameno:"annuler pseudo",
+  listclose:"fermer listes",pickclose:"fermer choix de recette",iconclose:"fermer icônes"
+};
+const CLICK_FORM={f:"enregistrer la recette",sf:"ajouter un article",impr:"créer les recettes importées",impf:"analyser le texte (import)",
+  authf:"se connecter",namef:"valider le pseudo",newlistf:"créer la liste"};
+const CLICK_BOX={sendopts:"choisir un ami (partage)",listopts:"choisir une liste (fiche)",icongrid:"choisir une icône",
+  picklist:"choisir une recette (planning)",sugg:"suggestion d'article",tsugg:"suggestion de tag",chips:"filtre catégorie",
+  tchips:"filtre tag",tpills:"retirer un tag (formulaire)",lmine:"choisir une liste"};
+const CLICK_CLS=[["cl","carte recette"],["cardcart","panier (carte)"],["tile","tuile du panier"],["pslot","créneau repas"],
+  ["pt","recette du planning"],["pcart","voir le panier (planning)"],["lrow","choisir une liste"],["lmore","options de la liste"],
+  ["fr","ami"],["impcta","importer des recettes"],["impcb","cocher une recette (import)"],["ic","icône de tag"],["rm","retirer un tag"],
+  ["tag","tag de la fiche"],["ricon","modifier la recette"]];
+function clickName(el){
+  if(el.dataset.tab)return "onglet "+el.dataset.tab;
+  if(el.id&&CLICK_ID[el.id])return CLICK_ID[el.id];
+  const form=el.type==="submit"&&el.closest("form");
+  if(form)return CLICK_FORM[form.id]||"valider";
+  if(el.closest(".ios-alert,.ios-sheet"))return "alerte : "+el.textContent.replace(/\s+/g," ").trim().toLowerCase().slice(0,40);
+  if(el.matches("[data-unplan]"))return "retirer un repas";
+  if(el.matches("[data-rm]"))return "retirer du panier (récap)";
+  if(el.matches("[data-d]"))return el.dataset.d==="1"?"personnes +":"personnes −";
+  if(el.matches(".tile.add"))return "ajouter l'article tapé";
+  if(el.matches("a.tag[data-l]"))return "liste de la fiche";
+  for(const [c,n] of CLICK_CLS)if(el.classList.contains(c))return n;
+  const box=el.parentElement&&el.parentElement.closest("[id]");
+  if(box&&CLICK_BOX[box.id])return CLICK_BOX[box.id];
+  if(el.matches('a[href="#/profil"]'))return "aller au profil";
+  return "autre"+(el.id?" · "+el.id:box&&box.id!=="view"?" · "+box.id:"");
+}
 function clickInfo(el){
-  const p={ecran:screenName(location.hash||"#/")};
-  if(el.id){
-    p.bouton=el.id;
-    if(!CLICK_NO_LABEL.has(el.id)){const l=(el.getAttribute("aria-label")||el.textContent||"").replace(/\s+/g," ").trim().slice(0,40);if(l)p.libelle=l}
-  }else if(el.dataset.tab)p.bouton="onglet "+el.dataset.tab;
-  else if(el.type==="submit"){const f=el.closest("form");p.bouton="valider"+(f&&f.id?" · "+f.id:"");p.libelle=el.textContent.replace(/\s+/g," ").trim().slice(0,40)}
-  else{
-    const c=[...el.classList].find(c=>!CLICK_SKIP_CLS.has(c));
-    const box=el.parentElement&&el.parentElement.closest("[id]");
-    p.bouton=(c||el.tagName.toLowerCase())+(box&&box.id!=="view"?" · "+box.id:"");
-  }
+  const p={ecran:screenName(location.hash||"#/"),bouton:clickName(el)};
+  const on=el.getAttribute("aria-pressed");
+  if(on==="true"||on==="false")p.actif=on!=="true";   // état après le toucher (bascules panier, favori, filtres)
   return p;
 }
 document.addEventListener("click",e=>{
