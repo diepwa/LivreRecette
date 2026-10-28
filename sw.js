@@ -1,9 +1,12 @@
-const CACHE = "livre-recettes-v25";
+const CACHE = "livre-recettes-v26";
 const ASSETS = [
   "./",
   "./index.html",
   "./sync.js",
   "./recipe-pdf.js",
+  "./analytics.js",
+  "./analytics-config.js",
+  "./vendor/amplitude.min.js",
   "./vendor/pdf-lib.min.js",
   "./firebase-config.js",
   "./manifest.json",

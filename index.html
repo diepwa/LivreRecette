@@ -868,7 +868,7 @@ async function viewList(){
     const r=rs.find(x=>x.id===b.dataset.id);
     if(!r)return;
     if(shop.sel[r.id]){removeRecipeFromCart(shop,r.id,planned().length);toast("Retirée des courses")}
-    else{addRecipeToCart(shop,r.id,Number(r.servings)||1,planned().length);toast("Ajoutée aux courses")}
+    else{addRecipeToCart(shop,r.id,Number(r.servings)||1,planned().length);toast("Ajoutée aux courses");track("Recette ajoutée au panier",{depuis:"accueil"})}
     saveShop();updateBadge();
     const on=!!shop.sel[r.id];
     b.classList.toggle("on",on);
@@ -924,6 +924,7 @@ async function viewDetail(id){
     if(on)addRecipeToCart(shop,r.id,Number(r.servings)||1,planned().length);else removeRecipeFromCart(shop,r.id,planned().length);
     saveShop();updateBadge();flip($("#cart"),on,"Retirer du panier","Ajouter au panier");
     toast(on?"Ajoutée au panier":"Retirée du panier");
+    if(on)track("Recette ajoutée au panier",{depuis:"fiche"});
   };
   $("#del").onclick=async()=>{
     const a=await iosAlert({sheet:true,title:`Supprimer « ${r.title} » ?`,msg:"Cette action est définitive.",actions:[{label:"Supprimer la recette",danger:true},{label:"Annuler",cancel:true}]});
@@ -1019,6 +1020,7 @@ async function viewForm(id){
     });
     if(!rec.title){$("#title").focus();return}
     try{await putRecipe(rec)}catch(err){alert("Impossible d’enregistrer (espace plein ?). "+err.message);return}
+    track(r?"Recette modifiée":"Recette créée",{photos:photos.length,tags:tags.length,source:"manuel"});
     toast("Recette enregistrée ✓");
     location.hash="#/r/"+rec.id;
   };
@@ -1721,7 +1723,7 @@ async function shareRecipePdf(r){
   const btn=$("#pdf");
   if(btn){btn.disabled=true;btn.classList.add("busy")}
   let file=null;
-  try{file=await makeRecipePdf(r)}
+  try{file=await makeRecipePdf(r);track("PDF téléchargé")}
   catch(e){toast("Impossible de créer le PDF")}
   if(btn){btn.disabled=false;btn.classList.remove("busy")}
   if(!file)return;
@@ -2072,6 +2074,7 @@ async function planMeal(day,meal,r,n){
   const k=slotKey(day,meal),wasEmpty=!Object.keys(effectiveSel(shop.sel,planned())).length;
   plan.slots[k]={id:r.id,n:Math.max(1,Number(n)||Number(r.servings)||1),updated:Date.now()};
   savePlan();
+  track("Repas planifié",{repas:meal==="l"?"déjeuner":"dîner",jours_avant:Math.round((keyDate(day)-keyDate(todayKey()))/864e5)});
   if(day>=todayKey()){
     if(wasEmpty)shop.have={};
     for(const it of buildList([r],{[r.id]:1}))delete shop.have[it.key];
@@ -2206,6 +2209,7 @@ function openSendDlg(r){
     const to=friends.filter(f=>sel.has(f.uid));
     d.close();
     syncApi.sendRecipe(to,r);
+    track("Recette partagée",{destinataires:to.length});
     toast("Copie envoyée à "+to.map(f=>f.name||"ton ami").join(", "));
   };
   $("#sendclose").onclick=()=>d.close();
@@ -2219,6 +2223,7 @@ async function receiveShared(m){
   for(const t of r.tags){const k=tagKey(t);if(!tagIcons[k]&&ic[k]&&ic[k].icon!==autoTagIcon(t)){tagIcons[k]={icon:ic[k].icon,updated:Date.now()};added=true}}
   if(added)saveTagIcons();
   await putRecipe(r);
+  track("Recette reçue");
   toast("📬 Nouvelle recette "+(r.sharedFrom.name?deNom(r.sharedFrom.name):"de ton ami"));
   refreshView();
 }
@@ -2251,7 +2256,7 @@ function iosAlert({title,msg="",input=null,actions,sheet=false}){
 // lien d'invitation : ouvre NoutBook et propose d'ajouter l'ami (#/ajout/<pseudo>)
 const inviteUrl=name=>location.origin+location.pathname+"#/ajout/"+encodeURIComponent(name);
 async function addFriend(p){
-  try{toast(`${await syncApi.addFriendByPseudo(p)} est maintenant ton ami ✓`)}
+  try{toast(`${await syncApi.addFriendByPseudo(p)} est maintenant ton ami ✓`);track("Ami ajouté",{via:"pseudo"})}
   catch(err){toast(err&&err.message||"Ajout impossible, réessaie avec du réseau.")}
 }
 async function viewProfile(link={}){
@@ -2359,7 +2364,7 @@ async function viewProfile(link={}){
       const r=await iosAlert({title:`Ajouter ${addP} à tes amis ?`,msg:"Vous pourrez vous envoyer des recettes.",actions:[{label:"Annuler",cancel:true},{label:"Ajouter",bold:true}]});
       if(r&&r.i===1)addFriend(addP);
     }else if(code.length===8){
-      try{toast(`${await syncApi.redeemInvite(code)||"Ton ami"} est maintenant ton ami ✓`)}
+      try{toast(`${await syncApi.redeemInvite(code)||"Ton ami"} est maintenant ton ami ✓`);track("Ami ajouté",{via:"code"})}
       catch(err){toast(err&&err.message||"Ce code n’a pas marché.")}
     }
   }
@@ -2481,10 +2486,25 @@ async function bootSync(){
   }catch(e){setStatus({state:"off"})}
 }
 
+/* ---------- statistiques d'usage (Amplitude, anonymes : voir analytics.js) ---------- */
+// jamais de contenu de recette, de pseudo ni d'e-mail dans les propriétés
+let anaQ=[],anaTrack=null;
+function track(name,props){if(anaTrack)anaTrack(name,props);else if(anaQ&&anaQ.length<50)anaQ.push([name,props])}
+function bootAnalytics(){
+  import("./analytics.js").then(m=>m.initAnalytics()).catch(()=>null).then(t=>{
+    const q=anaQ||[];anaQ=null;anaTrack=t;
+    if(t)for(const [n,p] of q)t(n,p);
+  });
+}
+const screenName=h=>/^#\/r\//.test(h)?"fiche":h==="#/new"?"nouvelle recette":/^#\/edit\//.test(h)?"modifier recette"
+  :({"#/courses":"panier","#/listes":"listes","#/planning":"planning","#/profil":"profil","#/amis":"profil","#/importer":"import"})[h]
+  ||(/^#\/(ami|ajout)\//.test(h)?"invitation":"recettes");
+
 /* ---------- router ---------- */
 async function route(){
   window.scrollTo(0,0);
   const h=location.hash||"#/";
+  track("Écran vu",{ecran:screenName(h)});
   let m;
   try{
     if((m=h.match(/^#\/r\/(.+)$/)))await viewDetail(m[1]);
@@ -2627,6 +2647,7 @@ async function viewImport(){
       alert(`${made.length} recette(s) créée(s), puis un souci : ${err.message}`);
       return impDraft.items.length?viewImport():(location.hash="#/");
     }
+    track("Recettes importées",{nombre:made.length,dans_une_liste:listOk(impDraft.list)});
     if(listOk(impDraft.list)){filter.list=impDraft.list;filter.cat="all";filter.tags=[];filter.q=""}
     impDraft={text:"",items:null,list:null};
     toast(made.length===1?"Recette créée ✓":`${made.length} recettes créées ✓`);
@@ -2688,6 +2709,8 @@ for(const ev of ["gesturestart","gesturechange","gestureend"])document.addEventL
 document.addEventListener("touchmove",e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
 route();
 bootSync();
+bootAnalytics();
+track("App ouverte",{installee:!!(navigator.standalone||matchMedia("(display-mode: standalone)").matches)});
 </script>
 </body>
 </html>
