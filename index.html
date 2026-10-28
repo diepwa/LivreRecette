@@ -345,6 +345,15 @@ body.root.scrolled header.top h1{font-size:1.25rem;letter-spacing:-.01em}
 body.root.scrolled .logo{height:26px}
 header.top h1{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px}
 header.top h1 .ht{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header.top h1 .hsw{display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;margin:0;text-align:left;border-radius:10px;transition:transform .12s var(--ease-out)}
+header.top h1 .hsw:active{transform:scale(.97);opacity:.7}
+header.top h1 .hchev{flex:none;display:inline-flex;color:var(--muted);align-self:center}
+header.top h1 .hchev svg{width:.5em;height:.5em;min-width:13px;min-height:13px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+header.top h1 .hsw.in .ht,header.top h1 .hsw.in .hc{animation:swin .22s var(--ease-out)}
+main.swin{animation:swfade .24s var(--ease-out)}
+@keyframes swin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes swfade{from{opacity:.35}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){header.top h1 .hsw,header.top h1 .hsw.in .ht,header.top h1 .hsw.in .hc,main.swin{animation:none;transition:none}}
 header.top h1 .hc{font-family:var(--sans);font-weight:500;font-size:.5em;color:var(--muted);letter-spacing:0;align-self:center;flex:none}
 #addbtn svg{stroke-width:2.2}
 .icon-btn{color:var(--accent);width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;transition:transform .1s var(--ease-out)}
@@ -808,6 +817,10 @@ function updateBadge(){
 const isHome=()=>["","#","#/"].includes(location.hash);
 const LIST_NAMES={mine:"Ma liste",shared:"Partagées",all:"Toutes les recettes"};
 const listName=(k,l)=>l?l.name:LIST_NAMES[k]||"Ma liste";
+// ordre du défilement au toucher du grand titre : le même que la page Listes
+const listOrder=ls=>["mine","shared","all",...ls.map(l=>l.id)];
+const SWAP_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 9 4-4 4 4M8 15l4 4 4-4"/></svg>`;
+let switchAnim=false;
 function setListsBadge(n){const b=$("#lbadge");b.hidden=!n;b.textContent=n;b.setAttribute("aria-label",n+" recette(s) reçue(s)")}
 async function viewList(){
   chrome({tab:"recettes",root:true,add:{label:"Nouvelle recette",fn:()=>{location.hash="#/new"}}});
@@ -819,7 +832,10 @@ async function viewList(){
   const unseen=rs.filter(r=>r.sharedFrom&&r.sharedNew).length;
   const inCur=rs.filter(r=>inList(r,filter.list,lists));
   const curCount=new Set(inCur.map(r=>r.id)).size;   // count distinct : une recette compte une fois par liste
-  $("#htitle").innerHTML=`${LOGO}<span class="ht">${esc(listName(filter.list,curList))}</span><span class="hc">${curCount}</span>`;
+  const order=listOrder(ls),nxt=order[(order.indexOf(filter.list)+1)%order.length];
+  $("#htitle").innerHTML=`${LOGO}<button type="button" class="hsw${switchAnim?" in":""}" id="hsw" aria-label="${esc(listName(filter.list,curList))}, ${curCount} recette(s). Toucher pour passer à ${esc(listName(nxt,ls.find(l=>l.id===nxt)))}"><span class="ht">${esc(listName(filter.list,curList))}</span><span class="hc">${curCount}</span><span class="hchev" aria-hidden="true">${SWAP_SVG}</span></button>`;
+  $("#hsw").onclick=()=>{filter.list=nxt;filter.cat="all";filter.tags=[];switchAnim=true;window.scrollTo(0,0);viewList()};
+  if(switchAnim){switchAnim=false;view.classList.add("swin");setTimeout(()=>view.classList.remove("swin"),260)}
   setListsBadge(unseen);
   view.innerHTML=`
     <input class="search" id="q" type="search" placeholder="Rechercher une recette, un ingrédient…" value="${esc(filter.q)}">
@@ -2658,7 +2674,7 @@ const CLICK_BOX={sendopts:"choisir un ami (partage)",listopts:"choisir une liste
   picklist:"choisir une recette (planning)",sugg:"suggestion d'article",tsugg:"suggestion de tag",chips:"filtre catégorie",
   tchips:"filtre tag",tpills:"retirer un tag (formulaire)",lmine:"choisir une liste"};
 const CLICK_CLS=[["cl","carte recette"],["cardcart","panier (carte)"],["tile","tuile du panier"],["pslot","créneau repas"],
-  ["pt","recette du planning"],["pcart","voir le panier (planning)"],["lrow","choisir une liste"],["lmore","options de la liste"],
+  ["pt","recette du planning"],["pcart","voir le panier (planning)"],["lrow","choisir une liste"],["hsw","liste suivante (titre)"],["lmore","options de la liste"],
   ["fr","ami"],["impcta","importer des recettes"],["impcb","cocher une recette (import)"],["ic","icône de tag"],["rm","retirer un tag"],
   ["tag","tag de la fiche"],["ricon","modifier la recette"]];
 function clickName(el){
