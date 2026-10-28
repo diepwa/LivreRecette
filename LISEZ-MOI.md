@@ -47,6 +47,11 @@ Utilisez bien **le même compte** sur les deux téléphones : c'est ce qui vous 
 - En cas de modification simultanée de la même recette, la dernière enregistrée l'emporte.
 - Photos : 6 maximum par recette, réduites automatiquement pour tenir dans la limite de 1 Mo par recette.
 
+## Mise à jour « amis par pseudo » (octobre 2026) : règles Firestore à republier
+
+Les amis s'ajoutent désormais par pseudo. **Republie les règles** (même manipulation que ci-dessous) avec le nouveau
+`firestore.rules` : sans elles, choisir ou changer de pseudo et ajouter un ami sont refusés.
+
 ## Mise à jour « listes et amis » : règles Firestore à republier
 
 Cette version ajoute les listes, les amis et l'envoi de recettes. **Avant de l'utiliser, republie les règles** :
@@ -71,11 +76,11 @@ Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'e
 
 ## Amis et envoi de recettes
 
-- Bouton « ⋯ » → page **Mon profil** : pseudo, connexion / déconnexion, amis et import de recettes.
-- Choisis d'abord ton **pseudo** : tes amis le voient, et s'il change, il change aussi chez eux.
-- **Inviter** : « Créer un code d'invitation », puis « Envoyer l'invitation » (Messages, WhatsApp…). Le code est valable 7 jours.
-- **Accepter** : ton ami ouvre NoutBook → « ⋯ » → « J'ai reçu un code », et tape le code. Vous êtes alors amis tous les deux
-  (l'ami qui a créé le code doit ouvrir NoutBook une fois pour que l'amitié soit confirmée de son côté).
+- Onglet **Profil** (en bas à droite) : pseudo, connexion / déconnexion, amis.
+- Choisis d'abord ton **pseudo** : il est unique (deux comptes ne peuvent pas avoir le même) et tes amis le voient.
+- **Ajouter un ami** : tape son pseudo. Vous êtes alors amis tous les deux (ton ami voit l'ajout la prochaine fois qu'il ouvre NoutBook).
+- **Inviter un ami** : envoie un message (Messages, WhatsApp…) avec ton pseudo et un lien. Sur iPhone, le lien s'ouvre dans Safari :
+  si ton ami y est connecté, NoutBook lui propose de t'ajouter ; sinon il tape ton pseudo dans l'app.
 - Sur une recette : **Envoyer à un ami**. L'ami reçoit une **copie** dans son onglet « Partagées » : s'il la modifie, la tienne ne change pas.
 - Chaque ami a son propre compte (créé dans la console Firebase, inscriptions toujours fermées).
 
