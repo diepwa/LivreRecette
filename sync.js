@@ -31,7 +31,7 @@ export async function initSync(app) {
 
   const { initializeApp } = appMod;
   const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } = authMod;
-  const { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, getDocFromServer, deleteDoc, onSnapshot, Timestamp } = fsMod;
+  const { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, getDocs, getDocFromServer, deleteDoc, onSnapshot, Timestamp } = fsMod;
 
   const fb = initializeApp(cfg);
   const auth = getAuth(fb);
@@ -426,5 +426,18 @@ export async function initSync(app) {
     isFriend: (u) => friendDocs.some((f) => f.uid === u),
     restoreFriend: (f) => { if (uid) setDoc(friendRef(f.uid), { name: f.name, since: f.since || Date.now() }).catch(fail); },
     sendRecipe,
+    // recettes d'un ami, en lecture seule (règle Firestore : il faut être dans ses amis)
+    friendRecipes: async (f) => {
+      if (!uid) throw new Error("Connecte-toi d'abord.");
+      let snap;
+      try {
+        snap = await getDocs(collection(db, "users", f, "recipes"));
+      } catch (e) {
+        const c = (e && e.code) || "";
+        if (c.includes("permission-denied")) { const err = new Error("denied"); err.code = "denied"; throw err; }
+        throw new Error("Chargement impossible : il faut du réseau.");
+      }
+      return snap.docs.map((d) => ({ ...d.data(), id: (d.data() && d.data().id) || d.id }));
+    },
   };
 }

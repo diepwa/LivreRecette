@@ -1,4 +1,4 @@
-const CACHE = "livre-recettes-v27";
+const CACHE = "livre-recettes-v28";
 const ASSETS = [
   "./",
   "./index.html",

@@ -9,7 +9,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 - `index.html` : toute l'app (HTML, CSS, JS inline). Logique pure entre `/*PURE-START*/` et `/*PURE-END*/` (`buildList`, `shopList`, `buildCatalog`, `normalizeShop`, `nameKey`, `EMOJI_MAP`…), testable avec node.
 - `sync.js` : synchro Firebase (SDK 12.19.0 depuis gstatic, chargé à la demande). Sans config ou sans réseau, l'app reste en mode local.
 - `firebase-config.js` : vraie config du projet `recettes-cedd9`. Ne pas la vider ni la remplacer par des valeurs d'exemple (ces valeurs ne sont pas secrètes).
-- `firestore.rules` : accès réservé à `request.auth.uid == uid`. Ne jamais assouplir.
+- `firestore.rules` : accès réservé à `request.auth.uid == uid`. Ne jamais assouplir, sauf exceptions voulues par Charles : boîte aux lettres `inbox`, profils publics, annuaire `pseudos`, et **lecture seule des recettes par un ami** (`users/{uid}/recipes`, si `users/{uid}/friends/{moi}` existe ; depuis le 2026-10-28, pour voir la liste d'un ami).
 - `recipe-pdf.js` + `vendor/pdf-lib.min.js` (pdf-lib 1.17.1, MIT) : export PDF d'une recette, hors ligne. Polices standard WinAnsi, les émojis sont retirés.
 - `analytics.js` + `analytics-config.js` + `vendor/amplitude.min.js` (@amplitude/analytics-browser 2.48.1, MIT, empaqueté avec esbuild en module ESM) : statistiques d'usage anonymes, chargées à la demande. Clé du projet Amplitude de Charles (région EU) ; clé vide = désactivé. Appel depuis `index.html` par `track(nom, propriétés)`. Vie privée : aucun `userId`, e-mail, pseudo, titre ni contenu de recette dans les événements ; IP non enregistrée ; capture automatique (clics, formulaires, pages, URL) et configuration distante désactivées, seules les sessions sont suivies. Événements : App ouverte, Écran vu, Recette créée/modifiée, Recettes importées, Recette ajoutée au panier, Repas planifié, Ami ajouté, Recette partagée, Recette reçue, PDF téléchargé.
 - `sw.js` : service worker (cache d'abord, mise à jour en arrière-plan).
@@ -18,7 +18,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v27`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v28`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -74,7 +74,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 - Presque pas d'ombres : les blocs sont des listes groupées sur fond crème. Ombre seulement pour ce qui flotte (bouton « Nouvelle recette », fenêtres). Remplissages doux `--fill` (accent à 9 %) pour les boutons secondaires, puces et champs ; matériaux translucides `--glass` pour l'en-tête et les barres du bas, avec repli `prefers-reduced-transparency`.
 - Séparateurs fins `.5px solid var(--hair)` (plus de pointillés). L'en-tête n'a de trait que quand le contenu défile dessous (`body.scrolled`).
 - Icônes de l'en-tête, du panier des vignettes et du bouton « + » : petits SVG au trait teintés `--accent` (style SF Symbols). Les émojis d'aliments restent sur les tuiles et vignettes.
-- Profil connecté façon Réglages : pseudo choisi au toucher de la ligne « Choisir ton pseudo » (alerte avec champ, rouverte tant que le pseudo est refusé) et modifiable au toucher (alerte de confirmation puis alerte avec champ ; pas de champ en ligne, car le « OK » du clavier iPhone ne l'envoyait pas), « Ajouter un ami » et « Inviter un ami » toujours actifs (sans pseudo, ils demandent d'abord d'en choisir un ; « Ajouter un ami » accepte aussi le lien ou le message d'invitation collé), « Chargement… » tant que le serveur n'a pas confirmé l'absence de pseudo, amis retirés au toucher après feuille de confirmation (pas de croix), « Ajouter un ami » (alerte avec champ pseudo) et « Inviter un ami » (feuille de partage : pseudo + lien), pas de textes d'aide sous les groupes, pas de bloc d'import (l'import reste dans « Nouvelle recette »).
+- Profil connecté façon Réglages : pseudo choisi au toucher de la ligne « Choisir ton pseudo » (alerte avec champ, rouverte tant que le pseudo est refusé) et modifiable au toucher (alerte de confirmation puis alerte avec champ ; pas de champ en ligne, car le « OK » du clavier iPhone ne l'envoyait pas), « Ajouter un ami » et « Inviter un ami » toujours actifs (sans pseudo, ils demandent d'abord d'en choisir un ; « Ajouter un ami » accepte aussi le lien ou le message d'invitation collé), « Chargement… » tant que le serveur n'a pas confirmé l'absence de pseudo, ami touché = ouverture de sa liste (le retrait se fait en bas de sa liste, après feuille de confirmation, pas de croix), « Ajouter un ami » (alerte avec champ pseudo) et « Inviter un ami » (feuille de partage : pseudo + lien), pas de textes d'aide sous les groupes, pas de bloc d'import (l'import reste dans « Nouvelle recette »).
 - Marges de page 16px, largeur max 900px, grilles à espacement 8px (12px au-delà de 640px).
 
 ### Mise en page et ergonomie mobile
@@ -108,7 +108,8 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 ### Détails techniques à garder
 
 - Garder `[hidden]{display:none !important}` (sinon `.btn{display:inline-block}` écrase `hidden`).
-- Fiche recette (depuis le 2026-10-28) : sous le titre, une rangée d'icônes rondes sans texte (libellé en `aria-label`) : Panier (bascule), Favori (bascule, étoile pleine), Listes, Partager (copie à un ami), Télécharger (PDF). En bas de page, deux icônes : Modifier et Supprimer (rouge, feuille de confirmation iOS).
+- Fiche recette (depuis le 2026-10-28) : sous le titre, une rangée d'icônes rondes sans texte (libellé en `aria-label`) : Panier (bascule), Favori (bascule, étoile pleine), Listes, Partager (copie à un ami, icône avion en papier façon Instagram). En bas de page, trois icônes : Télécharger (PDF), Modifier et Supprimer (rouge, feuille de confirmation iOS).
+- Liste d'un ami (`#/amis/<uid>`, fiche `#/amis/<uid>/r/<id>`) : sa « Ma liste » (ses recettes sans celles qu'il a reçues), en lecture seule, lue une fois par `getDocs` (cache mémoire de 2 min, pas d'écoute en temps réel pour ménager le quota gratuit). Ouverte depuis Profil → Mes amis ou Listes → « Listes de mes amis ». « Retirer de mes amis » est en bas de cette page.
 - Styles d'impression (`@media print`, plus de bouton Imprimer mais l'impression du navigateur reste propre) : masquer en-tête, barre d'onglets, actions, splash et barre du bas.
 
 ## Fonctions à préserver
