@@ -74,6 +74,13 @@ Sans cette étape, les listes marchent, mais la création d'un code d'ami et l'e
 - Les cartes affichent jusqu'à 3 icônes de tags. Une recette envoyée à un ami garde ses tags et leurs icônes.
 - Les tags et leurs icônes sont synchronisés. Rien à changer dans les règles Firestore.
 
+## Planning des repas
+
+- Onglet **Planning** : la semaine du lundi au dimanche, un déjeuner et un dîner par jour. Flèches pour changer de semaine.
+- Touche un repas vide pour choisir une recette ; touche un repas planifié pour voir la recette, en changer, régler le nombre de personnes ou le retirer.
+- Les repas d'aujourd'hui et des jours suivants sont **ajoutés au panier** automatiquement (rubrique « Repas planifiés »). Retirer un repas retire ses ingrédients ;
+  les repas passés sortent du panier tout seuls. « Vider » ne touche pas au planning.
+
 ## Amis et envoi de recettes
 
 - Onglet **Profil** (en bas à droite) : pseudo, connexion / déconnexion, amis.

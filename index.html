@@ -404,6 +404,35 @@ body.notab{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .toast{bottom:calc(var(--tabh) + 14px + env(safe-area-inset-bottom))}
 body.notab .toast{bottom:calc(100px + env(safe-area-inset-bottom))}
 body.courses .toast{bottom:calc(var(--tabh) + 80px + env(safe-area-inset-bottom))}
+/* planning */
+.wnav{display:flex;align-items:center;gap:4px;margin:2px -6px 4px}
+.wnav .wr{flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.25}
+.wnav .wr b{font-weight:600;font-size:1.0625rem;letter-spacing:-.02em}
+.wnav .wr span,.wnav .tbtn{font-size:.8125rem;color:var(--muted);padding:0;font-weight:500}
+.wnav .tbtn{color:var(--accent);font-weight:600;min-height:24px}
+.pcart{display:flex;align-items:center;justify-content:center;gap:4px;margin:6px 0 0;color:var(--accent);font-size:.875rem;font-weight:600;text-decoration:none;min-height:32px}
+.pcart .chev{color:var(--accent)}
+.gh.today{color:var(--accent);font-weight:700}
+.gh.today span{text-transform:none;font-weight:500;color:var(--muted)}
+.pslot{min-height:52px;gap:10px}
+.pslot .pm{flex:none;width:68px;font-size:.8125rem;color:var(--muted);font-weight:500}
+.pth{flex:none;width:36px;height:36px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--fill);font-size:1.2rem}
+.pth img{width:100%;height:100%;object-fit:cover;display:block}
+.pslot .pn{flex:none;color:var(--muted);font-size:.8125rem;font-variant-numeric:tabular-nums}
+.pslot .padd{color:color-mix(in srgb,var(--muted) 70%,transparent)}
+.pslot:not(.full) .padd::before{content:"+ ";color:var(--accent);font-weight:600}
+.pslot:active{background:var(--fill)}
+.pday.past{opacity:.55}
+.grp .pslot+.pslot::before{left:94px}
+#pickdlg{margin:calc(env(safe-area-inset-top) + 40px) auto auto;max-height:calc(100dvh - env(safe-area-inset-top) - 80px);display:flex;flex-direction:column}
+#pickdlg:not([open]){display:none}
+#pickdlg .search{flex:none;margin:4px 0 8px}
+.plist{overflow-y:auto;overscroll-behavior:contain;min-height:120px;flex:1;margin:0 0 12px}
+.plist button{gap:10px}
+.plist .pt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist .pf{color:#e8a33a}
+.recap .pick .when{display:block;font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}
+.recap ul.pick.meals .pt{white-space:normal}
 /* fiche recette : rangée d'icônes rondes */
 .rbar{display:flex;justify-content:center;gap:14px;margin:4px 0 18px}
 .ricon{width:52px;height:52px;border-radius:50%;border:0;background:var(--fill);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:transform .12s var(--ease-out),background-color .15s;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -572,6 +601,7 @@ setTimeout(done,2200)})();
 <main id="view"></main>
 <nav class="tabbar" id="tabbar" aria-label="Navigation">
   <a href="#/" data-tab="recettes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h10.5a1.5 1.5 0 0 1 1.5 1.5v15H7.2A2.2 2.2 0 0 1 5 17.8V4.5a1 1 0 0 1 1-1z"/><path d="M5 17.8A2.2 2.2 0 0 1 7.2 15.6H18"/><path d="M9 7.5h5.5M9 10.5h4"/></svg><span>Recettes</span></a>
+  <a href="#/planning" data-tab="planning"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle class="f" cx="8.5" cy="14" r="1.1"/><circle class="f" cx="12" cy="14" r="1.1"/><circle class="f" cx="15.5" cy="14" r="1.1"/><circle class="f" cx="8.5" cy="17.3" r="1.1"/></svg><span>Planning</span></a>
   <a href="#/listes" data-tab="listes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6.5H20M9.5 12H20M9.5 17.5H20"/><circle class="f" cx="5" cy="6.5" r="1.3"/><circle class="f" cx="5" cy="12" r="1.3"/><circle class="f" cx="5" cy="17.5" r="1.3"/></svg><span>Listes</span><b class="tbadge" id="lbadge" hidden></b></a>
   <a href="#/courses" data-tab="panier"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5h18l-1.8 9a1.8 1.8 0 0 1-1.8 1.5H6.6a1.8 1.8 0 0 1-1.8-1.5z"/><path d="m8 9.5 3-6M16 9.5l-3-6M9 13v3.5M12 13v3.5M15 13v3.5"/></svg><span>Panier</span><b class="tbadge" id="badge" hidden></b></a>
   <a href="#/profil" data-tab="profil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="f" cx="8" cy="12" r="1"/><circle class="f" cx="12" cy="12" r="1"/><circle class="f" cx="16" cy="12" r="1"/></svg><span>Profil</span><i class="dot" id="dot" hidden></i></a>
@@ -589,7 +619,7 @@ setTimeout(done,2200)})();
 
 <dialog id="cleardlg">
   <h3>Vider la liste ?</h3>
-  <p>Toutes les recettes et tous les produits de la liste seront retirés. Ton historique d’achats est conservé.</p>
+  <p>Les recettes ajoutées et les produits de la liste seront retirés. Les repas planifiés restent. Ton historique d’achats est conservé.</p>
   <div class="row2">
     <button class="btn" type="button" id="clearno">Annuler</button>
     <button class="btn primary" type="button" id="clearyes">Oui, vider</button>
@@ -635,6 +665,13 @@ setTimeout(done,2200)})();
   </form>
 </dialog>
 
+<dialog id="pickdlg">
+  <h3 id="pickt"></h3>
+  <input class="search" id="pickq" type="search" placeholder="Rechercher une recette" autocomplete="off" enterkeyhint="search">
+  <ul class="opts plist" id="picklist"></ul>
+  <button class="btn" type="button" id="pickclose" style="width:100%">Fermer</button>
+</dialog>
+
 <dialog id="senddlg">
   <h3>Partager avec un ami</h3>
   <p id="sendmsg">Ton ami reçoit sa propre copie : s’il la modifie, la tienne ne change pas.</p>
@@ -675,7 +712,7 @@ const allRecipes=()=>tx("readonly",s=>s.getAll());
 const getRecipe=id=>tx("readonly",s=>s.get(id));
 const putRecipeLocal=r=>tx("readwrite",s=>s.put(r));
 const delRecipeLocal=id=>tx("readwrite",s=>s.delete(id));
-const syncHooks={push:null,remove:null,pushShop:null,pushLists:null,pushTags:null};
+const syncHooks={push:null,remove:null,pushShop:null,pushLists:null,pushTags:null,pushPlan:null};
 async function putRecipe(r){
   await putRecipeLocal(r);
   if(syncHooks.push)syncHooks.push(r);
@@ -683,7 +720,10 @@ async function putRecipe(r){
 async function delRecipe(id){
   await delRecipeLocal(id);
   if(syncHooks.remove)syncHooks.remove(id);
-  if(shop.sel[id]){removeRecipeFromCart(shop,id);saveShop();updateBadge()}
+  if(shop.sel[id]){removeRecipeFromCart(shop,id,planned().length);saveShop();updateBadge()}
+  // recette supprimée : ses repas planifiés disparaissent aussi
+  const ks=Object.keys(plan.slots).filter(k=>plan.slots[k].id===id);
+  if(ks.length){ks.forEach(k=>plan.slots[k]={id:"",n:1,updated:Date.now()});savePlan();updateBadge()}
 }
 
 /* ---------- utils ---------- */
@@ -760,7 +800,7 @@ const CART_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.2l2.
 // barre du haut : trait fin et grand titre réduit seulement quand le contenu passe dessous
 addEventListener("scroll",()=>document.body.classList.toggle("scrolled",scrollY>8),{passive:true});
 function updateBadge(){
-  const n=Object.keys(shop.sel).length,b=$("#badge");
+  const n=Object.keys(effectiveSel(shop.sel,planned())).length,b=$("#badge");
   b.hidden=!n;b.textContent=n;
 }
 
@@ -827,8 +867,8 @@ async function viewList(){
     if(!b)return;
     const r=rs.find(x=>x.id===b.dataset.id);
     if(!r)return;
-    if(shop.sel[r.id]){removeRecipeFromCart(shop,r.id);toast("Retirée des courses")}
-    else{addRecipeToCart(shop,r.id,Number(r.servings)||1);toast("Ajoutée aux courses")}
+    if(shop.sel[r.id]){removeRecipeFromCart(shop,r.id,planned().length);toast("Retirée des courses")}
+    else{addRecipeToCart(shop,r.id,Number(r.servings)||1,planned().length);toast("Ajoutée aux courses")}
     saveShop();updateBadge();
     const on=!!shop.sel[r.id];
     b.classList.toggle("on",on);
@@ -881,7 +921,7 @@ async function viewDetail(id){
   if(r.sharedFrom&&r.sharedNew){r.sharedNew=false;touch(r);putRecipe(r)}
   $("#cart").onclick=()=>{
     const on=!shop.sel[r.id];
-    if(on)addRecipeToCart(shop,r.id,Number(r.servings)||1);else removeRecipeFromCart(shop,r.id);
+    if(on)addRecipeToCart(shop,r.id,Number(r.servings)||1,planned().length);else removeRecipeFromCart(shop,r.id,planned().length);
     saveShop();updateBadge();flip($("#cart"),on,"Retirer du panier","Ajouter au panier");
     toast(on?"Ajoutée au panier":"Retirée du panier");
   };
@@ -1175,13 +1215,51 @@ function addToList(shop,name,derivedKeys){
 }
 function toggleBasic(shop,key){shop.basics[key]=!isBasic(shop,key)}
 // Nouvelle série de courses : si le panier était vide, on oublie ce qui avait été « pris » la fois d'avant
-function addRecipeToCart(shop,id,servings){
-  if(!Object.keys(shop.sel).length)shop.have={};
+// planned = nombre de repas planifiés à venir (ils comptent aussi dans le panier)
+function addRecipeToCart(shop,id,servings,planned=0){
+  if(!Object.keys(shop.sel).length&&!planned)shop.have={};
   shop.sel[id]=servings;
 }
-function removeRecipeFromCart(shop,id){
+function removeRecipeFromCart(shop,id,planned=0){
   delete shop.sel[id];
-  if(!Object.keys(shop.sel).length)shop.have={};
+  if(!Object.keys(shop.sel).length&&!planned)shop.have={};
+}
+
+/* ---- planning des repas : plan.slots = {"AAAA-MM-JJ_l|d": {id, n, updated}} (id "" = repas retiré) ---- */
+const MEALS={l:"Déjeuner",d:"Dîner"};
+const pad2=n=>String(n).padStart(2,"0");
+const dayKey=d=>d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+const keyDate=k=>{const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)};
+const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const weekStart=d=>addDays(d,-((d.getDay()+6)%7));   // lundi
+const slotKey=(day,meal)=>day+"_"+meal;
+function normalizePlan(o){
+  const out={};
+  const src=o&&typeof o==="object"&&o.slots&&typeof o.slots==="object"?o.slots:{};
+  for(const [k,v] of Object.entries(src)){
+    if(!/^\d{4}-\d{2}-\d{2}_[ld]$/.test(k)||!v||typeof v!=="object")continue;
+    out[k]={id:typeof v.id==="string"?v.id:"",n:Math.max(1,Math.round(Number(v.n)||1)),updated:Number(v.updated)||0};
+  }
+  return {slots:out};
+}
+// fusion repas par repas : le plus récent gagne (un retrait est un repas vide daté)
+function mergePlan(a,b){
+  const A=normalizePlan(a).slots,B=normalizePlan(b).slots,out={...A};
+  for(const [k,v] of Object.entries(B))if(!out[k]||v.updated>out[k].updated)out[k]=v;
+  return {slots:out};
+}
+const planSig=p=>JSON.stringify(Object.keys(p.slots).sort().map(k=>[k,p.slots[k].id,p.slots[k].n,p.slots[k].updated]));
+// repas à venir (aujourd'hui compris) : ce sont eux qui remplissent le panier
+function upcomingMeals(plan,today){
+  return Object.entries(plan.slots).filter(([k,v])=>v.id&&k.slice(0,10)>=today)
+    .map(([k,v])=>({key:k,day:k.slice(0,10),meal:k.slice(11),id:v.id,n:v.n}))
+    .sort((a,b)=>a.day<b.day?-1:a.day>b.day?1:(a.meal==="l"?0:1)-(b.meal==="l"?0:1));   // déjeuner avant dîner
+}
+// sélection du panier = recettes ajoutées à la main + repas planifiés (personnes additionnées)
+function effectiveSel(sel,meals){
+  const out={...sel};
+  for(const m of meals)out[m.id]=(Number(out[m.id])||0)+m.n;
+  return out;
 }
 function buildCatalog(recipes,shop,onList,query){
   const m=new Map();
@@ -1703,10 +1781,12 @@ async function viewCourses(){
   let cur={selected:[],items:[],keys:new Set(),derived:new Set()};
 
   const compute=()=>{
-    const selected=rs.filter(r=>shop.sel[r.id]);
-    const items=shopList(selected,shop);
+    const meals=planned().filter(m=>rs.some(r=>r.id===m.id));
+    const eff=effectiveSel(shop.sel,meals),cart={...shop,sel:eff};
+    const selected=rs.filter(r=>eff[r.id]);
+    const items=shopList(selected,cart);
     colorOf=new Map(selected.map((r,i)=>[r.title,RC[i%RC.length]]));
-    cur={selected,items,keys:new Set(items.map(i=>i.key)),derived:new Set(buildList(selected,shop.sel).map(i=>i.key))};
+    cur={selected,items,meals,manual:selected.filter(r=>shop.sel[r.id]),keys:new Set(items.map(i=>i.key)),derived:new Set(buildList(selected,eff).map(i=>i.key))};
   };
   const tile=(cls,i)=>`<button type="button" class="tile ${cls}" data-k="${esc(i.key)}" data-n="${esc(i.name)}">
       ${cls==="cat"&&i.basic?'<span class="tb">de base</span>':""}
@@ -1746,12 +1826,22 @@ async function viewCourses(){
           :`<p class="hint box">${selected.length?"Tout est dans le chariot 🎉":"Ta liste est vide. Touche un produit ci-dessous, cherche-le avec « Il me faut… », ou ajoute une recette depuis l’accueil."}</p>`}
         <div class="actions tight" style="margin-top:10px">
           <button class="btn sm primary" type="button" id="copy" ${items.length?"":"disabled"}>📋 Copier la liste</button>
-          <button class="btn sm danger" type="button" id="clear" ${selected.length||shop.extra.length||Object.keys(shop.have).length?"":"disabled"}>Vider</button>
+          <button class="btn sm danger" type="button" id="clear" ${cur.manual.length||shop.extra.length||Object.keys(shop.have).length?"":"disabled"}>Vider</button>
         </div>
       </section>
-      ${selected.length?`<section class="recap">
-        <h3>Recettes choisies <small class="muted">· ${selected.length}</small></h3>
-        <ul class="pick">${selected.map(r=>{
+      ${cur.meals.length?`<section class="recap">
+        <h3>Repas planifiés <small class="muted">· ${cur.meals.length}</small></h3>
+        <ul class="pick meals">${cur.meals.map(m=>{
+          const r=rs.find(x=>x.id===m.id);
+          return `<li data-slot="${esc(m.key)}" style="--rc:${colorOf.get(r.title)}">
+            <a class="pt" href="#/r/${r.id}"><span class="when">${esc(mealLabel(m))}</span>${esc(r.title)}</a>
+            <small class="muted">${esc(m.n)} pers.</small>
+            <button type="button" class="x" data-unplan aria-label="Retirer ce repas du planning">✕</button>
+          </li>`}).join("")}</ul>
+      </section>`:""}
+      ${cur.manual.length?`<section class="recap">
+        <h3>Recettes choisies <small class="muted">· ${cur.manual.length}</small></h3>
+        <ul class="pick">${cur.manual.map(r=>{
           const base=Number(r.servings)||0;
           return `<li data-id="${r.id}" style="--rc:${colorOf.get(r.title)}">
             <a class="pt" href="#/r/${r.id}">${esc(r.title)}</a>
@@ -1764,13 +1854,16 @@ async function viewCourses(){
     window.scrollTo(0,y);
 
     const text=()=>items.map(i=>i.qty?`${i.name} (${i.qty})`:i.name).join("\n");
-    cw.querySelectorAll("ul.pick li").forEach(li=>{
+    cw.querySelectorAll("ul.pick li[data-slot]").forEach(li=>{
+      li.querySelector("[data-unplan]").onclick=()=>{unplan(li.dataset.slot);draw()};
+    });
+    cw.querySelectorAll("ul.pick li[data-id]").forEach(li=>{
       const id=li.dataset.id;
       li.querySelectorAll(".step button").forEach(b=>b.onclick=()=>{
         shop.sel[id]=Math.max(1,(Number(shop.sel[id])||1)+Number(b.dataset.d));
         saveShop();draw();
       });
-      li.querySelector("[data-rm]").onclick=()=>{removeRecipeFromCart(shop,id);saveShop();updateBadge();draw()};
+      li.querySelector("[data-rm]").onclick=()=>{removeRecipeFromCart(shop,id,planned().length);saveShop();updateBadge();draw()};
     });
     $("#copy").onclick=async()=>{toast(await copyText(text())?"Liste copiée ✓":"Copie impossible")};
     $("#clear").onclick=()=>{
@@ -1954,6 +2047,109 @@ function openListsDlg(r,after){
   draw();d.showModal();
 }
 
+/* ---------- planning des repas (onglet Planning) ---------- */
+const PLAN_KEY="livre-planning";
+let plan={slots:{}},planWeek=0;   // planWeek : décalage en semaines par rapport à la semaine en cours
+try{plan=normalizePlan(JSON.parse(localStorage.getItem(PLAN_KEY)||"null"))}catch(e){}
+const todayKey=()=>dayKey(new Date());
+const planned=()=>upcomingMeals(plan,todayKey());
+function savePlan(){
+  try{localStorage.setItem(PLAN_KEY,JSON.stringify(plan))}catch(e){}
+  if(syncHooks.pushPlan)syncHooks.pushPlan();
+}
+function applyRemotePlan(remote){
+  const m=mergePlan(plan,remote),changed=planSig(m)!==planSig(plan);
+  plan=m;
+  try{localStorage.setItem(PLAN_KEY,JSON.stringify(plan))}catch(e){}
+  if(planSig(m)!==planSig(normalizePlan(remote))&&syncHooks.pushPlan)syncHooks.pushPlan();
+  if(changed){updateBadge();refreshView()}
+}
+const DAY_FMT=new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"short"});
+const dayLabel=k=>{const t=DAY_FMT.format(keyDate(k));return k===todayKey()?"Aujourd’hui":t.charAt(0).toUpperCase()+t.slice(1)};
+const mealLabel=m=>{const d=new Intl.DateTimeFormat("fr-FR",{weekday:"short"}).format(keyDate(m.day)).replace(".","");return capFirst(d)+" · "+MEALS[m.meal].toLowerCase()};
+// planifier un repas : il entre dans le panier ; ses ingrédients redeviennent « à acheter » s'ils étaient déjà pris
+async function planMeal(day,meal,r,n){
+  const k=slotKey(day,meal),wasEmpty=!Object.keys(effectiveSel(shop.sel,planned())).length;
+  plan.slots[k]={id:r.id,n:Math.max(1,Number(n)||Number(r.servings)||1),updated:Date.now()};
+  savePlan();
+  if(day>=todayKey()){
+    if(wasEmpty)shop.have={};
+    for(const it of buildList([r],{[r.id]:1}))delete shop.have[it.key];
+    saveShop();
+  }
+  updateBadge();
+}
+// retirer un repas : ses ingrédients sortent du panier (avec Annuler)
+function unplan(k){
+  const old=plan.slots[k];if(!old||!old.id)return;
+  plan.slots[k]={id:"",n:old.n,updated:Date.now()};
+  savePlan();
+  if(!Object.keys(effectiveSel(shop.sel,planned())).length){shop.have={};saveShop()}
+  updateBadge();
+  toastUndo("Repas retiré du planning",()=>{plan.slots[k]={...old,updated:Date.now()};savePlan();updateBadge();refreshView()});
+}
+const PREV_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6 9 12l6 6"/></svg>`;
+async function viewPlanning(){
+  chrome({tab:"planning",root:true,title:"Planning"});
+  const rs=await allRecipes();
+  if(location.hash!=="#/planning")return;
+  const byId=new Map(rs.map(r=>[r.id,r]));
+  const today=todayKey(),start=addDays(weekStart(new Date()),planWeek*7);
+  const days=[...Array(7)].map((_,i)=>dayKey(addDays(start,i)));
+  const fmt=new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"short"});
+  const range=fmt.format(keyDate(days[0]))+" – "+fmt.format(keyDate(days[6]));
+  const inCart=planned().filter(m=>byId.has(m.id)).length;
+  const thumb=r=>`<span class="pth" aria-hidden="true">${r.photos&&r.photos[0]?`<img src="${r.photos[0]}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}</span>`;
+  const row=(day,meal)=>{
+    const v=plan.slots[slotKey(day,meal)],r=v&&v.id&&byId.get(v.id);
+    return `<button type="button" class="gr pslot ${r?"full":""}" data-k="${slotKey(day,meal)}" aria-label="${MEALS[meal]} : ${r?esc(r.title):"ajouter un repas"}">
+      <span class="pm">${MEALS[meal]}</span>${r?`${thumb(r)}<span class="pt">${esc(r.title)}</span><span class="pn">${esc(v.n)} pers.</span>`:`<span class="pt padd">Ajouter</span>`}</button>`;
+  };
+  view.innerHTML=`
+    <div class="wnav">
+      <button type="button" class="icon-btn" id="wprev" aria-label="Semaine précédente">${PREV_SVG}</button>
+      <div class="wr"><b>${esc(range)}</b>${planWeek?`<button type="button" class="tbtn" id="wnow">Cette semaine</button>`:`<span>Cette semaine</span>`}</div>
+      <button type="button" class="icon-btn" id="wnext" aria-label="Semaine suivante"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    </div>
+    ${inCart?`<a class="pcart" href="#/courses">${inCart} repas à venir dans le panier<span class="chev">${CHEV_SVG}</span></a>`:""}
+    ${days.map(d=>`<h4 class="gh ${d===today?"today":""}">${esc(dayLabel(d))}${d===today?` <span>${esc(DAY_FMT.format(keyDate(d)))}</span>`:""}</h4>
+      <div class="grp pday ${d<today?"past":""}">${row(d,"l")}${row(d,"d")}</div>`).join("")}`;
+  $("#wprev").onclick=()=>{planWeek--;viewPlanning()};
+  $("#wnext").onclick=()=>{planWeek++;viewPlanning()};
+  if($("#wnow"))$("#wnow").onclick=()=>{planWeek=0;viewPlanning()};
+  view.querySelectorAll(".pslot").forEach(b=>b.onclick=async()=>{
+    const k=b.dataset.k,day=k.slice(0,10),meal=k.slice(11),v=plan.slots[k],r=v&&v.id&&byId.get(v.id);
+    const where=dayLabel(day)+" · "+MEALS[meal].toLowerCase();
+    if(!r){pickRecipe(where,rs,x=>{planMeal(day,meal,x);viewPlanning()});return}
+    const a=await iosAlert({sheet:true,title:r.title,msg:where+" · "+v.n+" pers.",actions:[{label:"Voir la recette"},{label:"Changer de recette"},{label:"Nombre de personnes"},{label:"Retirer du planning",danger:true},{label:"Annuler",cancel:true}]});
+    if(!a)return;
+    if(a.i===0)location.hash="#/r/"+r.id;
+    else if(a.i===1)pickRecipe(where,rs,x=>{planMeal(day,meal,x);viewPlanning()});
+    else if(a.i===2){
+      const q=await iosAlert({title:"Nombre de personnes",input:{value:String(v.n),numeric:true},actions:[{label:"Annuler",cancel:true},{label:"OK",bold:true}]});
+      const n=q&&q.i===1&&parseInt(q.value,10);
+      if(n>0&&n<100){plan.slots[k]={...v,n,updated:Date.now()};savePlan();updateBadge();viewPlanning()}
+    }
+    else if(a.i===3){unplan(k);viewPlanning()}
+  });
+}
+// choisir une recette pour un repas : recherche + liste (favoris d'abord)
+function pickRecipe(where,rs,ok){
+  const d=$("#pickdlg"),q=$("#pickq"),ul=$("#picklist");
+  $("#pickt").textContent=where;q.value="";
+  const sorted=[...rs].sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)||norm(a.title).localeCompare(norm(b.title),"fr"));
+  const draw=()=>{
+    const t=norm(q.value.trim());
+    const list=t?sorted.filter(r=>norm(r.title+" "+recipeTags(r).join(" ")).includes(t)):sorted;
+    ul.innerHTML=list.map(r=>`<li><button type="button" data-id="${esc(r.id)}"><span class="pth" aria-hidden="true">${r.photos&&r.photos[0]?`<img src="${r.photos[0]}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}</span><span class="pt">${esc(r.title)}</span>${r.fav?'<span class="pf">★</span>':""}</button></li>`).join("")
+      ||`<li class="hint">${rs.length?"Aucune recette ne correspond.":"Ton livre est vide : ajoute d’abord une recette."}</li>`;
+  };
+  q.oninput=draw;
+  ul.onclick=e=>{const b=e.target.closest("button[data-id]");if(!b)return;const r=rs.find(x=>x.id===b.dataset.id);d.close();if(r)ok(r)};
+  $("#pickclose").onclick=()=>d.close();
+  draw();d.showModal();
+}
+
 /* ---------- icônes des tags ---------- */
 const TAGS_KEY="livre-tags";
 let tagIcons={};
@@ -2037,7 +2233,7 @@ function iosAlert({title,msg="",input=null,actions,sheet=false}){
     const w=document.createElement("div");w.className="ios-scrim"+(sheet?" sheet":"")+(input?" kb":"");
     const btn=(a,cls="")=>`<button type="button" data-i="${actions.indexOf(a)}" class="${cls} ${a.danger?"dg":""} ${a.bold?"b":""}">${esc(a.label)}</button>`;
     w.innerHTML=`<div class="ios-${sheet?"sheet":"alert"}" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
-      <div class="ia-box"><div class="ia-t">${esc(title)}</div>${msg?`<div class="ia-m">${esc(msg)}</div>`:""}${input?`<input class="ia-in" type="text" maxlength="30" value="${esc(input.value||"")}" placeholder="${esc(input.placeholder||"")}" enterkeyhint="done" ${input.plain?'autocapitalize="off" autocorrect="off" spellcheck="false"':""}>`:""}
+      <div class="ia-box"><div class="ia-t">${esc(title)}</div>${msg?`<div class="ia-m">${esc(msg)}</div>`:""}${input?`<input class="ia-in" type="text" maxlength="30" value="${esc(input.value||"")}" placeholder="${esc(input.placeholder||"")}" enterkeyhint="done" ${input.plain?'autocapitalize="off" autocorrect="off" spellcheck="false"':""} ${input.numeric?'inputmode="numeric" pattern="[0-9]*"':""}>`:""}
       <div class="ia-a ${!sheet&&actions.length===2?"two":""}">${actions.filter(a=>!(sheet&&a.cancel)).map(a=>btn(a)).join("")}</div></div>
       ${sheet?actions.filter(a=>a.cancel).map(a=>btn(a,"ia-c")).join(""):""}</div>`;
     document.body.appendChild(w);
@@ -2279,7 +2475,8 @@ async function bootSync(){
       setProfile:p=>{const ch=p.name!==profile.name||(p.photo||"")!==(profile.photo||"");profile={photo:"",...p};if(ch&&PROFILE_RE.test(location.hash))refreshView()},
       getProfile:()=>profile,receiveShared,shareable,toast,pseudoKey,
       setPseudoTaken:t=>{if(t!==pseudoTaken){pseudoTaken=t;if(PROFILE_RE.test(location.hash))refreshView()}},
-      getTagIcons:()=>tagIcons,setTagIcons:applyRemoteTagIcons,tagIconsFor
+      getTagIcons:()=>tagIcons,setTagIcons:applyRemoteTagIcons,tagIconsFor,
+      getPlan:()=>plan,setPlan:applyRemotePlan
     });
   }catch(e){setStatus({state:"off"})}
 }
@@ -2294,6 +2491,7 @@ async function route(){
     else if(h==="#/new")await viewForm();
     else if(h==="#/courses")await viewCourses();
     else if(h==="#/listes")await viewLists();
+    else if(h==="#/planning")await viewPlanning();
     else if((m=h.match(/^#\/edit\/(.+)$/)))await viewForm(m[1]);
     else if(h==="#/profil"||h==="#/amis")await viewProfile();
     else if(h==="#/importer")await viewImport();

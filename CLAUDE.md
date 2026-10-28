@@ -17,7 +17,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v24`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v25`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -29,6 +29,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 - Firestore : `users/{uid}/recipes/{id}` et `users/{uid}/meta/shop`. Amis : annuaire `pseudos/{clé}` = `{uid, name}` (clé = `pseudoKey(nom)`, pseudo unique, réservé avant d'enregistrer le pseudo), ajout d'ami par pseudo (`addFriendByPseudo`, message `type:"friend"` avec `pseudo`), lien d'invitation `#/ajout/<pseudo>`. Les anciens codes d'invitation (`invites/`, `#/ami/<code>`) restent acceptés mais ne sont plus créés. `meta/shop` s'écrit avec `setDoc(..., {merge:true})` pour qu'un téléphone pas à jour n'efface pas les champs qu'il ne connaît pas.
 - Tout nouveau champ est optionnel avec une valeur par défaut à la lecture. Ne jamais renommer ni supprimer un champ existant.
 - Un document Firestore fait au plus 1 Mo : 6 photos max par recette, recompressées par `fitPhotos`. Ne pas augmenter sans autre stockage.
+- Planning : localStorage `livre-planning` et Firestore `users/{uid}/meta/plan` (`setDoc` merge:true), `slots` = {`AAAA-MM-JJ_l|d`: {id, n, updated}} ; un repas retiré reste en `id:""` daté (fusion par `mergePlan`, le plus récent gagne). Les repas à venir (`upcomingMeals`, aujourd'hui compris) s'ajoutent à la sélection du panier sans toucher à `shop.sel` (`effectiveSel`, personnes additionnées) : un téléphone pas à jour ne les voit pas dans son panier. Planifier un repas remet ses ingrédients en « à acheter » (retire leurs clés de `have`).
 - Panier : `sel` {id: personnes} (Firestore : `[{id,n}]`), `have` {clé: true}, `extra` [noms] (tableau de chaînes), `freq` {clé: {n,last,name}} (fusion par maximum, jamais vidé, même par « Vider »), `basics` {clé: bool}. Clé produit = `nameKey(nom)` ; ne pas la changer sans migration. `normalizeShop()` migre l'ancien format.
 
 ## Design
@@ -78,7 +79,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 ### Mise en page et ergonomie mobile
 
 - Mobile d'abord, portrait. Accueil en grille 3 colonnes (4 à 640px, 5 à 900px), tuiles du panier en 4 colonnes (5 à 560px, 6 à 760px).
-- Navigation par barre d'onglets fixe en bas (`#tabbar`, depuis le 2026-10-28) : Recettes (`#/`, ouvre sur « Ma liste »), Listes (`#/listes`, choix de la liste affichée, renommer/supprimer via « ⋯ »), Panier (`#/courses`), Profil (`#/profil`). Pages racines : grand titre dans l'en-tête et « + » en haut à droite (plus de bouton flottant « Nouvelle recette »). La barre est masquée dans les formulaires (`chrome({bar:false})`) et quand le clavier est ouvert (`body.kb`).
+- Navigation par barre d'onglets fixe en bas (`#tabbar`, depuis le 2026-10-28) : Recettes (`#/`, ouvre sur « Ma liste »), Planning (`#/planning`, semaine du lundi au dimanche, déjeuner et dîner), Listes (`#/listes`, choix de la liste affichée, renommer/supprimer via « ⋯ »), Panier (`#/courses`), Profil (`#/profil`). Pages racines : grand titre dans l'en-tête et « + » en haut à droite (plus de bouton flottant « Nouvelle recette »). La barre est masquée dans les formulaires (`chrome({bar:false})`) et quand le clavier est ouvert (`body.kb`).
 - Respecter les zones sûres iOS (`env(safe-area-inset-*)`) pour l'en-tête collant, la barre d'onglets, la barre « Il me faut… » (posée sur la barre d'onglets) et le toast.
 - Zoom désactivé (viewport `user-scalable=no` + blocage du pincement en JS, double-tap coupé par `touch-action:manipulation`) : tout doit rester lisible sans zoomer. Les photos de la fiche ne s'ouvrent plus en grand au toucher (retiré le 2026-10-27 à la demande de Charles).
 - Cibles tactiles d'au moins 32px, 40px pour les boutons d'icône. Retour au toucher par `:active` (fond accent doux ou `scale(.96)` sur les tuiles), pas de survol requis.
