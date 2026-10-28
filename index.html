@@ -517,17 +517,18 @@ dialog p{font-size:.875rem}
 @media (prefers-color-scheme:dark){.toast button{color:#9a6418}}
 /* profil : listes groupées façon Réglages */
 .me{display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 0 2px}
-.av{flex:none;width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 70%,var(--card)),var(--accent));color:var(--accent-ink);font-family:var(--serif);font-weight:700;font-size:.9rem}
+.av{position:relative;overflow:hidden;flex:none;width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 70%,var(--card)),var(--accent));color:var(--accent-ink);font-family:var(--serif);font-weight:700;font-size:.9rem}
 .av.big{width:84px;height:84px;font-size:2.4rem;box-shadow:0 4px 14px rgba(60,40,20,.18)}
-.av img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
-button.av-btn{position:relative;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--ease-out)}
+.av img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+button.av-btn{overflow:visible;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .16s var(--ease-out)}
 button.av-btn:active{transform:scale(.96)}
 .av-btn .cam{position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;background:var(--card);color:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(60,40,20,.25)}
 .av-btn .cam svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #pfile{display:none}
-.me-n{font-family:var(--serif);font-weight:800;font-size:1.6rem;letter-spacing:-.02em;line-height:1.15;margin-top:10px}
-.me-s{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.875rem;margin-top:2px}
-.me-s .sd{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.me-n{font-family:var(--serif);font-weight:800;font-size:1.6rem;letter-spacing:-.02em;line-height:1.15;margin-top:10px;max-width:100%;padding:0 16px;overflow-wrap:anywhere}
+.me-s{display:flex;align-items:baseline;gap:6px;color:var(--muted);font-size:.875rem;margin-top:2px;max-width:100%;padding:0 16px;overflow-wrap:anywhere}
+.me-s .sd{flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.me-s .sd.green{background:#3f9d55}.me-s .sd.orange{background:#e0a030}.me-s .sd.red{background:#d64545}
 .me-s #syncmsg{margin:0}
 .gh{margin:26px 16px 6px;font-size:.8125rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;display:flex;gap:6px}
 .grp{background:var(--card);border-radius:12px;overflow:hidden;margin:0}
@@ -541,7 +542,7 @@ form .gr input[type=text],.gr input{flex:1;min-width:0;border:0;border-radius:0;
 .gr input::placeholder{color:var(--muted)}
 .tbtn{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;font-size:1.0625rem;padding:8px 4px;cursor:pointer}
 .tbtn:disabled,.gr:disabled{opacity:.4;cursor:default}
-.gr.act{color:var(--accent);font-weight:500}
+.gr.act,.gr.link .pt.ph{color:var(--accent);font-weight:500}
 .gr.act svg{width:30px;height:30px;margin:0 1px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
 .gr.link:active,.gr.fr:active,.gr.act:active:not(:disabled),.gr.danger:active{background:var(--fill)}
 .chev{color:color-mix(in srgb,var(--muted) 70%,transparent);display:flex}
@@ -2229,6 +2230,8 @@ async function receiveShared(m){
 }
 
 let pseudoTaken=false;    // le pseudo du compte appartient déjà à un autre compte dans l'annuaire
+let profileReady=false;  // profil confirmé par le serveur (ou pseudo déjà connu) : « Sans pseudo » veut vraiment dire sans pseudo
+let profileBusy=false;   // vérification d'un pseudo en cours : pas de double envoi
 let linkDone="";         // lien d'ajout d'ami déjà traité (pas de nouvelle question si la page se redessine)
 /* ---------- alertes et feuilles d'action façon iOS ---------- */
 const CHEV_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>`;
@@ -2238,7 +2241,7 @@ function iosAlert({title,msg="",input=null,actions,sheet=false}){
     const w=document.createElement("div");w.className="ios-scrim"+(sheet?" sheet":"")+(input?" kb":"");
     const btn=(a,cls="")=>`<button type="button" data-i="${actions.indexOf(a)}" class="${cls} ${a.danger?"dg":""} ${a.bold?"b":""}">${esc(a.label)}</button>`;
     w.innerHTML=`<div class="ios-${sheet?"sheet":"alert"}" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
-      <div class="ia-box"><div class="ia-t">${esc(title)}</div>${msg?`<div class="ia-m">${esc(msg)}</div>`:""}${input?`<input class="ia-in" type="text" maxlength="30" value="${esc(input.value||"")}" placeholder="${esc(input.placeholder||"")}" enterkeyhint="done" ${input.plain?'autocapitalize="off" autocorrect="off" spellcheck="false"':""} ${input.numeric?'inputmode="numeric" pattern="[0-9]*"':""}>`:""}
+      <div class="ia-box"><div class="ia-t">${esc(title)}</div>${msg?`<div class="ia-m">${esc(msg)}</div>`:""}${input?`<input class="ia-in" type="text" maxlength="${input.max||30}" value="${esc(input.value||"")}" placeholder="${esc(input.placeholder||"")}" enterkeyhint="done" ${input.plain?'autocapitalize="off" autocorrect="off" spellcheck="false"':""} ${input.numeric?'inputmode="numeric" pattern="[0-9]*"':""}>`:""}
       <div class="ia-a ${!sheet&&actions.length===2?"two":""}">${actions.filter(a=>!(sheet&&a.cancel)).map(a=>btn(a)).join("")}</div></div>
       ${sheet?actions.filter(a=>a.cancel).map(a=>btn(a,"ia-c")).join(""):""}</div>`;
     document.body.appendChild(w);
@@ -2255,15 +2258,58 @@ function iosAlert({title,msg="",input=null,actions,sheet=false}){
 }
 // lien d'invitation : ouvre NoutBook et propose d'ajouter l'ami (#/ajout/<pseudo>)
 const inviteUrl=name=>location.origin+location.pathname+"#/ajout/"+encodeURIComponent(name);
+// ce que l'on colle dans « Ajouter un ami » : le pseudo, le lien d'invitation ou tout le message d'invitation
+function friendInput(v){
+  v=String(v||"").trim();
+  const m=v.match(/#\/ajout\/([^\s]+)/);
+  if(m){try{return decodeURIComponent(m[1]).trim().slice(0,30)}catch(e){return m[1].slice(0,30)}}
+  const q=v.match(/pseudo\s*:\s*([^\n]+)/i);
+  return (q?q[1]:v).trim().slice(0,30);
+}
+// pendant la vérification (jusqu'à 12 s sur un réseau faible), un toast le dit et un 2e envoi est ignoré
+async function busy(fn){
+  if(profileBusy)return;
+  profileBusy=true;const t=setTimeout(()=>toast("Vérification…"),500);
+  try{return await fn()}finally{clearTimeout(t);profileBusy=false}
+}
 async function addFriend(p){
-  try{toast(`${await syncApi.addFriendByPseudo(p)} est maintenant ton ami ✓`);track("Ami ajouté",{via:"pseudo"})}
-  catch(err){toast(err&&err.message||"Ajout impossible, réessaie avec du réseau.")}
+  p=friendInput(p);if(!p)return;
+  if(!profile.name&&!await askPseudo("Choisis d’abord ton pseudo","Ton ami le verra quand tu l’ajoutes."))return;
+  await busy(async()=>{
+    try{toast(`${await syncApi.addFriendByPseudo(p)} est maintenant ton ami ✓`);track("Ami ajouté",{via:"pseudo"})}
+    catch(err){toast(err&&err.message||"Ajout impossible, réessaie avec du réseau.")}
+  });
+}
+// le pseudo est réservé dans l'annuaire avant d'être enregistré : deux comptes ne peuvent pas avoir le même
+async function saveName(n){
+  n=String(n||"").trim().slice(0,30);if(!n)return false;
+  if(n===profile.name&&!pseudoTaken){toast("Pseudo inchangé");return true}
+  return !!await busy(async()=>{
+    try{await syncApi.setProfile(n,profile.name)}
+    catch(err){toast(err&&err.message||"Pseudo non enregistré, réessaie avec du réseau.");return false}
+    profile={...profile,name:n};pseudoTaken=false;profileReady=true;toast("Pseudo enregistré ✓");
+    refreshView();return true;
+  });
+}
+// alerte avec champ ; on la rouvre tant que le pseudo est refusé (déjà pris, trop court…) pour ne pas tout retaper
+async function askPseudo(title="Choisis ton pseudo",msg="Tes amis te trouveront avec ce nom."){
+  let v=profile.name||"";
+  for(;;){
+    const r=await iosAlert({title,msg,input:{value:v,placeholder:"Ton pseudo"},actions:[{label:"Annuler",cancel:true},{label:"OK",bold:true}]});
+    if(!r||r.i!==1||!r.value)return false;
+    if(await saveName(r.value))return true;
+    v=r.value;
+    if(!navigator.onLine)return false;
+  }
 }
 async function viewProfile(link={}){
   chrome({tab:"profil",root:true,title:"Profil"});
   const code=cleanCode(link.code||""),addP=String(link.add||"").trim().slice(0,30);
   const on=signedIn(),named=!!profile.name;
-  const ini=(n,ph)=>ph&&/^data:image\//.test(ph)?`<img src="${esc(ph)}" alt="" draggable="false">`:esc((n||"?").trim().charAt(0).toUpperCase()||"?");
+  // nouveau téléphone : le pseudo arrive du serveur juste après la connexion, on ne propose pas d'en choisir un autre avant
+  const loading=!named&&!profileReady&&["syncing","ok","pending"].includes(syncState.state);
+  const first=n=>{n=String(n||"").trim();if(!n)return"?";try{return[...new Intl.Segmenter("fr",{granularity:"grapheme"}).segment(n)][0].segment.toUpperCase()}catch(e){return Array.from(n)[0].toUpperCase()}};
+  const ini=(n,ph)=>esc(first(n))+(ph&&/^data:image\//.test(ph)?`<img src="${esc(ph)}" alt="" draggable="false" onerror="this.remove()">`:"");
   const CAM_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
   const PLUS_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>`;
   const SHARE_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M8 7.5l4-4 4 4"/><path d="M7 11H5.5v9.5h13V11H17"/></svg>`;
@@ -2285,13 +2331,13 @@ async function viewProfile(link={}){
       <div class="me-s"><span class="sd"></span><span id="syncmsg" aria-live="polite"></span></div></div>
     <h4 class="gh">Pseudo</h4>
     ${named?`<div class="grp"><button type="button" class="gr link" id="pedit" aria-label="Modifier ton pseudo : ${esc(profile.name)}"><span class="pt">${esc(profile.name)}</span><span class="chev">${CHEV_SVG}</span></button></div>`
-    :`<form class="grp" id="pf" autocomplete="off"><div class="gr"><input id="pname" type="text" maxlength="30" placeholder="Choisis ton pseudo" enterkeyhint="done" autocomplete="nickname" aria-label="Pseudo"></div></form>`}
+    :`<div class="grp"><button type="button" class="gr link" id="pnew" ${loading?"disabled":""}><span class="pt ph">${loading?"Chargement…":"Choisir ton pseudo"}</span><span class="chev">${CHEV_SVG}</span></button></div>`}
     ${pseudoTaken?`<p class="gf fhint err">Un autre compte a déjà ce pseudo : choisis-en un autre pour que tes amis te trouvent.</p>`:""}
     <h4 class="gh">Mes amis <span>${friends.length}</span></h4>
     <div class="grp" id="flist">
       ${friends.map(f=>`<button type="button" class="gr fr" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}"><span class="av" aria-hidden="true">${ini(f.name,f.photo)}</span><span class="pt">${esc(f.name||"Ami")}</span></button>`).join("")}
-      <button type="button" class="gr act" id="addfr" ${named?"":"disabled"}>${PLUS_SVG}<span>Ajouter un ami</span></button>
-      <button type="button" class="gr act" id="mkinv" ${named?"":"disabled"}>${SHARE_SVG}<span>Inviter un ami</span></button>
+      <button type="button" class="gr act" id="addfr" ${loading?"disabled":""}>${PLUS_SVG}<span>Ajouter un ami</span></button>
+      <button type="button" class="gr act" id="mkinv" ${loading?"disabled":""}>${SHARE_SVG}<span>Inviter un ami</span></button>
     </div>
     <div class="grp" style="margin-top:28px"><button class="gr danger" type="button" id="signout">Se déconnecter</button></div>`;
   view.innerHTML=on?signedBlock:accountBlock;
@@ -2320,21 +2366,14 @@ async function viewProfile(link={}){
     const file=e.target.files&&e.target.files[0];e.target.value="";if(!file)return;
     try{setPhoto(await avatarFromFile(file))}catch(err){toast("Cette image n’a pas pu être lue")}
   };
-  // le pseudo est réservé dans l'annuaire avant d'être enregistré : deux comptes ne peuvent pas avoir le même
-  const saveName=async n=>{
-    n=n.trim().slice(0,30);if(!n)return false;
-    if(n===profile.name&&!pseudoTaken){toast("Pseudo inchangé");return true}
-    try{await syncApi.setProfile(n,profile.name)}
-    catch(err){toast(err&&err.message||"Pseudo non enregistré, réessaie avec du réseau.");return false}
-    profile={...profile,name:n};pseudoTaken=false;toast("Pseudo enregistré ✓");
-    refreshView();return true;
-  };
-  if($("#pf"))$("#pf").onsubmit=async e=>{e.preventDefault();const i=$("#pname");if(!await saveName(i.value))i.focus();else i.blur()};
+  if($("#pnew"))$("#pnew").onclick=()=>askPseudo();
   if($("#pedit"))$("#pedit").onclick=async()=>{
-    const r1=await iosAlert({title:"Modifier ton pseudo ?",msg:"Tes amis verront le nouveau nom.",actions:[{label:"Annuler",cancel:true},{label:"Modifier",bold:true}]});
-    if(!r1||r1.i!==1)return;
-    const r2=await iosAlert({title:"Nouveau pseudo",input:{value:profile.name,placeholder:"Ton pseudo"},actions:[{label:"Annuler",cancel:true},{label:"OK",bold:true}]});
-    if(r2&&r2.i===1)saveName(r2.value);
+    // pseudo pris par un autre compte : on passe directement au choix d'un nouveau
+    if(!pseudoTaken){
+      const r1=await iosAlert({title:"Modifier ton pseudo ?",msg:"Tes amis verront le nouveau nom.",actions:[{label:"Annuler",cancel:true},{label:"Modifier",bold:true}]});
+      if(!r1||r1.i!==1)return;
+    }
+    askPseudo("Nouveau pseudo","");
   };
   $("#flist").onclick=async e=>{
     const b=e.target.closest(".fr[data-id]");if(!b)return;
@@ -2345,10 +2384,13 @@ async function viewProfile(link={}){
     toastUndo("Retiré de tes amis : "+(f.name||"ami"),()=>syncApi.restoreFriend(f));
   };
   $("#addfr").onclick=async()=>{
-    const r=await iosAlert({title:"Ajouter un ami",input:{placeholder:"Son pseudo",plain:true},actions:[{label:"Annuler",cancel:true},{label:"Ajouter",bold:true}]});
+    const r=await iosAlert({title:"Ajouter un ami",msg:"Tape son pseudo ou colle son invitation.",input:{placeholder:"Son pseudo",plain:true,max:400},actions:[{label:"Annuler",cancel:true},{label:"Ajouter",bold:true}]});
     if(r&&r.i===1&&r.value)addFriend(r.value);
   };
   $("#mkinv").onclick=async()=>{
+    // sans pseudo (ou avec un pseudo pris par un autre compte), l'invitation mènerait nulle part
+    if(!profile.name&&!await askPseudo("Choisis d’abord ton pseudo","Ton ami en aura besoin pour t’ajouter."))return;
+    if(pseudoTaken&&!await askPseudo("Choisis un autre pseudo","Un autre compte a déjà le tien."))return;
     const url=inviteUrl(profile.name);
     const txt=`Ajoute-moi sur NoutBook pour qu’on s’échange des recettes ! Mon pseudo : ${profile.name}\n${url}`;
     if(navigator.share){try{await navigator.share({text:txt});return}catch(err){if(err&&err.name==="AbortError")return}}
@@ -2356,7 +2398,7 @@ async function viewProfile(link={}){
   };
   // arrivée par un lien d'ami : on propose l'ajout une seule fois
   const key=addP?"p:"+pseudoKey(addP):code?"c:"+code:"";
-  if(key&&linkDone!==key&&(named||!addP)){   // sans pseudo (ou profil pas encore chargé), on attend
+  if(key&&linkDone!==key&&(named||!addP||!loading)){   // profil pas encore chargé : on attend
     linkDone=key;
     history.replaceState(null,"","#/profil");
     if(addP){
@@ -2446,6 +2488,7 @@ function renderSync(){
   const [tone,text]=tones[s.state]||tones.off;
   const dot=$("#dot"),msg=$("#syncmsg"),af=$("#authf"),so=$("#signout");
   dot.className="dot "+tone;dot.hidden=!tone;
+  const sd=document.querySelector(".me-s .sd");if(sd)sd.className="sd "+tone;
   if(msg)msg.textContent=text;
   if(af)af.hidden=s.state!=="signedout";
   if(so)so.hidden=!["syncing","ok","pending","offline","error"].includes(s.state);
@@ -2477,7 +2520,7 @@ async function bootSync(){
       getShop:()=>shop,setShop:applyRemoteShop,fitPhotos,refresh:refreshView,setStatus,
       getLists:()=>lists,setLists:applyRemoteLists,
       setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&(PROFILE_RE.test(location.hash)||/^#\/(r\/|$)/.test(location.hash||"#/")))refreshView()},
-      setProfile:p=>{const ch=p.name!==profile.name||(p.photo||"")!==(profile.photo||"");profile={photo:"",...p};if(ch&&PROFILE_RE.test(location.hash))refreshView()},
+      setProfile:(p,ready)=>{const r=!!(ready||p.name),ch=p.name!==profile.name||(p.photo||"")!==(profile.photo||"")||r!==profileReady;profile={photo:"",...p};profileReady=r;if(ch&&PROFILE_RE.test(location.hash))refreshView()},
       getProfile:()=>profile,receiveShared,shareable,toast,pseudoKey,
       setPseudoTaken:t=>{if(t!==pseudoTaken){pseudoTaken=t;if(PROFILE_RE.test(location.hash))refreshView()}},
       getTagIcons:()=>tagIcons,setTagIcons:applyRemoteTagIcons,tagIconsFor,
