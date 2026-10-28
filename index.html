@@ -884,11 +884,16 @@ const RI={
   cart:`<svg viewBox="0 0 24 24"><path d="M3 9.5h18l-1.8 9a1.8 1.8 0 0 1-1.8 1.5H6.6a1.8 1.8 0 0 1-1.8-1.5z"/><path d="m8 9.5 3-6M16 9.5l-3-6M9 13v3.5M12 13v3.5M15 13v3.5"/></svg>`,
   fav:`<svg viewBox="0 0 24 24"><path d="m12 3.8 2.5 5.2 5.6.7-4.1 3.9 1 5.6L12 16.5l-5 2.7 1-5.6-4.1-3.9 5.6-.7z"/></svg>`,
   lists:`<svg viewBox="0 0 24 24"><path d="M4 6.5h11M4 12h11M4 17.5h7M18 14.5v6M15 17.5h6"/></svg>`,
-  send:`<svg viewBox="0 0 24 24"><path d="M12 14.5V3.5M8 7.5l4-4 4 4"/><path d="M7.5 10.5H6a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 6 20.5h12a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5h-1.5"/></svg>`,
+  send:`<svg viewBox="0 0 24 24"><path d="M20.5 3.5 10.8 13.2"/><path d="M20.5 3.5 14.4 20.5l-3.6-7.3-7.3-3.6z"/></svg>`,
   pdf:`<svg viewBox="0 0 24 24"><path d="M12 3.5v11M8 10.5l4 4 4-4M4.5 15.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"/></svg>`,
   edit:`<svg viewBox="0 0 24 24"><path d="M4.5 19.5h4l10-10a2.8 2.8 0 0 0-4-4l-10 10z"/><path d="m13 7 4 4"/></svg>`,
   del:`<svg viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5V4.5h5v2M6.5 6.5l1 13h9l1-13M10 10.5v6M14 10.5v6"/></svg>`
 };
+// ingrédients, préparation et notes (fiche à moi ou fiche d'un ami)
+const recipeSections=r=>`
+    ${lines(r.ingredients).length?`<section class="block"><h3>Ingrédients</h3><ul class="ing">${lines(r.ingredients).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></section>`:""}
+    ${lines(r.steps).length?`<section class="block"><h3>Préparation</h3><ol class="steps">${lines(r.steps).map(l=>`<li><span>${esc(l)}</span></li>`).join("")}</ol></section>`:""}
+    ${r.notes?`<section class="block"><h3>Notes</h3><div class="notes">${esc(r.notes)}</div></section>`:""}`;
 const ricon=(id,label,svg,on=false,onLabel="")=>`<button type="button" class="ricon ${on?"on":""}" id="${id}" aria-label="${esc(on&&onLabel?onLabel:label)}" ${id==="cart"||id==="fav"?`aria-pressed="${on}"`:""} title="${esc(label)}">${svg}</button>`;
 async function viewDetail(id){
   chrome({tab:"recettes"});
@@ -906,11 +911,9 @@ async function viewDetail(id){
       ${recipeLists(r).filter(l=>lists[l]&&!lists[l].deleted).map(l=>`<a class="tag" href="#/" data-l="${esc(l)}">📑 ${esc(lists[l].name)}</a>`).join("")}
       ${r.sharedFrom&&typeof r.sharedFrom==="object"?`<span class="tag from">📬 Reçue${senderName(r)?" "+esc(deNom(senderName(r))):""}${r.sharedFrom.at?" le "+new Date(r.sharedFrom.at).toLocaleDateString("fr-FR",{day:"numeric",month:"long"}):""}</span>`:""}
     </div>
-    <div class="rbar" role="group" aria-label="Actions">${ricon("cart","Ajouter au panier",RI.cart,!!shop.sel[r.id],shop.sel[r.id]?"Retirer du panier":"")}${ricon("fav","Favori",RI.fav,!!r.fav,r.fav?"Retirer des favoris":"")}${ricon("lists","Ranger dans une liste",RI.lists)}${ricon("send","Partager avec un ami",RI.send)}${ricon("pdf","Télécharger en PDF",RI.pdf)}</div>
-    ${lines(r.ingredients).length?`<section class="block"><h3>Ingrédients</h3><ul class="ing">${lines(r.ingredients).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></section>`:""}
-    ${lines(r.steps).length?`<section class="block"><h3>Préparation</h3><ol class="steps">${lines(r.steps).map(l=>`<li><span>${esc(l)}</span></li>`).join("")}</ol></section>`:""}
-    ${r.notes?`<section class="block"><h3>Notes</h3><div class="notes">${esc(r.notes)}</div></section>`:""}
-    <div class="rbar rfoot actions"><a class="ricon" href="#/edit/${r.id}" aria-label="Modifier la recette">${RI.edit}</a><button type="button" class="ricon dg" id="del" aria-label="Supprimer la recette">${RI.del}</button></div>`;
+    <div class="rbar" role="group" aria-label="Actions">${ricon("cart","Ajouter au panier",RI.cart,!!shop.sel[r.id],shop.sel[r.id]?"Retirer du panier":"")}${ricon("fav","Favori",RI.fav,!!r.fav,r.fav?"Retirer des favoris":"")}${ricon("lists","Ranger dans une liste",RI.lists)}${ricon("send","Partager avec un ami",RI.send)}</div>
+    ${recipeSections(r)}
+    <div class="rbar rfoot actions">${ricon("pdf","Télécharger en PDF",RI.pdf)}<a class="ricon" href="#/edit/${r.id}" aria-label="Modifier la recette">${RI.edit}</a><button type="button" class="ricon dg" id="del" aria-label="Supprimer la recette">${RI.del}</button></div>`;
   view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=()=>li.classList.toggle("done"));
   const flip=(b,on,label,offLabel)=>{b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);b.setAttribute("aria-label",on?label:offLabel)};
   $("#fav").onclick=async()=>{r.fav=!r.fav;touch(r);await putRecipe(r);flip($("#fav"),r.fav,"Retirer des favoris","Favori");toast(r.fav?"Ajoutée aux favoris ★":"Retirée des favoris")};
@@ -2016,7 +2019,9 @@ async function viewLists(){
     <div class="grp" id="lmine">
       ${ls.map(l=>`<div class="lwrap">${row(l.id,l.name,LIST_ICONS.list)}<button type="button" class="lmore" data-set="${esc(l.id)}" aria-label="Renommer ou supprimer ${esc(l.name)}">${MORE_SVG}</button></div>`).join("")}
       <button type="button" class="gr act" id="newlistrow"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Nouvelle liste</span></button>
-    </div>`;
+    </div>
+    ${friends.length?`<h4 class="gh">Listes de mes amis</h4>
+    <div class="grp">${friends.map(f=>`<a class="gr fr" href="${friendHref(f.uid)}"><span class="av" aria-hidden="true">${avatarIn(f.name,f.photo)}</span><span class="pt">${esc(friendListTitle(f.name))}</span><span class="chev">${CHEV_SVG}</span></a>`).join("")}</div>`:""}`;
   const pick=e=>{
     const m=e.target.closest(".lmore[data-set]");if(m){openListSettings(m.dataset.set);return}
     const b=e.target.closest(".lrow[data-l]");if(!b)return;
@@ -2302,14 +2307,111 @@ async function askPseudo(title="Choisis ton pseudo",msg="Tes amis te trouveront 
     if(!navigator.onLine)return false;
   }
 }
+/* ---------- liste d'un ami (lecture seule) : sa « Ma liste », sans les recettes qu'il a reçues ---------- */
+const friendHref=u=>"#/amis/"+encodeURIComponent(u);
+const friendListTitle=n=>"Liste "+deNom(n||"ton ami");
+const syncWaiting=()=>syncState.state==="off"&&syncBooting||syncState.state==="syncing";
+const WAIT_HTML=`<div class="empty" id="fwait"><p>Chargement…</p></div>`;
+const friendCache=new Map();   // uid -> {at, rs} : évite de tout relire quand la page se redessine
+async function friendRecipesOf(fu,fresh){
+  const c=friendCache.get(fu);
+  if(c&&!fresh&&Date.now()-c.at<120000)return c.rs;
+  const rs=(await syncApi.friendRecipes(fu)).filter(r=>r&&!r.sharedFrom&&r.title!==undefined);
+  rs.sort((a,b)=>String(a.title||"").localeCompare(String(b.title||""),"fr",{sensitivity:"base"}));
+  friendCache.set(fu,{at:Date.now(),rs});
+  return rs;
+}
+let friendQ="",friendQFor="";
+async function viewFriendList(fu){
+  const f=friends.find(x=>x.uid===fu)||{uid:fu,name:""};
+  chrome({tab:"listes",title:esc(friendListTitle(f.name))});
+  if(friendQFor!==fu){friendQ="";friendQFor=fu}
+  const here=location.hash;
+  const removeBlock=friends.some(x=>x.uid===fu)?`<div class="grp" style="margin-top:28px"><button class="gr danger" type="button" id="rmfr">Retirer de mes amis</button></div>`:"";
+  if(!signedIn()){
+    // au lancement, la connexion arrive juste après : la page se redessine alors toute seule
+    view.innerHTML=syncWaiting()?WAIT_HTML
+      :`<div class="empty"><div class="big">👋</div><p>Connecte-toi pour voir la liste de tes amis.<br><a href="#/profil">Aller au profil</a></p></div>`;
+    return;
+  }
+  view.innerHTML=`<div class="empty"><p>Chargement…</p></div>`;
+  let rs;
+  try{rs=await friendRecipesOf(fu,!friendCache.has(fu))}
+  catch(err){
+    if(location.hash!==here)return;
+    view.innerHTML=`<div class="empty"><div class="big">${err&&err.code==="denied"?"🔒":"📶"}</div><p>${err&&err.code==="denied"
+      ?`<b>Sa liste n’est pas encore visible.</b><br>${esc(f.name||"Ton ami")} doit t’avoir aussi dans ses amis : demande-lui d’ouvrir NoutBook.`
+      :esc(err&&err.message||"Chargement impossible.")}</p></div>${removeBlock}`;
+    bindRemove(f);return;
+  }
+  if(location.hash!==here)return;
+  view.innerHTML=`
+    ${rs.length?`<input class="search" id="q" type="search" placeholder="Rechercher dans sa liste…" value="${esc(friendQ)}">`:""}
+    <div id="results"></div>${removeBlock}`;
+  const draw=()=>{
+    const q=nrm(friendQ);
+    const list=q?rs.filter(r=>nrm([r.title,r.category,r.ingredients,...recipeTags(r)].join(" ")).includes(q)):rs;
+    if(!rs.length){$("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>${esc(f.name||"Ton ami")} n’a pas encore de recette.</b></p></div>`;return}
+    if(!list.length){$("#results").innerHTML=`<div class="empty"><div class="big">🔍</div><p>Aucune recette ne correspond.</p></div>`;return}
+    $("#results").innerHTML=`<div class="grid">${list.map(r=>`
+      <div class="card">
+        <a class="cl" href="${friendHref(fu)}/r/${encodeURIComponent(r.id)}">
+          <div class="ph">${r.photos&&r.photos[0]?`<img src="${esc(r.photos[0])}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}</div>
+          <div class="body"><h3>${esc(r.title||"Sans titre")}</h3><small>${esc(r.category||"")}${r.time?" · "+esc(r.time):""}</small></div>
+        </a>
+      </div>`).join("")}</div>`;
+  };
+  draw();
+  if($("#q"))$("#q").oninput=e=>{friendQ=e.target.value;draw()};
+  bindRemove(f);
+}
+function bindRemove(f){
+  const b=$("#rmfr");if(!b)return;
+  b.onclick=async()=>{
+    const r=await iosAlert({sheet:true,title:`Retirer ${f.name||"cet ami"} de tes amis ?`,actions:[{label:"Retirer de mes amis",danger:true},{label:"Annuler",cancel:true}]});
+    if(!r||r.i!==0)return;
+    const keep=friends.find(x=>x.uid===f.uid)||f;
+    syncApi.removeFriend(f.uid);
+    friendCache.delete(f.uid);
+    toastUndo("Retiré de tes amis : "+(f.name||"ami"),()=>syncApi.restoreFriend(keep));
+    location.hash="#/profil";
+  };
+}
+async function viewFriendRecipe(fu,id){
+  const f=friends.find(x=>x.uid===fu)||{uid:fu,name:""};
+  chrome({tab:"listes",title:""});
+  const here=location.hash;
+  if(!signedIn()&&syncWaiting()){view.innerHTML=WAIT_HTML;return}
+  let r;
+  try{r=signedIn()?(await friendRecipesOf(fu)).find(x=>x.id===id):null}catch(e){r=null}
+  if(location.hash!==here)return;
+  if(!r){location.hash=friendHref(fu);return}
+  const ph=r.photos||[];
+  view.innerHTML=`
+    ${ph.length?`<div class="gallery ${ph.length>1?"multi":""}">${ph.map((p,i)=>`<img src="${esc(p)}" alt="Photo ${i+1}" data-i="${i}">`).join("")}</div>`:""}
+    <h2 class="title">${esc(r.title||"Sans titre")}</h2>
+    <div class="meta">
+      ${r.category?`<span class="tag">${EMOJI[r.category]||""} ${esc(r.category)}</span>`:""}
+      ${r.time?`<span class="tag">⏱ ${esc(r.time)}</span>`:""}
+      ${r.servings?`<span class="tag">👥 ${esc(r.servings)} pers.</span>`:""}
+      ${recipeTags(r).map(t=>`<span class="tag">${showIcon(tagIcon(t,tagIcons))} ${esc(t)}</span>`).join("")}
+      <a class="tag from" href="${friendHref(fu)}">📖 ${esc(friendListTitle(f.name))}</a>
+    </div>
+    ${recipeSections(r)}
+    <div class="rbar rfoot actions">${ricon("pdf","Télécharger en PDF",RI.pdf)}</div>`;
+  view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=()=>li.classList.toggle("done"));
+  $("#pdf").onclick=()=>shareRecipePdf(r);
+}
+// avatar rond : initiale du pseudo, recouverte par la photo s'il y en a une
+const firstLetter=n=>{n=String(n||"").trim();if(!n)return"?";try{return[...new Intl.Segmenter("fr",{granularity:"grapheme"}).segment(n)][0].segment.toUpperCase()}catch(e){return Array.from(n)[0].toUpperCase()}};
+const avatarIn=(n,ph)=>esc(firstLetter(n))+(ph&&/^data:image\//.test(ph)?`<img src="${esc(ph)}" alt="" draggable="false" onerror="this.remove()">`:"");
 async function viewProfile(link={}){
   chrome({tab:"profil",root:true,title:"Profil"});
   const code=cleanCode(link.code||""),addP=String(link.add||"").trim().slice(0,30);
   const on=signedIn(),named=!!profile.name;
   // nouveau téléphone : le pseudo arrive du serveur juste après la connexion, on ne propose pas d'en choisir un autre avant
   const loading=!named&&!profileReady&&["syncing","ok","pending"].includes(syncState.state);
-  const first=n=>{n=String(n||"").trim();if(!n)return"?";try{return[...new Intl.Segmenter("fr",{granularity:"grapheme"}).segment(n)][0].segment.toUpperCase()}catch(e){return Array.from(n)[0].toUpperCase()}};
-  const ini=(n,ph)=>esc(first(n))+(ph&&/^data:image\//.test(ph)?`<img src="${esc(ph)}" alt="" draggable="false" onerror="this.remove()">`:"");
+  const ini=avatarIn;
   const CAM_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
   const PLUS_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>`;
   const SHARE_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M8 7.5l4-4 4 4"/><path d="M7 11H5.5v9.5h13V11H17"/></svg>`;
@@ -2335,7 +2437,7 @@ async function viewProfile(link={}){
     ${pseudoTaken?`<p class="gf fhint err">Un autre compte a déjà ce pseudo : choisis-en un autre pour que tes amis te trouvent.</p>`:""}
     <h4 class="gh">Mes amis <span>${friends.length}</span></h4>
     <div class="grp" id="flist">
-      ${friends.map(f=>`<button type="button" class="gr fr" data-id="${esc(f.uid)}" aria-label="Retirer ${esc(f.name||"cet ami")}"><span class="av" aria-hidden="true">${ini(f.name,f.photo)}</span><span class="pt">${esc(f.name||"Ami")}</span></button>`).join("")}
+      ${friends.map(f=>`<a class="gr fr" href="${friendHref(f.uid)}" aria-label="Voir la liste de ${esc(f.name||"cet ami")}"><span class="av" aria-hidden="true">${ini(f.name,f.photo)}</span><span class="pt">${esc(f.name||"Ami")}</span><span class="chev">${CHEV_SVG}</span></a>`).join("")}
       <button type="button" class="gr act" id="addfr" ${loading?"disabled":""}>${PLUS_SVG}<span>Ajouter un ami</span></button>
       <button type="button" class="gr act" id="mkinv" ${loading?"disabled":""}>${SHARE_SVG}<span>Inviter un ami</span></button>
     </div>
@@ -2374,14 +2476,6 @@ async function viewProfile(link={}){
       if(!r1||r1.i!==1)return;
     }
     askPseudo("Nouveau pseudo","");
-  };
-  $("#flist").onclick=async e=>{
-    const b=e.target.closest(".fr[data-id]");if(!b)return;
-    const f=friends.find(x=>x.uid===b.dataset.id);if(!f)return;
-    const r=await iosAlert({sheet:true,title:`Retirer ${f.name||"cet ami"} de tes amis ?`,actions:[{label:"Retirer de mes amis",danger:true},{label:"Annuler",cancel:true}]});
-    if(!r||r.i!==0)return;
-    syncApi.removeFriend(f.uid);
-    toastUndo("Retiré de tes amis : "+(f.name||"ami"),()=>syncApi.restoreFriend(f));
   };
   $("#addfr").onclick=async()=>{
     const r=await iosAlert({title:"Ajouter un ami",msg:"Tape son pseudo ou colle son invitation.",input:{placeholder:"Son pseudo",plain:true,max:400},actions:[{label:"Annuler",cancel:true},{label:"Ajouter",bold:true}]});
@@ -2454,7 +2548,7 @@ async function fitPhotos(photos,budget=800000){
 }
 
 /* ---------- synchronisation ---------- */
-let syncState={state:"off"},syncApi=null,refreshT=null;
+let syncState={state:"off"},syncApi=null,refreshT=null,syncBooting=true;
 function refreshView(){
   clearTimeout(refreshT);
   refreshT=setTimeout(()=>{
@@ -2472,6 +2566,7 @@ function setStatus(st){
   syncState=st;renderSync();
   const now=signedIn();
   if(now!==wasSignedIn){wasSignedIn=now;if(PROFILE_RE.test(location.hash))refreshView()}
+  else if($("#fwait")&&!syncWaiting())refreshView();   // page d'un ami en attente de la connexion
 }
 function renderSync(){
   const s=syncState,em=s.email?" · "+s.email:"";
@@ -2519,7 +2614,7 @@ async function bootSync(){
       putLocal:putRecipeLocal,delLocal:delRecipeLocal,
       getShop:()=>shop,setShop:applyRemoteShop,fitPhotos,refresh:refreshView,setStatus,
       getLists:()=>lists,setLists:applyRemoteLists,
-      setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&(PROFILE_RE.test(location.hash)||/^#\/(r\/|$)/.test(location.hash||"#/")))refreshView()},
+      setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&(PROFILE_RE.test(location.hash)||/^#\/(r\/|$|listes$)/.test(location.hash||"#/")))refreshView()},
       setProfile:(p,ready)=>{const r=!!(ready||p.name),ch=p.name!==profile.name||(p.photo||"")!==(profile.photo||"")||r!==profileReady;profile={photo:"",...p};profileReady=r;if(ch&&PROFILE_RE.test(location.hash))refreshView()},
       getProfile:()=>profile,receiveShared,shareable,toast,pseudoKey,
       setPseudoTaken:t=>{if(t!==pseudoTaken){pseudoTaken=t;if(PROFILE_RE.test(location.hash))refreshView()}},
@@ -2527,6 +2622,8 @@ async function bootSync(){
       getPlan:()=>plan,setPlan:applyRemotePlan,setUser:anaSetUser
     });
   }catch(e){setStatus({state:"off"})}
+  syncBooting=false;
+  if($("#fwait")&&!syncWaiting())refreshView();
 }
 
 /* ---------- statistiques d'usage (Amplitude, anonymes : voir analytics.js) ---------- */
@@ -2566,7 +2663,7 @@ document.addEventListener("click",e=>{
 },true);
 const screenName=h=>/^#\/r\//.test(h)?"fiche":h==="#/new"?"nouvelle recette":/^#\/edit\//.test(h)?"modifier recette"
   :({"#/courses":"panier","#/listes":"listes","#/planning":"planning","#/profil":"profil","#/amis":"profil","#/importer":"import"})[h]
-  ||(/^#\/(ami|ajout)\//.test(h)?"invitation":"recettes");
+  ||(/^#\/amis\/[^/]+\/r\//.test(h)?"fiche d'un ami":/^#\/amis\//.test(h)?"liste d'un ami":/^#\/(ami|ajout)\//.test(h)?"invitation":"recettes");
 
 /* ---------- router ---------- */
 async function route(){
@@ -2582,6 +2679,8 @@ async function route(){
     else if(h==="#/planning")await viewPlanning();
     else if((m=h.match(/^#\/edit\/(.+)$/)))await viewForm(m[1]);
     else if(h==="#/profil"||h==="#/amis")await viewProfile();
+    else if((m=h.match(/^#\/amis\/([^/]+)\/r\/(.+)$/)))await viewFriendRecipe(decodeURIComponent(m[1]),decodeURIComponent(m[2]));
+    else if((m=h.match(/^#\/amis\/([^/]+)$/)))await viewFriendList(decodeURIComponent(m[1]));
     else if(h==="#/importer")await viewImport();
     else if((m=h.match(/^#\/ami\/([A-Za-z0-9-]+)$/)))await viewProfile({code:m[1]});
     else if((m=h.match(/^#\/ajout\/(.+)$/))){let p=m[1];try{p=decodeURIComponent(p)}catch(e){}await viewProfile({add:p})}

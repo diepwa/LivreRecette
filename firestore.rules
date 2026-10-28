@@ -7,7 +7,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Boîte aux lettres : seule exception, un autre compte peut y DÉPOSER un message (jamais lire ni modifier).
+    // Recettes : un ami peut les LIRE (jamais les modifier), pour voir la liste de son ami.
+    // « Ami » = le propriétaire l'a dans ses amis ; s'il le retire, l'accès s'arrête aussitôt.
+    match /users/{uid}/recipes/{id} {
+      allow read: if request.auth != null
+        && exists(/databases/$(database)/documents/users/$(uid)/friends/$(request.auth.uid));
+    }
+
+    // Boîte aux lettres : autre exception, un autre compte peut y DÉPOSER un message (jamais lire ni modifier).
     // - une recette, seulement si le destinataire l'a dans ses amis ;
     // - une demande d'ami, avec le pseudo du destinataire (annuaire « pseudos ») ou un ancien code d'invitation valide.
     match /users/{uid}/inbox/{msg} {
