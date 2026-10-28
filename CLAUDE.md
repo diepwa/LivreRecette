@@ -107,7 +107,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 ### Détails techniques à garder
 
 - Garder `[hidden]{display:none !important}` (sinon `.btn{display:inline-block}` écrase `hidden`).
-- Fiche recette : pas d'émojis sur les boutons d'action ; « Ajouter aux courses » en tête, puis Favori / Listes / Modifier, puis Partager / Télécharger, et « Supprimer la recette » en rouge, à l'écart sous un séparateur.
+- Fiche recette (depuis le 2026-10-28) : sous le titre, une rangée d'icônes rondes sans texte (libellé en `aria-label`) : Panier (bascule), Favori (bascule, étoile pleine), Listes, Partager (copie à un ami), Télécharger (PDF). En bas de page, deux icônes : Modifier et Supprimer (rouge, feuille de confirmation iOS).
 - Styles d'impression (`@media print`, plus de bouton Imprimer mais l'impression du navigateur reste propre) : masquer en-tête, barre d'onglets, actions, splash et barre du bas.
 
 ## Fonctions à préserver
