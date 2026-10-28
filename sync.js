@@ -64,6 +64,7 @@ export async function initSync(app) {
   const shopRef = () => doc(db, "users", uid, "meta", "shop");
   const listsRef = () => doc(db, "users", uid, "meta", "lists");
   const tagsRef = () => doc(db, "users", uid, "meta", "tags");
+  const planRef = () => doc(db, "users", uid, "meta", "plan");
   const profileRef = () => doc(db, "users", uid, "meta", "profile");
   const friendRef = (f) => doc(db, "users", uid, "friends", f);
   const inboxOf = (u) => collection(db, "users", u, "inbox");
@@ -124,6 +125,12 @@ export async function initSync(app) {
   hooks.pushTags = () => {
     if (!uid) return;
     setDoc(tagsRef(), { icons: app.getTagIcons(), updated: Date.now() }, { merge: true }).catch(fail);
+  };
+
+  hooks.pushPlan = () => {
+    if (!uid) return;
+    // merge:true fusionne repas par repas ; un repas retiré est gardé vide (id "") pour que le retrait se propage
+    setDoc(planRef(), { slots: app.getPlan().slots, updated: Date.now() }, { merge: true }).catch(fail);
   };
 
   // ---------- amis et partage ----------
@@ -301,6 +308,14 @@ export async function initSync(app) {
           return;
         }
         app.setTagIcons((snap.data() || {}).icons || {});
+      }, fail),
+      onSnapshot(planRef(), (snap) => {
+        if (snap.metadata.hasPendingWrites) return;
+        if (!snap.exists()) {
+          if (!snap.metadata.fromCache && Object.keys(app.getPlan().slots).length) hooks.pushPlan();
+          return;
+        }
+        app.setPlan(snap.data() || {});
       }, fail),
       onSnapshot(profileRef(), (snap) => {
         const d = snap.exists() ? snap.data() : {};
