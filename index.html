@@ -702,8 +702,12 @@ setTimeout(done,2200)})();
 
 <script>
 "use strict";
-const CATS=["Entrée","Plat","Sauce","Dessert","Gâteau & pâtisserie","Boisson","Autre"];
-const EMOJI={"Entrée":"🥗","Plat":"🍲","Sauce":"🥫","Dessert":"🍮","Gâteau & pâtisserie":"🎂","Boisson":"🍹","Autre":"🍴"};
+const CATS=["Entrée","Plat","Sauce","Dessert","Boisson","Autre"];
+const EMOJI={"Entrée":"🥗","Plat":"🍲","Sauce":"🥫","Dessert":"🍮","Boisson":"🍹","Autre":"🍴"};
+// anciennes catégories fusionnées : lues et réécrites sous leur nouveau nom (« Gâteau & pâtisserie » → Dessert, 2026-10-31)
+const CAT_ALIAS={"Gâteau & pâtisserie":"Dessert"};
+const oldCat=r=>!!(r&&Object.prototype.hasOwnProperty.call(CAT_ALIAS,r.category));
+const fixCat=r=>{if(oldCat(r))r.category=CAT_ALIAS[r.category];return r};
 
 /* ---------- IndexedDB ---------- */
 let dbp;
@@ -724,9 +728,14 @@ async function tx(mode,fn){
     t.onerror=()=>rej(t.error);
   });
 }
-const allRecipes=()=>tx("readonly",s=>s.getAll());
-const getRecipe=id=>tx("readonly",s=>s.get(id));
-const putRecipeLocal=r=>tx("readwrite",s=>s.put(r));
+const allRecipes=async()=>(await tx("readonly",s=>s.getAll())||[]).map(fixCat);
+const getRecipe=async id=>fixCat(await tx("readonly",s=>s.get(id)));
+const putRecipeLocal=r=>tx("readwrite",s=>s.put(fixCat(r)));
+// une fois par lancement, sans effet si rien n'est à migrer : réécrit sur l'appareil les recettes à l'ancienne catégorie
+async function migrateCats(){
+  const raw=await tx("readonly",s=>s.getAll())||[];
+  for(const r of raw)if(oldCat(r))await putRecipeLocal(r);
+}
 const delRecipeLocal=id=>tx("readwrite",s=>s.delete(id));
 const syncHooks={push:null,remove:null,pushShop:null,pushLists:null,pushTags:null,pushPlan:null};
 async function putRecipe(r){
@@ -1582,7 +1591,7 @@ function impCleanTitle(l){
 const IMP_CAT=[
   ["Sauce",/^(?:(?:la |le |les |une? |ma |mon )?(?:sauces?|vinaigrettes?|mayonnaises?|pestos?|b[ée]chamel|ketchup|aïoli|aioli|rouille|chimichurri|coulis|marinades?|sauce)\b)/],
   ["Boisson",/\b(?:smoothie|cocktail|mocktail|jus|limonade|citronnade|milk ?shake|th[ée] glac[ée]|sirop|latte|chocolat chaud|sangria|punch|mojito|spritz|infusion|lassi|boisson)\b/],
-  ["Gâteau & pâtisserie",/\b(?:g[aâ]teaux?|cakes?|cookies?|brownies?|muffins?|cupcakes?|madeleines?|financiers?|biscuits?|sabl[ée]s?|macarons?|cheesecakes?|fondants?|moelleux|quatre[- ]quarts|clafoutis|far|flans?|choux|[ée]clairs?|brioches?|viennoiseries?|cr[êe]pes?|gaufres?|pancakes?|beignets?|bugnes?|kouign|kougelhopf|galettes? des rois|cannel[ée]s?|tartes? (?:au|aux|à la|a la) (?:pommes?|poires?|citron|fraises?|framboises?|chocolat|abricots?|prunes?|myrtilles?|rhubarbe|fruits?|sucre|caramel|noix|amandines?|bourdaloue|tatin)|tarte tatin|tartelettes? (?:au|aux) (?:citron|fraises?|chocolat|fruits?)|bûche|charlotte|entremets?|layer|banana bread|crumble|cookies)\b/],
+  ["Dessert",/\b(?:g[aâ]teaux?|cakes?|cookies?|brownies?|muffins?|cupcakes?|madeleines?|financiers?|biscuits?|sabl[ée]s?|macarons?|cheesecakes?|fondants?|moelleux|quatre[- ]quarts|clafoutis|far|flans?|choux|[ée]clairs?|brioches?|viennoiseries?|cr[êe]pes?|gaufres?|pancakes?|beignets?|bugnes?|kouign|kougelhopf|galettes? des rois|cannel[ée]s?|tartes? (?:au|aux|à la|a la) (?:pommes?|poires?|citron|fraises?|framboises?|chocolat|abricots?|prunes?|myrtilles?|rhubarbe|fruits?|sucre|caramel|noix|amandines?|bourdaloue|tatin)|tarte tatin|tartelettes? (?:au|aux) (?:citron|fraises?|chocolat|fruits?)|bûche|charlotte|entremets?|layer|banana bread|crumble|cookies)\b/],
   ["Dessert",/\b(?:mousses? au|tiramisu|panna cotta|cr[eè]mes? (?:br[uû]l[ée]e|caramel|dessert|anglaise|p[âa]tissi[eè]re)|cr[eè]me au chocolat|riz au lait|semoule au lait|compotes?|salade de fruits|glaces?|sorbets?|granit[ée]|verrines? sucr[ée]es?|ile flottante|[îi]les? flottantes?|pavlova|fraisier|dessert|coupe|parfait glac[ée]|poires? belle|crumble|smoothie bowl|overnight|porridge|granola|yaourt)\b/],
   ["Entrée",/\b(?:soupes?|velout[ée]s?|potage|gaspacho|gazpacho|bouillon|salades?|verrines?|tartinades?|houmous|hummus|guacamole|tapenade|caviar d'aubergine|dips?|rillettes|terrines?|carpaccio|tartare de (?:saumon|thon|daurade)|bruschettas?|toasts?|bouch[ée]es?|feuillet[ée]s ap[ée]ro|ap[ée]ritifs?|entr[ée]es?|œufs? mimosa|oeufs? mimosa|accras|nems?|samoussas?|rouleaux de printemps|blinis|gougères|cake sal[ée])\b/]
 ];
@@ -1595,7 +1604,7 @@ function impCategory(title,ings){
     return c;
   }
   const sweet=IMP_SWEET.test(i),salty=(i.match(IMP_SALTY)||[]).length;
-  if(sweet&&salty<2)return /\b(?:tartes?|tartelettes?|p[âa]te|four|levure)\b/.test(t+" "+i)?"Gâteau & pâtisserie":"Dessert";
+  if(sweet&&salty<2)return "Dessert";
   return "Plat";
 }
 // découpe un texte en morceaux, un par recette : lignes ---, sinon un nouvel intertitre « Ingrédients » après des étapes
@@ -2345,7 +2354,7 @@ const friendCache=new Map();   // uid -> {at, rs} : évite de tout relire quand 
 async function friendRecipesOf(fu,fresh){
   const c=friendCache.get(fu);
   if(c&&!fresh&&Date.now()-c.at<120000)return c.rs;
-  const rs=(await syncApi.friendRecipes(fu)).filter(r=>r&&!r.sharedFrom&&r.title!==undefined);
+  const rs=(await syncApi.friendRecipes(fu)).filter(r=>r&&!r.sharedFrom&&r.title!==undefined).map(fixCat);
   rs.sort((a,b)=>String(a.title||"").localeCompare(String(b.title||""),"fr",{sensitivity:"base"}));
   friendCache.set(fu,{at:Date.now(),rs});
   return rs;
@@ -2640,7 +2649,7 @@ async function bootSync(){
     const mod=await import("./sync.js");
     syncApi=await mod.initSync({
       hooks:syncHooks,listLocal:allRecipes,getLocal:getRecipe,
-      putLocal:putRecipeLocal,delLocal:delRecipeLocal,
+      putLocal:putRecipeLocal,delLocal:delRecipeLocal,oldCat,fixCat,
       getShop:()=>shop,setShop:applyRemoteShop,fitPhotos,refresh:refreshView,setStatus,
       getLists:()=>lists,setLists:applyRemoteLists,
       setFriends:f=>{const ch=JSON.stringify(f)!==JSON.stringify(friends);friends=f;if(ch&&(PROFILE_RE.test(location.hash)||/^#\/(r\/|$|listes$)/.test(location.hash||"#/")))refreshView()},
@@ -2855,7 +2864,7 @@ async function viewImport(){
       for(const it of todo){
         go.textContent=`Création… ${made.length+1}/${todo.length}`;
         // même forme qu'une recette créée à la main ; la 1re du texte arrive en tête de l'accueil
-        const rec={id:uid(),title:it.title.trim().slice(0,120),category:CATS.includes(it.category)?it.category:"Plat",
+        const rec={id:uid(),title:it.title.trim().slice(0,120),category:CATS.includes(it.category)?it.category:CAT_ALIAS[it.category]||"Plat",
           time:it.time.trim(),servings:it.servings,ingredients:it.ingredients,steps:it.steps,notes:it.notes.trim(),
           photos:[],fav:false,tags:it.tags.slice(),created:now-made.length,updated:now-made.length};
         if(listOk(impDraft.list))rec.lists=[impDraft.list];
@@ -2930,7 +2939,7 @@ if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.ser
 for(const ev of ["gesturestart","gesturechange","gestureend"])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
 document.addEventListener("touchmove",e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
 route();
-bootSync();
+migrateCats().catch(()=>{}).then(bootSync);
 bootAnalytics();
 track("App ouverte",{installee:!!(navigator.standalone||matchMedia("(display-mode: standalone)").matches)});
 </script>
