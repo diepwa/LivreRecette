@@ -253,6 +253,12 @@ export async function initSync(app) {
           await app.putLocal(data);
           changed = true;
         }
+        // ancienne catégorie (« Gâteau & pâtisserie ») encore sur le serveur : on renvoie la version migrée,
+        // sans toucher à « updated ». Sans effet ensuite : le document revient avec la nouvelle catégorie.
+        if (app.oldCat && app.oldCat(data)) {
+          const cur = await app.getLocal(id);
+          if (cur && (cur.updated || 0) >= (data.updated || 0)) hooks.push(cur);
+        }
       }
     }
     if (changed) app.refresh();
