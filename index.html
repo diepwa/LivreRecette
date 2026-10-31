@@ -702,8 +702,8 @@ setTimeout(done,2200)})();
 
 <script>
 "use strict";
-const CATS=["Entrée","Plat","Dessert","Gâteau & pâtisserie","Boisson","Autre"];
-const EMOJI={"Entrée":"🥗","Plat":"🍲","Dessert":"🍮","Gâteau & pâtisserie":"🎂","Boisson":"🍹","Autre":"🍴"};
+const CATS=["Entrée","Plat","Sauce","Dessert","Gâteau & pâtisserie","Boisson","Autre"];
+const EMOJI={"Entrée":"🥗","Plat":"🍲","Sauce":"🥫","Dessert":"🍮","Gâteau & pâtisserie":"🎂","Boisson":"🍹","Autre":"🍴"};
 
 /* ---------- IndexedDB ---------- */
 let dbp;
@@ -1580,6 +1580,7 @@ function impCleanTitle(l){
   return t.slice(0,120);
 }
 const IMP_CAT=[
+  ["Sauce",/^(?:(?:la |le |les |une? |ma |mon )?(?:sauces?|vinaigrettes?|mayonnaises?|pestos?|b[ée]chamel|ketchup|aïoli|aioli|rouille|chimichurri|coulis|marinades?|sauce)\b)/],
   ["Boisson",/\b(?:smoothie|cocktail|mocktail|jus|limonade|citronnade|milk ?shake|th[ée] glac[ée]|sirop|latte|chocolat chaud|sangria|punch|mojito|spritz|infusion|lassi|boisson)\b/],
   ["Gâteau & pâtisserie",/\b(?:g[aâ]teaux?|cakes?|cookies?|brownies?|muffins?|cupcakes?|madeleines?|financiers?|biscuits?|sabl[ée]s?|macarons?|cheesecakes?|fondants?|moelleux|quatre[- ]quarts|clafoutis|far|flans?|choux|[ée]clairs?|brioches?|viennoiseries?|cr[êe]pes?|gaufres?|pancakes?|beignets?|bugnes?|kouign|kougelhopf|galettes? des rois|cannel[ée]s?|tartes? (?:au|aux|à la|a la) (?:pommes?|poires?|citron|fraises?|framboises?|chocolat|abricots?|prunes?|myrtilles?|rhubarbe|fruits?|sucre|caramel|noix|amandines?|bourdaloue|tatin)|tarte tatin|tartelettes? (?:au|aux) (?:citron|fraises?|chocolat|fruits?)|bûche|charlotte|entremets?|layer|banana bread|crumble|cookies)\b/],
   ["Dessert",/\b(?:mousses? au|tiramisu|panna cotta|cr[eè]mes? (?:br[uû]l[ée]e|caramel|dessert|anglaise|p[âa]tissi[eè]re)|cr[eè]me au chocolat|riz au lait|semoule au lait|compotes?|salade de fruits|glaces?|sorbets?|granit[ée]|verrines? sucr[ée]es?|ile flottante|[îi]les? flottantes?|pavlova|fraisier|dessert|coupe|parfait glac[ée]|poires? belle|crumble|smoothie bowl|overnight|porridge|granola|yaourt)\b/],
