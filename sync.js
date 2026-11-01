@@ -199,14 +199,17 @@ export async function initSync(app) {
     setDoc(doc(inboxOf(inv.from)), { type: "friend", from: uid, fromName: myName(), code, at: Date.now() }).catch(fail);
     return name;
   }
-  function sendRecipe(to, r) {
+  // list (facultatif) = {key, name} : la recette fait partie d'une liste partagée, rangée chez l'ami dans une liste du même nom
+  function sendRecipe(to, r, list) {
     if (!uid) return;
     const from = uid;
     (async () => {
       const recipe = app.shareable(r);
       recipe.photos = await app.fitPhotos(recipe.photos);
       for (const f of to) {
-        setDoc(doc(inboxOf(f.uid)), { type: "recipe", from, fromName: myName(), at: Date.now(), recipe, tagIcons: app.tagIconsFor(recipe.tags) })
+        const msg = { type: "recipe", from, fromName: myName(), at: Date.now(), recipe, tagIcons: app.tagIconsFor(recipe.tags) };
+        if (list) msg.list = { key: list.key, name: list.name };
+        setDoc(doc(inboxOf(f.uid)), msg)
           .catch((e) => {
             const c = (e && e.code) || "";
             app.toast(c.includes("permission-denied")

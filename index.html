@@ -692,7 +692,7 @@ setTimeout(done,2200)})();
 </dialog>
 
 <dialog id="senddlg">
-  <h3>Partager avec un ami</h3>
+  <h3 id="sendt">Partager avec un ami</h3>
   <p id="sendmsg">Ton ami reçoit sa propre copie : s’il la modifie, la tienne ne change pas.</p>
   <ul class="opts" id="sendopts"></ul>
   <div class="col">
@@ -1473,6 +1473,14 @@ function sharedCopy(src,m,now){
   if(!r.title.trim())r.title="Recette partagée";
   return r;
 }
+// liste partagée par un ami : même id chez les deux téléphones du foyer (pas de doublon), un par ami et par liste
+function receivedList(m){
+  const l=m&&m.list;
+  if(!l||typeof l!=="object"||typeof l.key!=="string"||typeof l.name!=="string"||!l.name.trim())return null;
+  const from=String(m.from||"").replace(/[^A-Za-z0-9]/g,"").slice(0,40),key=l.key.replace(/[^A-Za-z0-9_-]/g,"").slice(0,40);
+  if(!from||!key)return null;
+  return{id:"f"+from+"_"+key,name:l.name.trim().slice(0,40)};
+}
 // code d'invitation : 8 caractères sans ambiguïté (pas de 0/O, 1/I/L)
 const CODE_ABC="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const cleanCode=s=>String(s||"").toUpperCase().split("").filter(c=>CODE_ABC.includes(c)).join("");
@@ -2030,7 +2038,7 @@ function askName(title,value,ok){
 async function openListSettings(id){
   const l=lists[id];if(!l)return;
   const msg=l.exclusive?"Liste exclusive : ses recettes n’apparaissent que dans cette liste.":"Supprimer la liste ne supprime pas ses recettes.";
-  const r=await iosAlert({sheet:true,title:l.name,msg,actions:[{label:"Renommer la liste"},{label:l.exclusive?"Ne plus rendre exclusive":"Rendre exclusive"},{label:"Supprimer la liste",danger:true},{label:"Annuler",cancel:true}]});
+  const r=await iosAlert({sheet:true,title:l.name,msg,actions:[{label:"Renommer la liste"},{label:l.exclusive?"Ne plus rendre exclusive":"Rendre exclusive"},{label:"Partager la liste"},{label:"Supprimer la liste",danger:true},{label:"Annuler",cancel:true}]});
   if(!r)return;
   if(r.i===0)askName("Renommer la liste",l.name,n=>{l.name=n.slice(0,40);l.updated=Date.now();saveLists();refreshView()});
   else if(r.i===1){
@@ -2039,6 +2047,11 @@ async function openListSettings(id){
     toastUndo((was?"Plus exclusive : ":"Exclusive : ")+l.name,()=>set(was));
   }
   else if(r.i===2){
+    const recipes=(await allRecipes()).filter(x=>recipeLists(x).includes(id));
+    if(!recipes.length){toast("Cette liste est vide : ajoute-lui des recettes avant de la partager.");return}
+    openSendDlg(null,{id,name:l.name,recipes});
+  }
+  else if(r.i===3){
     l.deleted=true;l.updated=Date.now();saveLists();if(filter.list===id)filter.list="mine";refreshView();   // liste exclusive supprimée : ses recettes réapparaissent
     toastUndo("Liste supprimée : "+l.name,()=>{l.deleted=false;l.updated=Date.now();saveLists();refreshView()});
   }
@@ -2248,8 +2261,11 @@ function senderName(r){
   const f=r.sharedFrom&&friends.find(x=>x.uid===r.sharedFrom.uid);
   return (f&&f.name)||(r.sharedFrom&&r.sharedFrom.name)||"";
 }
-function openSendDlg(r){
+// r = une recette ; ou list = {id,name,recipes} pour envoyer toute une liste
+function openSendDlg(r,list){
   const d=$("#senddlg"),sel=new Set(),go=$("#sendgo"),msg=$("#sendmsg");
+  $("#sendt").textContent=list?"Partager « "+list.name+" »":"Partager avec un ami";
+  const n=list?list.recipes.length:1;
   const draw=()=>{
     $("#sendopts").innerHTML=friends.map(f=>`<li><button type="button" role="checkbox" aria-checked="${sel.has(f.uid)}" data-id="${esc(f.uid)}"><span class="cb"></span>${esc(f.name||"Ami")}</button></li>`).join("");
     go.disabled=!sel.size;
@@ -2257,7 +2273,8 @@ function openSendDlg(r){
   };
   const ok=signedIn();
   msg.textContent=!ok?"Connecte-toi d’abord (onglet Profil) pour envoyer des recettes à tes amis."
-    :!friends.length?"Tu n’as pas encore d’ami dans NoutBook. Ajoute-en un pour lui envoyer cette recette."
+    :!friends.length?"Tu n’as pas encore d’ami dans NoutBook. Ajoute-en un pour lui envoyer "+(list?"cette liste.":"cette recette.")
+    :list?`Ton ami reçoit une copie des ${n} recette${n>1?"s":""}, rangée${n>1?"s":""} dans une liste « ${list.name} ». S’il les modifie, les tiennes ne changent pas.`
     :"Ton ami reçoit sa propre copie : s’il la modifie, la tienne ne change pas.";
   $("#sendopts").hidden=go.hidden=!ok||!friends.length;
   $("#sendfriends").textContent=ok?"👥 Ajouter un ami":"👤 Se connecter";
@@ -2269,6 +2286,12 @@ function openSendDlg(r){
   go.onclick=()=>{
     const to=friends.filter(f=>sel.has(f.uid));
     d.close();
+    if(list){
+      for(const x of list.recipes)syncApi.sendRecipe(to,x,{key:list.id,name:list.name});
+      track("recipe_share",{destinataires:to.length,recettes:n,liste:true});
+      toast("Liste envoyée à "+to.map(f=>f.name||"ton ami").join(", "));
+      return;
+    }
     syncApi.sendRecipe(to,r);
     track("recipe_share",{destinataires:to.length});
     toast("Copie envoyée à "+to.map(f=>f.name||"ton ami").join(", "));
@@ -2283,9 +2306,16 @@ async function receiveShared(m){
   let added=false;
   for(const t of r.tags){const k=tagKey(t);if(!tagIcons[k]&&ic[k]&&ic[k].icon!==autoTagIcon(t)){tagIcons[k]={icon:ic[k].icon,updated:Date.now()};added=true}}
   if(added)saveTagIcons();
+  const rl=receivedList(m);
+  if(rl){
+    // liste créée à la première recette reçue ; renommée chez moi = gardée telle quelle ; supprimée = recréée par un nouvel envoi
+    if(!lists[rl.id]||lists[rl.id].deleted){const now=Date.now();lists[rl.id]={name:rl.name,created:(lists[rl.id]&&lists[rl.id].created)||now,updated:now,deleted:false,exclusive:false};saveLists()}
+    r.lists=[rl.id];
+  }
   await putRecipe(r);
   track("Recette reçue");
-  toast("📬 Nouvelle recette "+(r.sharedFrom.name?deNom(r.sharedFrom.name):"de ton ami"));
+  const who=r.sharedFrom.name?deNom(r.sharedFrom.name):"de ton ami";
+  toast(rl?"📬 Liste « "+lists[rl.id].name+" » reçue "+who:"📬 Nouvelle recette "+who);
   refreshView();
 }
 
