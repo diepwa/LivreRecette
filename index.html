@@ -266,7 +266,8 @@ section.block p{margin:0 0 12px}
 .impcta>span:first-child{font-size:1.5rem;flex:none}
 .impcta b{color:var(--accent)}
 .impcta:active{transform:scale(.98)}
-.implist{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.implist{display:flex;align-items:center;gap:10px;margin:0 0 4px}
+.implhint{margin:0 0 14px}
 .implist label{font-weight:600;font-size:.95rem;flex:none}
 .implist select{flex:1;min-width:0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1rem}
 .imp{padding:10px 14px 12px}
@@ -2700,7 +2701,7 @@ const CLICK_ID={
   mkinv:"inviter un ami",addfr:"ajouter un ami",newlistrow:"nouvelle liste",cpp:"copier le pseudo",wnow:"cette semaine",
   wprev:"semaine précédente",wnext:"semaine suivante",sendgo:"envoyer la recette",sendclose:"fermer partage",
   sendfriends:"ajouter un ami (partage)",pdfdl:"télécharger le PDF",pdfshare:"partager le PDF",pdfclose:"fermer PDF",
-  impgo:"créer les recettes importées",impback:"retour au texte (import)",impcancel:"annuler l'import",imppaste:"coller (import)",
+  impgo:"créer les recettes importées",impback:"retour au texte (import)",impcancel:"annuler l'import",imppaste:"coller (import)",impl:"liste de l'import",
   tdbasic:"produit de base (tuile)",tdskip:"retirer sans compter (tuile)",tdclose:"fermer tuile",nameno:"annuler pseudo",
   listclose:"fermer listes",pickclose:"fermer choix de recette",iconclose:"fermer icônes"
 };
@@ -2822,8 +2823,7 @@ async function viewImport(){
   view.innerHTML=`
     <h2 class="title">${one?"Vérifie la recette":"Vérifie les recettes"}</h2>
     <p class="hint">${one?"Corrige ce qui doit l’être, puis crée-la. Tu pourras ajouter des photos ensuite.":`J’ai trouvé ${items.length} recettes${nDup?`, dont ${nDup} déjà dans ton livre (décochée${nDup>1?"s":""})`:""}. Décoche celles que tu ne veux pas.`}</p>
-    <div class="implist"><label for="impl">Ranger dans</label>
-      <select id="impl"><option value="">Aucune liste</option>${activeLists(lists).map(l=>`<option value="${esc(l.id)}" ${l.id===impDraft.list?"selected":""}>${esc(l.name)}</option>`).join("")}<option value="+">＋ Nouvelle liste…</option></select></div>
+    ${impListField()}
     <form id="impr" autocomplete="off">${items.map(card).join("")}</form>
     <div class="impspace"></div>
     <div class="impbar"><div>
@@ -2831,12 +2831,7 @@ async function viewImport(){
       <button class="btn primary" type="submit" form="impr" id="impgo"></button>
     </div></div>`;
   const go=$("#impgo");
-  $("#impl").onchange=e=>{
-    const v=e.target.value;
-    if(v!=="+"){impDraft.list=v;return}
-    e.target.value=impDraft.list;   // en attendant le nom (ou si on annule)
-    askName("Nouvelle liste","",n=>{impDraft.list=createList(n);viewImport()});
-  };
+  bindImpList(viewImport);
   const label=()=>{const n=nOn();go.disabled=!n;go.textContent=!n?"Rien à créer":n===1?"Créer la recette":`Créer les ${n} recettes`};
   label();
   const refreshCard=sec=>{
@@ -2901,11 +2896,31 @@ async function viewImport(){
     location.hash=made.length===1?"#/r/"+made[0].id:"#/";
   };
 }
+// champ « Liste » de l'import : liste où ranger toutes les recettes importées (vide = Ma liste)
+function impListField(){
+  const cur=impDraft.list&&lists[impDraft.list]&&!lists[impDraft.list].deleted?impDraft.list:"";
+  return `<div class="implist"><label for="impl">Liste</label>
+      <select id="impl"><option value="">Ma liste</option>${activeLists(lists).map(l=>`<option value="${esc(l.id)}" ${l.id===cur?"selected":""}>${esc(l.name)}${l.exclusive?" (exclusive)":""}</option>`).join("")}<option value="+">＋ Nouvelle liste…</option></select></div>
+    <p class="fhint implhint" id="implhint">${impListHint()}</p>`;
+}
+function impListHint(){
+  const l=impDraft.list&&lists[impDraft.list]&&!lists[impDraft.list].deleted&&lists[impDraft.list];
+  return !l?"Les recettes iront dans Ma liste. Choisis une liste pour les y ranger directement.":l.exclusive?`Liste exclusive : ces recettes n’apparaîtront que dans « ${esc(l.name)} », pas dans Ma liste.`:`Les recettes seront rangées dans « ${esc(l.name)} » et resteront aussi dans Ma liste.`;
+}
+function bindImpList(redraw){
+  $("#impl").onchange=e=>{
+    const v=e.target.value;
+    if(v!=="+"){impDraft.list=v;$("#implhint").innerHTML=impListHint();return}
+    e.target.value=impDraft.list||"";   // en attendant le nom (ou si on annule)
+    askName("Nouvelle liste","",n=>{impDraft.list=createList(n);redraw()});
+  };
+}
 function viewImportText(){
   if(impDraft.list===null)impDraft.list=lists[filter.list]&&!lists[filter.list].deleted?filter.list:"";
   view.innerHTML=`
     <h2 class="title">Importer des recettes</h2>
     <p class="hint">Colle le texte d’une recette (Instagram, site, notes…) ou de plusieurs à la suite. Si deux recettes se mélangent, sépare-les par une ligne <b>---</b>.</p>
+    ${impListField()}
     <form id="impf" autocomplete="off">
       <div class="row2">
         <button class="btn" type="button" id="imppaste" hidden>📋 Coller</button>
@@ -2920,6 +2935,7 @@ function viewImportText(){
       </div>
     </form>`;
   const ta=$("#imptxt");
+  bindImpList(viewImportText);
   ta.oninput=()=>{impDraft.text=ta.value;$("#impmsg").textContent=""};
   $("#impcancel").onclick=()=>{impDraft={text:"",items:null,list:null}};
   const add=t=>{t=String(t||"").trim();if(!t)return;ta.value=ta.value.trim()?ta.value.trim()+"\n\n---\n\n"+t:t;impDraft.text=ta.value};

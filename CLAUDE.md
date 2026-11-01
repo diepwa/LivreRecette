@@ -18,7 +18,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v36`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v37`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -111,6 +111,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 - Garder `[hidden]{display:none !important}` (sinon `.btn{display:inline-block}` écrase `hidden`).
 - Fiche recette (depuis le 2026-10-28) : sous le titre, une rangée d'icônes rondes sans texte (libellé en `aria-label`) : Panier (bascule), Favori (bascule, étoile pleine), Listes, Partager (copie à un ami, icône avion en papier façon Instagram). En bas de page, trois icônes : Télécharger (PDF), Modifier et Supprimer (rouge, feuille de confirmation iOS).
 - Liste d'un ami (`#/amis/<uid>`, fiche `#/amis/<uid>/r/<id>`) : sa « Ma liste » (ses recettes sans celles qu'il a reçues), en lecture seule, lue une fois par `getDocs` (cache mémoire de 2 min, pas d'écoute en temps réel pour ménager le quota gratuit). Ouverte depuis Profil → Mes amis ou Listes → « Listes de mes amis ». « Retirer de mes amis » est en bas de cette page.
+- Import en vrac (`#/importer`, depuis le 2026-11-01) : champ « Liste » en haut des deux écrans (texte et relecture), valeur par défaut = liste affichée à l'accueil si c'est une vraie liste, sinon « Ma liste » (aucune liste). Toutes les recettes du lot sont rangées dans la liste choisie ; une phrase sous le champ prévient quand la liste est exclusive.
 - Styles d'impression (`@media print`, plus de bouton Imprimer mais l'impression du navigateur reste propre) : masquer en-tête, barre d'onglets, actions, splash et barre du bas.
 
 ## Fonctions à préserver
