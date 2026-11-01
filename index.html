@@ -479,6 +479,8 @@ body.courses .toast{bottom:calc(var(--tabh) + 80px + env(safe-area-inset-bottom)
 .lrow.on .pt{font-weight:600}
 .lrow .ck{color:var(--accent);display:flex}
 .lrow .ck svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.lrow .lsub{display:block;font-size:.8125rem;color:var(--muted);font-weight:400;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.lrow:has(.lsub){padding-top:7px;padding-bottom:7px}
 .lwrap{display:flex;align-items:stretch;position:relative}
 .lwrap .gr{flex:1;min-width:0}
 .grp .lwrap+.lwrap::before,.grp .lwrap+.gr::before,.grp .gr+.lwrap::before{content:"";position:absolute;top:0;right:0;left:58px;border-top:.5px solid var(--hair);z-index:1}
@@ -974,7 +976,8 @@ async function viewDetail(id){
   $("#lists").onclick=()=>openListsDlg(r,()=>viewDetail(id));
   $("#send").onclick=()=>openSendDlg(r);
   view.querySelectorAll("a.tag[data-l]").forEach(a=>a.onclick=e=>{e.preventDefault();filter.list=a.dataset.l;filter.cat="all";filter.tags=[];location.hash="#/"});
-  view.querySelectorAll("a.tag[data-t]").forEach(a=>a.onclick=e=>{e.preventDefault();filter={...filter,list:"all",cat:"all",q:"",tags:[a.dataset.t]};location.hash="#/"});
+  // tag d'une recette rangée dans une liste exclusive : on cherche dans cette liste (elle n'est pas dans « Toutes »)
+  view.querySelectorAll("a.tag[data-t]").forEach(a=>a.onclick=e=>{e.preventDefault();filter={...filter,list:exclusiveOf(r,lists)[0]||"all",cat:"all",q:"",tags:[a.dataset.t]};location.hash="#/"});
   if(r.sharedFrom&&r.sharedNew){r.sharedNew=false;touch(r);putRecipe(r)}
   $("#cart").onclick=()=>{
     const on=!shop.sel[r.id];
@@ -1358,14 +1361,16 @@ function buildCatalog(recipes,shop,onList,query){
 }
 
 /* ---- listes de recettes ---- */
-// lists = {id:{name,created,updated,deleted}} ; une recette porte r.lists = [id…] (champ facultatif).
+// lists = {id:{name,created,updated,deleted,exclusive}} ; une recette porte r.lists = [id…] (champ facultatif).
+// exclusive (facultatif, false par défaut) : une recette rangée dans une liste exclusive n'apparaît que dans cette liste
+// (ni dans Ma liste, Partagées, Toutes, ni dans les autres listes). Simple filtre d'affichage : la recette n'est pas modifiée.
 // Une liste supprimée garde une trace (deleted:true) pour que la fusion entre téléphones ne la fasse pas revenir.
 function normalizeLists(o){
   const out={};
   if(!o||typeof o!=="object"||Array.isArray(o))return out;
   for(const [id,v] of Object.entries(o)){
     if(!v||typeof v!=="object"||typeof v.name!=="string")continue;
-    out[id]={name:v.name,created:Number(v.created)||0,updated:Number(v.updated)||0,deleted:!!v.deleted};
+    out[id]={name:v.name,created:Number(v.created)||0,updated:Number(v.updated)||0,deleted:!!v.deleted,exclusive:v.exclusive===true};
   }
   return out;
 }
@@ -1375,12 +1380,17 @@ function mergeLists(a,b){
   for(const [id,v] of Object.entries(normalizeLists(b)))if(!out[id]||v.updated>out[id].updated)out[id]=v;
   return out;
 }
-const listsSig=o=>JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k].name,o[k].created,o[k].updated,o[k].deleted]));
+const listsSig=o=>JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k].name,o[k].created,o[k].updated,o[k].deleted,o[k].exclusive]));
 const activeLists=ls=>Object.entries(ls||{}).filter(([,v])=>!v.deleted)
-  .map(([id,v])=>({id,name:v.name,created:v.created}))
+  .map(([id,v])=>({id,name:v.name,created:v.created,exclusive:!!v.exclusive}))
   .sort((a,b)=>a.created-b.created||a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
 const recipeLists=r=>Array.isArray(r&&r.lists)?r.lists.filter(x=>typeof x==="string"):[];
+// listes exclusives (actives) dans lesquelles la recette est rangée
+const exclusiveOf=(r,ls)=>recipeLists(r).filter(id=>ls&&ls[id]&&!ls[id].deleted&&ls[id].exclusive);
 function inList(r,list,ls){
+  // rangée dans une liste exclusive : visible seulement dans celle(s)-ci (dans deux listes exclusives = dans les deux)
+  const ex=exclusiveOf(r,ls);
+  if(ex.length)return ex.includes(list);
   if(!list||list==="all")return true;
   const shared=!!(r.sharedFrom&&typeof r.sharedFrom==="object");
   if(list==="shared")return shared;
@@ -2018,11 +2028,17 @@ function askName(title,value,ok){
 }
 async function openListSettings(id){
   const l=lists[id];if(!l)return;
-  const r=await iosAlert({sheet:true,title:l.name,msg:"Supprimer la liste ne supprime pas ses recettes.",actions:[{label:"Renommer la liste"},{label:"Supprimer la liste",danger:true},{label:"Annuler",cancel:true}]});
+  const msg=l.exclusive?"Liste exclusive : ses recettes n’apparaissent que dans cette liste.":"Supprimer la liste ne supprime pas ses recettes.";
+  const r=await iosAlert({sheet:true,title:l.name,msg,actions:[{label:"Renommer la liste"},{label:l.exclusive?"Ne plus rendre exclusive":"Rendre exclusive"},{label:"Supprimer la liste",danger:true},{label:"Annuler",cancel:true}]});
   if(!r)return;
   if(r.i===0)askName("Renommer la liste",l.name,n=>{l.name=n.slice(0,40);l.updated=Date.now();saveLists();refreshView()});
   else if(r.i===1){
-    l.deleted=true;l.updated=Date.now();saveLists();if(filter.list===id)filter.list="mine";refreshView();
+    const set=v=>{l.exclusive=v;l.updated=Date.now();saveLists();refreshView()};
+    const was=!!l.exclusive;set(!was);
+    toastUndo((was?"Plus exclusive : ":"Exclusive : ")+l.name,()=>set(was));
+  }
+  else if(r.i===2){
+    l.deleted=true;l.updated=Date.now();saveLists();if(filter.list===id)filter.list="mine";refreshView();   // liste exclusive supprimée : ses recettes réapparaissent
     toastUndo("Liste supprimée : "+l.name,()=>{l.deleted=false;l.updated=Date.now();saveLists();refreshView()});
   }
 }
@@ -2045,8 +2061,8 @@ async function viewLists(){
   const count=k=>new Set(rs.filter(r=>inList(r,k,lists)).map(r=>r.id)).size;
   const unseen=rs.filter(r=>r.sharedFrom&&r.sharedNew).length;
   setListsBadge(unseen);
-  const row=(k,name,icon,extra="")=>`<button type="button" class="gr lrow ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>
-      <span class="ln" aria-hidden="true">${icon}</span><span class="pt">${esc(name)}</span>${extra}<span class="lc">${count(k)}</span>${filter.list===k?`<span class="ck">${CHECK_SVG}</span>`:`<span class="chev">${CHEV_SVG}</span>`}</button>`;
+  const row=(k,name,icon,extra="",sub="")=>`<button type="button" class="gr lrow ${filter.list===k?"on":""}" data-l="${esc(k)}" ${filter.list===k?'aria-current="true"':""}>
+      <span class="ln" aria-hidden="true">${icon}</span><span class="pt">${esc(name)}${sub?`<small class="lsub">${sub}</small>`:""}</span>${extra}<span class="lc">${count(k)}</span>${filter.list===k?`<span class="ck">${CHECK_SVG}</span>`:`<span class="chev">${CHEV_SVG}</span>`}</button>`;
   view.innerHTML=`
     <div class="grp" id="lgrp">
       ${row("mine","Ma liste",LIST_ICONS.mine)}
@@ -2055,7 +2071,7 @@ async function viewLists(){
     </div>
     <h4 class="gh">Mes listes</h4>
     <div class="grp" id="lmine">
-      ${ls.map(l=>`<div class="lwrap">${row(l.id,l.name,LIST_ICONS.list)}<button type="button" class="lmore" data-set="${esc(l.id)}" aria-label="Renommer ou supprimer ${esc(l.name)}">${MORE_SVG}</button></div>`).join("")}
+      ${ls.map(l=>`<div class="lwrap">${row(l.id,l.name,LIST_ICONS.list,"",l.exclusive?"Exclusive":"")}<button type="button" class="lmore" data-set="${esc(l.id)}" aria-label="Réglages de la liste ${esc(l.name)}">${MORE_SVG}</button></div>`).join("")}
       <button type="button" class="gr act" id="newlistrow"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Nouvelle liste</span></button>
     </div>
     ${friends.length?`<h4 class="gh">Listes de mes amis</h4>
