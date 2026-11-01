@@ -18,7 +18,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v37`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v38`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -31,6 +31,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 - Tout nouveau champ est optionnel avec une valeur par défaut à la lecture. Ne jamais renommer ni supprimer un champ existant.
 - Un document Firestore fait au plus 1 Mo : 6 photos max par recette, recompressées par `fitPhotos`. Ne pas augmenter sans autre stockage.
 - Listes : localStorage `livre-listes` et Firestore `users/{uid}/meta/lists` (`lists` = {id: {name, created, updated, deleted, exclusive}}). `exclusive` (facultatif, depuis le 2026-11-01) : une recette rangée dans une liste exclusive n'apparaît que dans cette liste (ni Ma liste, Partagées, Toutes, ni les autres listes ; dans deux listes exclusives = dans les deux). Simple filtre d'affichage (`inList`), les recettes ne sont pas modifiées. Ne s'applique pas à la liste d'un ami (ses listes ne sont pas lisibles), ni au panier, ni au choix de recette du planning (toutes les recettes y restent proposées).
+- Partage d'une liste (« ⋯ » → « Partager la liste », depuis le 2026-11-01) : une copie de chaque recette part dans l'`inbox` de l'ami (un message `type:"recipe"` par recette, même règle Firestore), avec un champ facultatif `list:{key,name}`. À la réception (`receivedList`), les recettes sont rangées dans une liste d'id `f<uid de l'ami>_<id de sa liste>` (même id sur les deux téléphones du foyer ; un nouvel envoi complète cette liste, la recrée si elle a été supprimée, garde son nom si elle a été renommée). Copie figée : pas de synchro entre les deux listes. Un téléphone pas à jour ignore `list` (recettes seulement dans Partagées).
 - Planning : localStorage `livre-planning` et Firestore `users/{uid}/meta/plan` (`setDoc` merge:true), `slots` = {`AAAA-MM-JJ_l|d`: {id, n, updated}} ; un repas retiré reste en `id:""` daté (fusion par `mergePlan`, le plus récent gagne). Les repas à venir (`upcomingMeals`, aujourd'hui compris) s'ajoutent à la sélection du panier sans toucher à `shop.sel` (`effectiveSel`, personnes additionnées) : un téléphone pas à jour ne les voit pas dans son panier. Planifier un repas remet ses ingrédients en « à acheter » (retire leurs clés de `have`).
 - Panier : `sel` {id: personnes} (Firestore : `[{id,n}]`), `have` {clé: true}, `extra` [noms] (tableau de chaînes), `freq` {clé: {n,last,name}} (fusion par maximum, jamais vidé), `basics` {clé: bool}. Clé produit = `nameKey(nom)` ; ne pas la changer sans migration. `normalizeShop()` migre l'ancien format.
 
