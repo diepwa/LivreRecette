@@ -1028,10 +1028,11 @@ async function viewForm(id){
     <label for="notes">Notes <small>(astuces, origine de la recette…)</small></label>
     <textarea id="notes" style="min-height:90px">${esc(rec.notes)}</textarea>
     <div class="formbar">
-      <a class="btn" href="${r?"#/r/"+rec.id:"#/"}">Annuler</a>
+      <a class="btn" href="${r?"#/r/"+rec.id:"#/"}" id="fcancel">Annuler</a>
       <button class="btn primary" type="submit">Enregistrer</button>
     </div>
   </form>`;
+  $("#fcancel").onclick=e=>{e.preventDefault();leaveForm(r?"#/r/"+rec.id:"#/",true)};
   const drawThumbs=()=>{
     $("#thumbs").innerHTML=photos.map((p,i)=>`<div class="thumb ${i===0?"cover":""}"><img src="${p}" alt=""><button type="button" data-i="${i}" aria-label="Retirer">✕</button></div>`).join("")+
       `<div class="addphoto" id="add"><b>＋</b>Photo</div>`;
@@ -1084,7 +1085,7 @@ async function viewForm(id){
     if(r)track("Recette modifiée",{photos:photos.length,tags:tags.length});
     else track("recipe_add",{source:"manuel",photos:photos.length,tags:tags.length});
     toast("Recette enregistrée ✓");
-    location.hash="#/r/"+rec.id;
+    leaveForm("#/r/"+rec.id);
   };
 }
 
@@ -2579,7 +2580,7 @@ async function viewProfile(link={}){
   const key=addP?"p:"+pseudoKey(addP):code?"c:"+code:"";
   if(key&&linkDone!==key&&(named||!addP||!loading)){   // profil pas encore chargé : on attend
     linkDone=key;
-    history.replaceState(null,"","#/profil");
+    history.replaceState(history.state,"","#/profil");navStack[navIdx]="#/profil";
     if(addP){
       if(pseudoKey(addP)===pseudoKey(profile.name))return;
       const r=await iosAlert({title:`Ajouter ${addP} à tes amis ?`,msg:"Vous pourrez vous envoyer des recettes.",actions:[{label:"Annuler",cancel:true},{label:"Ajouter",bold:true}]});
@@ -2775,6 +2776,34 @@ const screenName=h=>/^#\/r\//.test(h)?"fiche":h==="#/new"?"nouvelle recette":/^#
   :({"#/courses":"panier","#/listes":"listes","#/planning":"planning","#/profil":"profil","#/amis":"profil","#/importer":"import"})[h]
   ||(/^#\/amis\/[^/]+\/r\//.test(h)?"fiche d'un ami":/^#\/amis\//.test(h)?"liste d'un ami":/^#\/(ami|ajout)\//.test(h)?"invitation":"recettes");
 
+/* ---------- historique ---------- */
+// copie des pages de l'historique (index rangé dans history.state.i) : en quittant un formulaire
+// (modifier, nouvelle recette, import), on revient sur la page d'avant au lieu d'empiler la fiche
+// par-dessus le formulaire, pour que « retour » ne rouvre pas le formulaire.
+const navStack=[];let navIdx=0,navStarted=false,navReplace=false,navPending=null;
+const normHash=h=>h===""||h==="#"?"#/":h;
+const isFormHash=h=>/^#\/(new$|edit\/|importer$)/.test(h);
+function navTrack(){
+  const h=normHash(location.hash),s=history.state;
+  if(navReplace)navReplace=false;                         // location.replace : même place
+  else if(s&&Number.isInteger(s.i))navIdx=s.i;            // retour / avance / rechargement
+  else if(navStarted){navIdx++;navStack.length=navIdx}    // nouvelle page empilée
+  navStarted=true;navStack[navIdx]=h;
+  if(!s||s.i!==navIdx){try{history.replaceState({...(s&&typeof s==="object"?s:{}),i:navIdx},"")}catch(e){}}
+}
+function navTo(h){
+  if(normHash(location.hash)===h){route();return}
+  navReplace=true;location.replace(h);
+}
+// quitter un formulaire vers `target` ; anyPrev : revenir à la page d'avant quelle qu'elle soit (Annuler)
+function leaveForm(target,anyPrev){
+  let j=-1;
+  for(let k=navIdx-1;k>=0;k--){const h=navStack[k];if(h===undefined)break;if(isFormHash(h))continue;j=k;break}
+  if(j>=0&&(anyPrev||navStack[j]===target)){history.go(j-navIdx);return}
+  if(j>=0&&j+1<navIdx){navPending=target;history.go(j+1-navIdx);return}   // remplacer le 1er formulaire
+  navTo(target);
+}
+
 /* ---------- router ---------- */
 async function route(){
   window.scrollTo(0,0);
@@ -2799,7 +2828,11 @@ async function route(){
     view.innerHTML=`<div class="empty"><div class="big">⚠️</div><p>Un souci est survenu : ${esc(err.message)}</p></div>`;
   }
 }
-window.addEventListener("hashchange",route);
+window.addEventListener("hashchange",()=>{
+  navTrack();
+  if(navPending){const t=navPending;navPending=null;navTo(t);return}
+  route();
+});
 $("#back").onclick=()=>{ if(history.length>1)history.back(); else location.hash="#/" };
 // toucher l'onglet de la page en cours : remonter en haut
 $("#tabbar").addEventListener("click",e=>{const a=e.target.closest("a[data-tab]");if(a&&a.classList.contains("on")&&(location.hash||"#/")===a.getAttribute("href")){e.preventDefault();window.scrollTo({top:0,behavior:"smooth"})}});
@@ -2923,7 +2956,7 @@ async function viewImport(){
     if(listOk(impDraft.list)){filter.list=impDraft.list;filter.cat="all";filter.tags=[];filter.q=""}
     impDraft={text:"",items:null,list:null};
     toast(made.length===1?"Recette créée ✓":`${made.length} recettes créées ✓`);
-    location.hash=made.length===1?"#/r/"+made[0].id:"#/";
+    leaveForm(made.length===1?"#/r/"+made[0].id:"#/");
   };
 }
 // champ « Liste » de l'import : liste où ranger toutes les recettes importées (vide = Ma liste)
@@ -2967,7 +3000,7 @@ function viewImportText(){
   const ta=$("#imptxt");
   bindImpList(viewImportText);
   ta.oninput=()=>{impDraft.text=ta.value;$("#impmsg").textContent=""};
-  $("#impcancel").onclick=()=>{impDraft={text:"",items:null,list:null}};
+  $("#impcancel").onclick=e=>{e.preventDefault();impDraft={text:"",items:null,list:null};leaveForm("#/",true)};
   const add=t=>{t=String(t||"").trim();if(!t)return;ta.value=ta.value.trim()?ta.value.trim()+"\n\n---\n\n"+t:t;impDraft.text=ta.value};
   if(navigator.clipboard&&navigator.clipboard.readText){
     $("#imppaste").hidden=false;
@@ -3000,6 +3033,7 @@ if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.ser
 // pas de zoom : iOS ignore user-scalable=no, on bloque donc aussi le pincement à la main
 for(const ev of ["gesturestart","gesturechange","gestureend"])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
 document.addEventListener("touchmove",e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+navTrack();
 route();
 migrateCats().catch(()=>{}).then(bootSync);
 bootAnalytics();
