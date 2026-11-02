@@ -31,7 +31,7 @@ export async function initSync(app) {
 
   const { initializeApp } = appMod;
   const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } = authMod;
-  const { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, getDocs, getDocFromServer, deleteDoc, onSnapshot, Timestamp } = fsMod;
+  const { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, getDocs, getDocFromServer, getDocsFromServer, getCountFromServer, query, where, deleteDoc, onSnapshot, Timestamp } = fsMod;
 
   const fb = initializeApp(cfg);
   const auth = getAuth(fb);
@@ -448,6 +448,25 @@ export async function initSync(app) {
         throw new Error("Chargement impossible : il faut du réseau.");
       }
       return snap.docs.map((d) => ({ ...d.data(), id: (d.data() && d.data().id) || d.id }));
+    },
+    // pour le cache de la liste d'un ami : sans since, toutes ses recettes ; avec since, seulement celles
+    // modifiées depuis (updated > since) et le nombre total de documents (1 lecture par tranche de 1000)
+    // pour repérer les suppressions. Toujours depuis le serveur : hors ligne, l'appelant garde son cache.
+    friendRecipesSince: async (f, since) => {
+      if (!uid) throw new Error("Connecte-toi d'abord.");
+      const col = collection(db, "users", f, "recipes");
+      try {
+        const [snap, cnt] = await Promise.all([
+          getDocsFromServer(since == null ? col : query(col, where("updated", ">", since))),
+          since == null ? null : getCountFromServer(col),
+        ]);
+        const items = snap.docs.map((d) => ({ k: d.id, r: { ...d.data(), id: (d.data() && d.data().id) || d.id } }));
+        return { items, count: cnt ? cnt.data().count : items.length };
+      } catch (e) {
+        const c = (e && e.code) || "";
+        if (c.includes("permission-denied")) { const err = new Error("denied"); err.code = "denied"; throw err; }
+        throw new Error("Chargement impossible : il faut du réseau.");
+      }
     },
   };
 }

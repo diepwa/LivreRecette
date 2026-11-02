@@ -57,6 +57,7 @@ main{max-width:900px;margin:0 auto;padding:14px 16px}
 .card small{color:var(--muted)}
 .card .star{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.45);color:#ffd36b;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:.95rem}
 .empty{text-align:center;color:var(--muted);padding:56px 20px}
+.more{display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 0 8px}.more .btn{min-height:44px;padding:10px 22px;border-radius:999px}.more small{color:var(--muted);font-size:.85rem}
 .empty .big{font-size:3rem}
 .fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:14px 22px;font:inherit;font-weight:600;font-size:1rem;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;text-decoration:none}
 /* detail */
@@ -862,6 +863,39 @@ function openListMenu(rs,ls,unseen){
 }
 const SWAP_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 9 4-4 4 4M8 15l4 4 4-4"/></svg>`;
 let switchAnim=false;
+/* ---------- grille paginée : 40 vignettes, puis 40 de plus en arrivant en bas (ou au toucher du bouton) ----------
+   La recherche et les filtres portent toujours sur toutes les recettes : on ne pagine que l'affichage. */
+const PAGE=40;
+const pageN=new Map();   // vue -> {key, n} : garde le nombre affiché quand la page se redessine (synchro, retour)
+let pageObs=null;
+function pagedGrid(el,list,view,key,card){
+  const st=pageN.get(view);
+  let n=st&&st.key===key?st.n:PAGE;
+  n=Math.min(Math.max(n,PAGE),list.length);
+  pageN.set(view,{key,n});
+  const foot=()=>n<list.length?`<div class="more"><button type="button" class="btn" id="more">Afficher plus</button><small>${n} sur ${list.length} recettes</small></div>`:"";
+  el.innerHTML=`<div class="grid">${list.slice(0,n).map(card).join("")}</div>${foot()}`;
+  if(pageObs){pageObs.disconnect();pageObs=null}
+  const grid=el.firstElementChild;
+  const more=()=>{
+    if(n>=list.length||!grid.isConnected)return;
+    const m=Math.min(n+PAGE,list.length);
+    grid.insertAdjacentHTML("beforeend",list.slice(n,m).map(card).join(""));
+    n=m;pageN.set(view,{key,n});
+    const f=el.querySelector(".more");if(f)f.remove();
+    if(n<list.length){el.insertAdjacentHTML("beforeend",foot());watch()}
+  };
+  const watch=()=>{
+    const f=el.querySelector(".more");if(!f)return;
+    f.querySelector("button").onclick=more;
+    if("IntersectionObserver" in window){
+      if(pageObs)pageObs.disconnect();
+      pageObs=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))more()},{rootMargin:"0px 0px 800px 0px"});
+      pageObs.observe(f);
+    }
+  };
+  watch();
+}
 function setListsBadge(n){const b=$("#lbadge");b.hidden=!n;b.textContent=n;b.setAttribute("aria-label",n+" recette(s) reçue(s)")}
 async function viewList(){
   chrome({tab:"recettes",root:true,add:{label:"Nouvelle recette",fn:()=>{location.hash="#/new"}}});
@@ -908,7 +942,7 @@ async function viewList(){
       $("#results").innerHTML=`<div class="empty"><div class="big">📑</div><p><b>Cette liste est vide.</b><br>Ouvre une recette et touche « Listes » pour la ranger ici, ou touche + pour en créer une.</p></div>`;return;
     }
     if(!list.length){$("#results").innerHTML=`<div class="empty"><div class="big">🔍</div><p>Aucune recette ne correspond.</p></div>`;return}
-    $("#results").innerHTML=`<div class="grid">${list.map(r=>`
+    pagedGrid($("#results"),list,"home",JSON.stringify([filter.list,filter.cat,filter.tags,nrm(filter.q)]),r=>`
       <div class="card">
         <a class="cl" href="#/r/${r.id}">
           <div class="ph">${r.photos&&r.photos[0]?`<img src="${r.photos[0]}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}${recipeTags(r).length?`<span class="tico" aria-label="Tags : ${esc(recipeTags(r).join(", "))}">${recipeTags(r).slice(0,3).map(t=>showIcon(tagIcon(t,tagIcons))).join("")}</span>`:""}</div>
@@ -916,7 +950,7 @@ async function viewList(){
         </a>
         ${r.fav?'<span class="star">★</span>':""}
         <button type="button" class="cardcart ${shop.sel[r.id]?"on":""}" data-id="${r.id}" aria-label="${shop.sel[r.id]?"Retirer des courses":"Ajouter aux courses"}">${shop.sel[r.id]?"✓":CART_SVG}</button>
-      </div>`).join("")}</div>`;
+      </div>`);
   };
   draw();
   $("#results").onclick=e=>{
@@ -2398,14 +2432,86 @@ const friendHref=u=>"#/amis/"+encodeURIComponent(u);
 const friendListTitle=n=>"Liste "+deNom(n||"ton ami");
 const syncWaiting=()=>syncState.state==="off"&&syncBooting||syncState.state==="syncing";
 const WAIT_HTML=`<div class="empty" id="fwait"><p>Chargement…</p></div>`;
-const friendCache=new Map();   // uid -> {at, rs} : évite de tout relire quand la page se redessine
-async function friendRecipesOf(fu,fresh){
-  const c=friendCache.get(fu);
-  if(c&&!fresh&&Date.now()-c.at<120000)return c.rs;
-  const rs=(await syncApi.friendRecipes(fu)).filter(r=>r&&!r.sharedFrom&&r.title!==undefined).map(fixCat);
-  rs.sort((a,b)=>String(a.title||"").localeCompare(String(b.title||""),"fr",{sensitivity:"base"}));
-  friendCache.set(fu,{at:Date.now(),rs});
-  return rs;
+/* Cache des listes d'amis, sur l'appareil, dans une base IndexedDB à part (« livre-amis ») : la liste d'un ami
+   s'affiche tout de suite au lancement, puis on ne relit chez lui que les recettes modifiées depuis la
+   dernière fois (+ un comptage pour repérer les suppressions). Relecture complète une fois par jour,
+   ou si le comptage ne tombe pas juste. Ce n'est qu'une copie : la vider ne fait rien perdre. */
+const DAY=86400000;
+let fdbp;
+function fdb(){
+  return fdbp||(fdbp=new Promise((res,rej)=>{
+    const r=indexedDB.open("livre-amis",1);
+    r.onupgradeneeded=()=>r.result.createObjectStore("lists",{keyPath:"uid"});
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  }).catch(e=>{fdbp=null;throw e}));
+}
+async function fcDo(mode,fn){
+  try{
+    const d=await fdb();
+    return await new Promise((res,rej)=>{
+      const t=d.transaction("lists",mode),q=fn(t.objectStore("lists"));
+      t.oncomplete=()=>res(q&&q.result);t.onerror=t.onabort=()=>rej(t.error);
+    });
+  }catch(e){return null}   // navigation privée, quota plein… : on fait sans cache
+}
+const fcGet=u=>fcDo("readonly",s=>s.get(u));
+const fcPut=c=>fcDo("readwrite",s=>s.put(c));
+const fcDel=u=>{friendCache.delete(u);return fcDo("readwrite",s=>s.delete(u))};
+const fcClear=()=>{friendCache.clear();return fcDo("readwrite",s=>s.clear())};
+const friendCache=new Map();   // uid -> {uid, full, checked, maxUpd, ids, rs} (copie mémoire de « livre-amis »)
+const friendKeep=r=>r&&!r.sharedFrom&&r.title!==undefined;
+const byTitle=(a,b)=>String(a.title||"").localeCompare(String(b.title||""),"fr",{sensitivity:"base"});
+async function friendCached(fu){
+  let c=friendCache.get(fu);
+  if(!c){c=await fcGet(fu);if(c&&Array.isArray(c.rs)&&Array.isArray(c.ids)){c.rs.forEach(fixCat);friendCache.set(fu,c)}else c=null}
+  return c;
+}
+const friendBusy=new Map();      // une seule relecture à la fois par ami
+function friendRefresh(fu,force){
+  if(!friendBusy.has(fu))friendBusy.set(fu,friendRefresh1(fu,force).finally(()=>friendBusy.delete(fu)));
+  return friendBusy.get(fu);
+}
+// relit chez l'ami ce qui a changé ; renvoie {c, changed}
+async function friendRefresh1(fu,force){
+  const old=await friendCached(fu),now=Date.now();
+  if(old&&!force&&now-old.checked<120000)return {c:old,changed:false};
+  const upd=r=>Number(r.updated)||0;
+  let ids,byId,maxUpd,changed=false,full=false;
+  try{
+    if(old&&now-old.full<DAY){
+      ids=new Set(old.ids);byId=new Map(old.rs.map(r=>[r.id,r]));maxUpd=old.maxUpd||0;
+      // marge d'un jour : les horloges des téléphones de l'ami ne sont pas forcément à l'heure
+      const d=await syncApi.friendRecipesSince(fu,Math.max(0,maxUpd-DAY));
+      for(const {k,r} of d.items){
+        ids.add(k);maxUpd=Math.max(maxUpd,upd(r));
+        const prev=byId.get(r.id);
+        if(friendKeep(r)){if(!prev||upd(prev)!==upd(r)){byId.set(r.id,fixCat(r));changed=true}}
+        else if(prev){byId.delete(r.id);changed=true}
+      }
+      if(d.count!==ids.size)full=true;   // une recette supprimée (ou modifiée sans date) : on relit tout
+    }else full=true;
+    if(full){
+      const d=await syncApi.friendRecipesSince(fu);
+      ids=new Set();byId=new Map();maxUpd=0;
+      for(const {k,r} of d.items){ids.add(k);maxUpd=Math.max(maxUpd,upd(r));if(friendKeep(r))byId.set(r.id,fixCat(r))}
+      changed=!old||old.rs.length!==byId.size||old.rs.some(r=>!byId.has(r.id)||upd(byId.get(r.id))!==upd(r));
+    }
+  }catch(err){
+    if(err&&err.code==="denied")await fcDel(fu);   // plus dans ses amis : on oublie sa liste
+    throw err;
+  }
+  const c={uid:fu,full:full?now:old.full,checked:now,maxUpd,ids:[...ids],rs:changed?[...byId.values()].sort(byTitle):old.rs};
+  if(!signedIn())return {c,changed};   // déconnecté pendant la relecture : rien à garder
+  friendCache.set(fu,c);
+  fcPut(c);
+  return {c,changed};
+}
+// recettes de l'ami : le cache s'il existe, sinon (première fois) on attend le serveur
+async function friendRecipesOf(fu){
+  const c=await friendCached(fu);
+  if(c){friendRefresh(fu).catch(()=>{});return c.rs}
+  return (await friendRefresh(fu)).c.rs;
 }
 let friendQ="",friendQFor="";
 async function viewFriendList(fu){
@@ -2420,36 +2526,49 @@ async function viewFriendList(fu){
       :`<div class="empty"><div class="big">👋</div><p>Connecte-toi pour voir la liste de tes amis.<br><a href="#/profil">Aller au profil</a></p></div>`;
     return;
   }
-  view.innerHTML=`<div class="empty"><p>Chargement…</p></div>`;
-  let rs;
-  try{rs=await friendRecipesOf(fu,!friendCache.has(fu))}
-  catch(err){
-    if(location.hash!==here)return;
+  const showErr=err=>{
     view.innerHTML=`<div class="empty"><div class="big">${err&&err.code==="denied"?"🔒":"📶"}</div><p>${err&&err.code==="denied"
       ?`<b>Sa liste n’est pas encore visible.</b><br>${esc(f.name||"Ton ami")} doit t’avoir aussi dans ses amis : demande-lui d’ouvrir NoutBook.`
       :esc(err&&err.message||"Chargement impossible.")}</p></div>${removeBlock}`;
-    bindRemove(f);return;
-  }
+    bindRemove(f);
+  };
+  let c=await friendCached(fu),rs;
   if(location.hash!==here)return;
-  view.innerHTML=`
+  if(!c){
+    view.innerHTML=`<div class="empty"><p>Chargement…</p></div>`;
+    try{c=(await friendRefresh(fu)).c}
+    catch(err){if(location.hash===here)showErr(err);return}
+    if(location.hash!==here)return;
+  }
+  const render=()=>{
+    rs=c.rs;
+    view.innerHTML=`
     ${rs.length?`<input class="search" id="q" type="search" placeholder="Rechercher dans sa liste…" value="${esc(friendQ)}">`:""}
     <div id="results"></div>${removeBlock}`;
+    draw();
+    if($("#q"))$("#q").oninput=e=>{friendQ=e.target.value;draw()};
+    bindRemove(f);
+  };
   const draw=()=>{
     const q=nrm(friendQ);
     const list=q?rs.filter(r=>nrm([r.title,r.category,r.ingredients,...recipeTags(r)].join(" ")).includes(q)):rs;
     if(!rs.length){$("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>${esc(f.name||"Ton ami")} n’a pas encore de recette.</b></p></div>`;return}
     if(!list.length){$("#results").innerHTML=`<div class="empty"><div class="big">🔍</div><p>Aucune recette ne correspond.</p></div>`;return}
-    $("#results").innerHTML=`<div class="grid">${list.map(r=>`
+    pagedGrid($("#results"),list,"friend",fu+"\n"+q,r=>`
       <div class="card">
         <a class="cl" href="${friendHref(fu)}/r/${encodeURIComponent(r.id)}">
           <div class="ph">${r.photos&&r.photos[0]?`<img src="${esc(r.photos[0])}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}</div>
           <div class="body"><h3>${esc(r.title||"Sans titre")}</h3><small>${esc(r.category||"")}${r.time?" · "+esc(r.time):""}</small></div>
         </a>
-      </div>`).join("")}</div>`;
+      </div>`);
   };
-  draw();
-  if($("#q"))$("#q").oninput=e=>{friendQ=e.target.value;draw()};
-  bindRemove(f);
+  render();
+  // en arrière-plan : on ne relit que ce qui a changé chez l'ami, et on redessine seulement si besoin
+  friendRefresh(fu).then(({c:n,changed})=>{
+    if(!changed||location.hash!==here||!$("#results"))return;
+    const hadAll=!!rs.length;c=n;
+    if(!!n.rs.length===hadAll&&$("#q")){rs=n.rs;draw()}else render();
+  },err=>{if(location.hash===here&&err&&err.code==="denied")showErr(err)});
 }
 function bindRemove(f){
   const b=$("#rmfr");if(!b)return;
@@ -2458,7 +2577,7 @@ function bindRemove(f){
     if(!r||r.i!==0)return;
     const keep=friends.find(x=>x.uid===f.uid)||f;
     syncApi.removeFriend(f.uid);
-    friendCache.delete(f.uid);
+    fcDel(f.uid);
     toastUndo("Retiré de tes amis : "+(f.name||"ami"),()=>syncApi.restoreFriend(keep));
     location.hash="#/profil";
   };
@@ -2470,6 +2589,7 @@ async function viewFriendRecipe(fu,id){
   if(!signedIn()&&syncWaiting()){view.innerHTML=WAIT_HTML;return}
   let r;
   try{r=signedIn()?(await friendRecipesOf(fu)).find(x=>x.id===id):null}catch(e){r=null}
+  if(!r&&signedIn())try{r=(await friendRefresh(fu,true)).c.rs.find(x=>x.id===id)}catch(e){r=null}   // ajoutée depuis le dernier passage
   if(location.hash!==here)return;
   if(!r){location.hash=friendHref(fu);return}
   const ph=r.photos||[];
@@ -2650,6 +2770,7 @@ const PROFILE_RE=/^#\/(profil|ami|ajout)/;
 let wasSignedIn=false;
 function setStatus(st){
   syncState=st;renderSync();
+  if(st.state==="signedout")fcClear();   // déconnexion : on oublie les listes des amis gardées sur l'appareil
   const now=signedIn();
   if(now!==wasSignedIn){wasSignedIn=now;if(PROFILE_RE.test(location.hash))refreshView()}
   else if($("#fwait")&&!syncWaiting())refreshView();   // page d'un ami en attente de la connexion
