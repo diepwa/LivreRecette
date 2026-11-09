@@ -18,7 +18,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v41`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v42`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -113,6 +113,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 - Fiche recette (depuis le 2026-10-28) : sous le titre, une rangée d'icônes rondes sans texte (libellé en `aria-label`) : Panier (bascule), Favori (bascule, étoile pleine), Listes, Partager (copie à un ami, icône avion en papier façon Instagram). En bas de page, trois icônes : Télécharger (PDF), Modifier et Supprimer (rouge, feuille de confirmation iOS).
 - Liste d'un ami (`#/amis/<uid>`, fiche `#/amis/<uid>/r/<id>`) : sa « Ma liste » (ses recettes sans celles qu'il a reçues), en lecture seule, gardée sur l'appareil dans une base IndexedDB à part, `livre-amis` (store `lists`, une entrée par ami ; simple copie, la vider ne fait rien perdre ; vidée à la déconnexion). Affichage immédiat depuis ce cache, puis relecture en arrière-plan (au plus toutes les 2 min) des seules recettes modifiées (`updated` > dernier vu − 1 jour) + un comptage (`getCountFromServer`) : si le compte ne tombe pas juste (suppression), ou une fois par jour, relecture complète (`syncApi.friendRecipesSince`). Pas d'écoute en temps réel pour ménager le quota gratuit. Ouverte depuis Profil → Mes amis ou Listes → « Listes de mes amis ». « Retirer de mes amis » est en bas de cette page.
 - Grilles de recettes (accueil et liste d'un ami, depuis le 2026-11-02) : affichage par pages de 40 (`pagedGrid`, `PAGE`), 40 de plus en arrivant en bas (IntersectionObserver) ou au bouton « Afficher plus ». La recherche, les catégories et les tags portent toujours sur toutes les recettes ; seul l'affichage est paginé.
+- Icône d'un tag (toucher l'émoji d'une pastille dans le formulaire, depuis le 2026-11-09) : banque d'émojis groupés `TAG_BANK` (≤ Emoji 11, ~200), rangée de raccourcis par groupe, « Récents » (icônes déjà choisies + `TAG_PICK`), et champ « Ou tape ton émoji… » (`oneEmoji` : un seul émoji, 8 unités max comme `normalizeTagIcons`). Format de `tagIcons` inchangé.
 - Import en vrac (`#/importer`, depuis le 2026-11-01) : champ « Liste » en haut des deux écrans (texte et relecture), valeur par défaut = liste affichée à l'accueil si c'est une vraie liste, sinon « Ma liste » (aucune liste). Toutes les recettes du lot sont rangées dans la liste choisie ; une phrase sous le champ prévient quand la liste est exclusive.
 - Styles d'impression (`@media print`, plus de bouton Imprimer mais l'impression du navigateur reste propre) : masquer en-tête, barre d'onglets, actions, splash et barre du bas.
 

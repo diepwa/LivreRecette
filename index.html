@@ -239,7 +239,14 @@ section.block p{margin:0 0 12px}
 .tsugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .tsugg button{border:1px dashed var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 12px;min-height:36px;font:inherit;font-size:.85rem;cursor:pointer}
 .tsugg button:active,.chip:active{background:var(--accent-soft)}
-.icongrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0 0 14px}
+.icongrid{max-height:min(46vh,340px);overflow-y:auto;overscroll-behavior:contain;margin:0 -4px 0;padding:0 4px;-webkit-overflow-scrolling:touch}
+.icongrid h4{margin:0;padding:8px 0 6px;color:var(--muted);font-size:.8125rem;font-weight:600;text-transform:uppercase;letter-spacing:.02em}
+.igrp{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0 0 6px}
+.iconnav{display:flex;gap:2px;overflow-x:auto;margin:0 0 4px;padding-bottom:4px;scrollbar-width:none}
+.iconnav::-webkit-scrollbar{display:none}
+.iconnav button{flex:none;width:36px;height:36px;border:0;border-radius:10px;background:var(--fill);font-size:1.15rem;cursor:pointer;padding:0}
+.iconnav button:active{background:var(--accent-soft)}
+#iconin{background:var(--fill)}
 .icongrid button{aspect-ratio:1/1;border:1px solid var(--line);background:var(--card);border-radius:12px;font-size:1.4rem;cursor:pointer;padding:0}
 .icongrid button[aria-pressed=true]{border:2px solid var(--accent);background:var(--accent-soft)}
 .tab:focus-visible,ul.opts button:focus-visible,.btn:focus-visible,.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -664,7 +671,13 @@ setTimeout(done,2200)})();
 <dialog id="icondlg">
   <h3 id="icont"></h3>
   <p>L’icône vaut pour ce tag sur toutes tes recettes.</p>
+  <div class="iconnav" id="iconnav" aria-label="Groupes d’émojis"></div>
   <div class="icongrid" id="icongrid"></div>
+  <form class="addrow" id="iconf" autocomplete="off" style="margin:12px 0 0">
+    <input id="iconin" type="text" maxlength="16" placeholder="Ou tape ton émoji…" enterkeyhint="done" aria-label="Ton émoji">
+    <button class="btn" type="submit">OK</button>
+  </form>
+  <p class="fhint" id="iconhint" aria-live="polite"></p>
   <button class="btn" type="button" id="iconclose" style="width:100%">Fermer</button>
 </dialog>
 
@@ -1459,6 +1472,27 @@ const TAG_AUTO=[["epice|epicee|piquant|spicy|pimente|harissa|curry","🌶️"],[
   ["vin|alcool|cocktail","🍷"],["asie|asiatique|chinois|japonais|thai","🥢"],["monde|exotique|voyage","🌍"],["favori|prefere|top|coup de coeur","❤️"],["robot|thermomix|cookeo","🤖"]]
   .map(([w,e])=>[new RegExp("(?:^| )(?:"+w+")(?= |$)"),e]);
 const TAG_PICK=["🏷️","🌶️","🌱","🥦","⚡","🌾","💶","☀️","❄️","🧒","🎉","🥗","🔥","🥛","🐟","🥩","🍗","🍫","🧀","🍝","🍷","🥢","🌍","❤️","⭐","🤖"];
+// banque d'émojis du choix d'icône d'un tag, par groupe (uniquement ≤ Emoji 11 : visibles aussi sur l'ordinateur)
+const TAG_BANK=[
+  ["Fruits","🍎 🍏 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🍈 🍒 🍑 🥭 🍍 🥥 🥝 🍅"],
+  ["Légumes","🥑 🍆 🥔 🥕 🌽 🌶️ 🥒 🥬 🥦 🍄 🥜 🌰 🌿 🍃 🌱 🌾"],
+  ["Viandes et poissons","🥩 🍗 🍖 🥓 🌭 🍔 🥚 🐄 🐖 🐑 🐓 🦃 🦆 🐇 🐟 🐠 🦐 🦑 🦀 🦞 🐙 🐚"],
+  ["Plats","🍳 🥘 🍲 🥣 🥗 🍝 🍕 🍟 🥪 🌮 🌯 🥙 🥫 🧀 🍞 🥐 🥖 🥨 🥯 🥞 🍿 🧂"],
+  ["Cuisine du monde","🍜 🍛 🍚 🍙 🍘 🍱 🍣 🍤 🍥 🥟 🥠 🥡 🍢 🍡 🥢 🌍 🗺️ 🇫🇷 🇮🇹 🇪🇸 🇯🇵 🇨🇳 🇲🇽 🇮🇳 🇲🇦 🇬🇷 🇺🇸 🇬🇧"],
+  ["Desserts","🍰 🎂 🧁 🥧 🍮 🍩 🍪 🍫 🍬 🍭 🍯 🍦 🍧 🍨"],
+  ["Boissons","☕ 🍵 🥛 🍼 🥤 🍶 🍾 🍷 🍸 🍹 🍺 🍻 🥂 🥃"],
+  ["Cuisson et ustensiles","🔥 ♨️ ❄️ 🍽️ 🍴 🥄 🔪 ⏲️ ⏱️ ⏰ 🤖 🏺"],
+  ["Saisons et fêtes","☀️ 🌧️ ⛄ 🌸 🍂 🍁 🏖️ ⛺ 🎉 🥳 🎄 🎃 🎁 💝 🎈 🕯️"],
+  ["Pour qui, comment","❤️ 💚 💛 💜 🖤 ⭐ 🌟 ✨ 👍 😋 🤤 😍 💪 🧒 👶 👵 👨‍🍳 👩‍🍳 🏠 🎒 💶 ⚡ 🐢 🥇 🍀 🌙 🏷️ 📌 🔖 ✅"]
+].map(([n,l])=>[n,l.split(" ")]);
+// un seul émoji tapé au clavier (le premier caractère visible), ou "" si ce n'en est pas un
+function oneEmoji(s){
+  s=String(s||"").trim();if(!s)return"";
+  let g;
+  try{g=[...new Intl.Segmenter("fr",{granularity:"grapheme"}).segment(s)][0].segment}catch(e){g=Array.from(s)[0]}
+  if(!/\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(g)||g.length>8)return"";
+  return g;
+}
 const TAG_START=["Épicé","Végétarien","Rapide","Sans gluten","Pas cher","Été"];
 function autoTagIcon(name){const k=tagKey(name);for(const [re,e] of TAG_AUTO)if(re.test(k))return e;return"🏷️"}
 const tagIcon=(name,icons)=>{const o=icons&&icons[tagKey(name)];return o&&o.icon||autoTagIcon(name)};
@@ -2246,9 +2280,27 @@ const tagIconsFor=tags=>Object.fromEntries(recipeTags({tags}).map(t=>[tagKey(t),
 function openIconPicker(name,after){
   const d=$("#icondlg"),cur=tagIcon(name,tagIcons);
   $("#icont").textContent=`Icône de « ${name} »`;
-  $("#icongrid").innerHTML=TAG_PICK.map(e=>`<button type="button" data-e="${e}" aria-pressed="${e===cur}">${showIcon(e)}</button>`).join("");
-  $("#icongrid").onclick=ev=>{const b=ev.target.closest("button[data-e]");if(!b)return;setTagIcon(name,b.dataset.e);d.close();if(after)after()};
+  // déjà utilisés : icônes choisies pour tes autres tags, puis les suggestions de départ
+  const mine=[...new Set([cur,...Object.values(tagIcons).sort((a,b)=>b.updated-a.updated).map(o=>o.icon),...TAG_PICK])].slice(0,12);
+  const btn=e=>`<button type="button" data-e="${esc(e)}" aria-pressed="${e===cur}">${e}</button>`;
+  const groups=[["Récents",mine.map(showIcon)],...TAG_BANK];
+  const grid=$("#icongrid"),nav=$("#iconnav");
+  grid.innerHTML=groups.map(([n,l],i)=>`<h4 id="ig${i}">${esc(n)}</h4><div class="igrp">${l.map(btn).join("")}</div>`).join("");
+  nav.innerHTML=groups.map(([n,l],i)=>`<button type="button" data-g="${i}" aria-label="${esc(n)}">${l[0]}</button>`).join("");
+  nav.onclick=ev=>{const b=ev.target.closest("button[data-g]");if(!b)return;const h=$("#ig"+b.dataset.g);grid.scrollTo({top:h.offsetTop-grid.offsetTop,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})};
+  const pick=e=>{setTagIcon(name,e);d.close();if(after)after()};
+  grid.onclick=ev=>{const b=ev.target.closest("button[data-e]");if(b)pick(b.dataset.e)};
+  const inp=$("#iconin"),hint=$("#iconhint");
+  inp.value="";hint.textContent="";hint.classList.remove("err");
+  inp.oninput=()=>{hint.textContent="";hint.classList.remove("err")};
+  $("#iconf").onsubmit=ev=>{
+    ev.preventDefault();
+    const e=oneEmoji(inp.value);
+    if(!e){hint.textContent="Tape un seul émoji (touche 🌐 ou 😀 du clavier).";hint.classList.add("err");return}
+    pick(e);
+  };
   $("#iconclose").onclick=()=>d.close();
+  grid.scrollTop=0;
   d.showModal();
 }
 
@@ -2821,8 +2873,8 @@ const CLICK_ID={
   listclose:"fermer listes",pickclose:"fermer choix de recette",iconclose:"fermer icônes"
 };
 const CLICK_FORM={f:"enregistrer la recette",sf:"ajouter un article",impr:"créer les recettes importées",impf:"analyser le texte (import)",
-  authf:"se connecter",namef:"valider le pseudo",newlistf:"créer la liste"};
-const CLICK_BOX={sendopts:"choisir un ami (partage)",listopts:"choisir une liste (fiche)",icongrid:"choisir une icône",
+  authf:"se connecter",namef:"valider le pseudo",newlistf:"créer la liste",iconf:"émoji tapé (icône de tag)"};
+const CLICK_BOX={sendopts:"choisir un ami (partage)",listopts:"choisir une liste (fiche)",icongrid:"choisir une icône",iconnav:"groupe d’émojis (icône)",
   picklist:"choisir une recette (planning)",tsugg:"suggestion de tag",chips:"filtre catégorie",
   tchips:"filtre tag",tpills:"retirer un tag (formulaire)",lmine:"choisir une liste"};
 const CLICK_CLS=[["cl","carte recette"],["cardcart","panier (carte)"],["tile","tuile du panier"],["pslot","créneau repas"],
