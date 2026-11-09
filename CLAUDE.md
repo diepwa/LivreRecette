@@ -18,7 +18,7 @@ NoutBook (anciennement « Mon livre de recettes ») : PWA de recettes et de list
 
 ## Mise à jour de la PWA et du cache
 
-- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v40`), sinon les téléphones gardent l'ancienne version.
+- **À chaque modification d'un fichier servi, incrémenter `CACHE` dans `sw.js`** (actuellement `livre-recettes-v41`), sinon les téléphones gardent l'ancienne version.
 - Tout nouveau fichier local doit être ajouté à `ASSETS` dans `sw.js`.
 - Ne jamais mettre en cache les appels Firestore/Auth. Seuls le SDK versionné (`www.gstatic.com/firebasejs/`) et Google Fonts sont mis en cache hors origine.
 - Ne pas changer `start_url`, `scope`, l'emplacement des fichiers ni le nom du dépôt : les données locales sont liées à l'adresse.
@@ -53,7 +53,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 
 - Papier crème et encre brune, comme un carnet de cuisine, mis en forme **à la manière d'iOS** (depuis le 2026-10-27, demande de Charles) : barres translucides floutées, police système, listes groupées façon Réglages, contrôle segmenté, alertes et feuilles d'action iOS (`iosAlert()`), retour au toucher immédiat. Les photos des recettes apportent la couleur ; l'interface reste sobre autour.
 - Formes rondes et douces : polices arrondies, coins arrondis partout, pastilles en `999px`.
-- Deux exceptions colorées assumées, propres au panier façon Bring : tuiles rouges « à acheter » et tuiles vert-bleu « catalogue ». Ne pas les ramener dans la palette brune.
+- Deux exceptions colorées assumées, propres au panier façon Bring : tuiles rouges « à acheter » et tuiles vert-bleu « catalogue » (ces dernières ne sont plus affichées depuis le 2026-11-09). Ne pas les ramener dans la palette brune.
 
 ### Palette
 
@@ -118,7 +118,7 @@ Chaleureuse, familiale, gourmande, un peu ludique (logo chat, lettres animées a
 
 ## Fonctions à préserver
 
-Catégories, recherche, favoris, photos multiples (couverture = 1re), panier rapide 🛒 (accueil et page recette), page panier façon Bring (tuiles rouges à acheter, vertes « Souvent achetés » et « Dans vos recettes », barre « Il me faut… », appui long, annuler ; plus de texte d'aide ni de boutons « Copier la liste » et « Vider » depuis le 2026-10-28, à la demande de Charles), récap des recettes du panier (affiché seulement s'il y en a au moins une), regroupement des ingrédients et quantités, produits de base exclus par défaut, PDF (bouton « Télécharger »), envoi d'une copie à un ami (bouton « Partager »), thème clair/sombre, synchro temps réel et hors ligne.
+Catégories, recherche, favoris, photos multiples (couverture = 1re), panier rapide 🛒 (accueil et page recette), page panier façon Bring (tuiles rouges à acheter, barre « Il me faut… » qui ajoute l'article tapé, appui long, annuler ; plus de texte d'aide ni de boutons « Copier la liste » et « Vider » depuis le 2026-10-28, et plus aucune suggestion d'article (ni résultats pendant la saisie, ni « Souvent achetés », ni « Dans vos recettes ») depuis le 2026-11-09 car elles faisaient ramer le clavier, à la demande de Charles ; `buildCatalog` et `shop.freq` restent pour retrouver le nom d'un produit connu), récap des recettes du panier (affiché seulement s'il y en a au moins une), regroupement des ingrédients et quantités, produits de base exclus par défaut, PDF (bouton « Télécharger »), envoi d'une copie à un ami (bouton « Partager »), thème clair/sombre, synchro temps réel et hors ligne.
 
 ## Tester avant de livrer
 
