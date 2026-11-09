@@ -79,6 +79,7 @@ ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
 ol.steps li{counter-increment:s;display:flex;gap:12px;padding:8px 0}
 ol.steps li::before{content:counter(s);flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;margin-top:1px}
 .notes{white-space:pre-wrap}
+a.rlink{color:var(--accent);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere;font-weight:600}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 [hidden]{display:none !important}
 .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;border-radius:12px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
@@ -986,11 +987,31 @@ const RI={
   edit:`<svg viewBox="0 0 24 24"><path d="M4.5 19.5h4l10-10a2.8 2.8 0 0 0-4-4l-10 10z"/><path d="m13 7 4 4"/></svg>`,
   del:`<svg viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5V4.5h5v2M6.5 6.5l1 13h9l1-13M10 10.5v6M14 10.5v6"/></svg>`
 };
+// liens cliquables : le texte est échappé, seules les adresses http(s) ou www. deviennent des <a>
+const URL_RE=/\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+const linkify=s=>{
+  s=String(s??"");let out="",i=0;
+  for(const m of s.matchAll(URL_RE)){
+    let u=m[0];
+    // ponctuation finale qui n'appartient pas au lien (fin de phrase, parenthèse fermante orpheline)
+    while(/[.,;:!?)\]}»]$/.test(u)){
+      const c=u.slice(-1);
+      if(c===")"&&(u.match(/\(/g)||[]).length>=(u.match(/\)/g)||[]).length)break;
+      u=u.slice(0,-1);
+    }
+    const href=/^www\./i.test(u)?"https://"+u:u;
+    let label=u.replace(/^https?:\/\//i,"").replace(/^www\./i,"");
+    if(label.length>42)label=label.slice(0,40)+"…";
+    out+=esc(s.slice(i,m.index))+`<a class="rlink" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`;
+    i=m.index+u.length;
+  }
+  return out+esc(s.slice(i));
+};
 // ingrédients, préparation et notes (fiche à moi ou fiche d'un ami)
 const recipeSections=r=>`
-    ${lines(r.ingredients).length?`<section class="block"><h3>Ingrédients</h3><ul class="ing">${lines(r.ingredients).map(l=>`<li>${esc(l)}</li>`).join("")}</ul></section>`:""}
-    ${lines(r.steps).length?`<section class="block"><h3>Préparation</h3><ol class="steps">${lines(r.steps).map(l=>`<li><span>${esc(l)}</span></li>`).join("")}</ol></section>`:""}
-    ${r.notes?`<section class="block"><h3>Notes</h3><div class="notes">${esc(r.notes)}</div></section>`:""}`;
+    ${lines(r.ingredients).length?`<section class="block"><h3>Ingrédients</h3><ul class="ing">${lines(r.ingredients).map(l=>`<li><span>${linkify(l)}</span></li>`).join("")}</ul></section>`:""}
+    ${lines(r.steps).length?`<section class="block"><h3>Préparation</h3><ol class="steps">${lines(r.steps).map(l=>`<li><span>${linkify(l)}</span></li>`).join("")}</ol></section>`:""}
+    ${r.notes?`<section class="block"><h3>Notes</h3><div class="notes">${linkify(r.notes)}</div></section>`:""}`;
 const ricon=(id,label,svg,on=false,onLabel="")=>`<button type="button" class="ricon ${on?"on":""}" id="${id}" aria-label="${esc(on&&onLabel?onLabel:label)}" ${id==="cart"||id==="fav"?`aria-pressed="${on}"`:""} title="${esc(label)}">${svg}</button>`;
 async function viewDetail(id){
   chrome({tab:"recettes"});
@@ -1011,7 +1032,7 @@ async function viewDetail(id){
     <div class="rbar" role="group" aria-label="Actions">${ricon("cart","Ajouter au panier",RI.cart,!!shop.sel[r.id],shop.sel[r.id]?"Retirer du panier":"")}${ricon("fav","Favori",RI.fav,!!r.fav,r.fav?"Retirer des favoris":"")}${ricon("lists","Ranger dans une liste",RI.lists)}${ricon("send","Partager avec un ami",RI.send)}</div>
     ${recipeSections(r)}
     <div class="rbar rfoot actions">${ricon("pdf","Télécharger en PDF",RI.pdf)}<a class="ricon" href="#/edit/${r.id}" aria-label="Modifier la recette">${RI.edit}</a><button type="button" class="ricon dg" id="del" aria-label="Supprimer la recette">${RI.del}</button></div>`;
-  view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=()=>li.classList.toggle("done"));
+  view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=e=>{if(!e.target.closest("a"))li.classList.toggle("done")});
   const flip=(b,on,label,offLabel)=>{b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);b.setAttribute("aria-label",on?label:offLabel)};
   $("#fav").onclick=async()=>{r.fav=!r.fav;touch(r);await putRecipe(r);flip($("#fav"),r.fav,"Retirer des favoris","Favori");toast(r.fav?"Ajoutée aux favoris ★":"Retirée des favoris")};
   $("#pdf").onclick=()=>shareRecipePdf(r);
@@ -2620,7 +2641,7 @@ async function viewFriendRecipe(fu,id){
     </div>
     ${recipeSections(r)}
     <div class="rbar rfoot actions">${ricon("pdf","Télécharger en PDF",RI.pdf)}</div>`;
-  view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=()=>li.classList.toggle("done"));
+  view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=e=>{if(!e.target.closest("a"))li.classList.toggle("done")});
   $("#pdf").onclick=()=>shareRecipePdf(r);
 }
 // avatar rond : initiale du pseudo, recouverte par la photo s'il y en a une
