@@ -177,7 +177,6 @@ dialog{max-height:88vh;max-height:88dvh;overflow:auto;overscroll-behavior:contai
 .tile:active{transform:scale(.96)}
 .tile.buy{background:var(--buy)}
 .tile.cat{background:var(--cat)}
-.tile.add{background:transparent;border:2px dashed var(--cat);color:var(--ink);box-shadow:none}
 .tile .te{font-size:1.5rem;line-height:1}
 .tile .tn{font-weight:600;font-size:.75rem;line-height:1.15;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;max-width:100%}
 .tile .tq{font-size:.7rem;opacity:.95;font-weight:600}
@@ -187,9 +186,6 @@ dialog{max-height:88vh;max-height:88dvh;overflow:auto;overscroll-behavior:contai
 .searchbar form{max-width:900px;margin:0 auto;display:flex;gap:10px;align-items:center}
 .sbox{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:0 14px;margin:0}
 .sbox input{flex:1;min-width:0;border:0;background:none;color:var(--ink);font:inherit;font-size:1rem;padding:12px 0;outline:none}
-.sugg{position:absolute;left:0;right:0;bottom:100%;max-height:min(45vh,calc(var(--vvh,100vh) - 170px));overflow-y:auto;overscroll-behavior:contain;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.12);padding:10px 14px 12px}
-.sugg>*{max-width:900px;margin-left:auto;margin-right:auto}
-.sugg h3{font-family:var(--serif);font-size:.95rem;margin:0 0 8px}
 .sbtn{width:46px;height:46px;border-radius:50%;border:0;background:var(--cat);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;flex:none;padding:0}
 .btn.sm{padding:7px 12px;font-size:.85rem;border-radius:10px}
 .recap{margin:16px 0 4px}
@@ -315,7 +311,6 @@ dialog::backdrop{background:rgba(0,0,0,0);transition:background-color 150ms var(
 .toast.swap span{filter:blur(2px);opacity:.6}
 /* appui long sur une tuile : un voile se remplit pendant les 520 ms, puis le menu s'ouvre */
 .tile::before{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.28);clip-path:inset(0 100% 0 0);transition:clip-path 150ms var(--ease-out);pointer-events:none}
-.tile.add::before{background:color-mix(in srgb,var(--cat) 25%,transparent)}
 .tile.lp::before{clip-path:inset(0 0 0 0);transition:clip-path 400ms linear 120ms}
 @media (prefers-reduced-motion:reduce){
   /* moins de mouvement, pas zéro : on garde les fondus, on retire les déplacements et les changements de taille */
@@ -527,7 +522,6 @@ form select{-webkit-appearance:none;appearance:none;background:var(--card) url("
 body.kb .searchbar{padding-bottom:10px}
 body.courses .tabbar{border-top-color:transparent}
 .sbox input{padding:9px 0}
-.sugg{border-top:.5px solid var(--hair);background:var(--card)}
 .tile{border-radius:14px;box-shadow:none}
 .tsec h3,.recap h3{font-weight:700;letter-spacing:-.02em}
 .recap ul.pick li{border-radius:10px}
@@ -1877,18 +1871,17 @@ async function viewCourses(){
   const rs=(await allRecipes()).sort((a,b)=>norm(a.title).localeCompare(norm(b.title),"fr"));
   updateBadge();
   view.innerHTML=`<div id="cw"></div>
-    <div class="searchbar" id="sbar"><div class="sugg" id="sugg" hidden></div><form id="sf" autocomplete="off">
+    <div class="searchbar" id="sbar"><form id="sf" autocomplete="off">
       <label class="sbox"><span aria-hidden="true">🔍</span><input id="sq" type="search" placeholder="Il me faut…" enterkeyhint="done" maxlength="60"></label>
       <button class="sbtn" type="submit" aria-label="Ajouter à la liste">＋</button>
     </form></div>`;
-  const cw=$("#cw"),sq=$("#sq"),sugg=$("#sugg"),sbar=$("#sbar");
-  // la barre de recherche et les suggestions suivent le clavier (iPhone)
+  const cw=$("#cw"),sq=$("#sq"),sbar=$("#sbar");
+  // la barre « Il me faut… » suit le clavier (iPhone). Plus aucune suggestion d'article (2026-11-09) : elles faisaient ramer la saisie
   const vv=window.visualViewport;
   const followKb=()=>{
     if(!document.body.contains(sbar)){if(vv){vv.removeEventListener("resize",followKb);vv.removeEventListener("scroll",followKb)}return}
     const kb=vv?Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop)):0;
     sbar.style.bottom=kb>40?kb+"px":"";   // sans clavier : posée sur la barre d'onglets
-    sbar.style.setProperty("--vvh",(vv?vv.height:window.innerHeight)+"px");
   };
   if(vv){vv.addEventListener("resize",followKb);vv.addEventListener("scroll",followKb);followKb()}
   const RC=["#ff7a8a","#ffb04a","#4cc38a","#4aa8ff","#b07cff","#ff6fb5","#2cc5c5","#d4b000"];
@@ -1910,25 +1903,6 @@ async function viewCourses(){
     </button>`;
   const restore=snap=>{shop=normalizeShop(JSON.parse(snap));saveShop();updateBadge();draw()};
 
-  const drawCat=()=>{
-    const box=$("#cat");if(!box)return;
-    const q=sq.value.trim();
-    const c=buildCatalog(rs,shop,cur.keys,q);
-    if(q){
-      const addTile=c.exists?"":`<button type="button" class="tile add" data-add="${esc(q)}"><span class="te">＋</span><span class="tn">Ajouter « ${esc(q)} »</span></button>`;
-      sugg.innerHTML=`<h3>Résultats</h3>
-        <div class="tgrid">${addTile}${c.results.map(e=>tile("cat",e)).join("")}</div>
-        ${!c.results.length&&c.exists?'<p class="hint">Ce produit est déjà dans ta liste.</p>':""}`;
-      sugg.hidden=false;box.innerHTML="";
-      return;
-    }
-    sugg.hidden=true;sugg.innerHTML="";
-    box.innerHTML=`<section class="tsec"><h3>Souvent achetés</h3>${
-      c.top.length?`<div class="tgrid">${c.top.map(e=>tile("cat",e)).join("")}</div>`
-      :`<p class="hint box">Les produits que tu achètes le plus remonteront ici, en tête. Touche une tuile rouge quand tu l’as mise dans ton chariot : elle compte comme un achat.</p>`}</section>`+
-      (c.rest.length?`<section class="tsec"><h3>Dans vos recettes</h3><div class="tgrid">${c.rest.map(e=>tile("cat",e)).join("")}</div></section>`:"");
-  };
-
   const draw=()=>{
     const y=window.scrollY;
     compute();
@@ -1937,7 +1911,7 @@ async function viewCourses(){
       <section class="tsec">
         <h3>À acheter <span class="cnt">${items.length}</span></h3>
         ${items.length?`<div class="tgrid">${items.map(i=>tile("buy",i)).join("")}</div>`
-          :`<p class="hint box">${selected.length?"Tout est dans le chariot 🎉":"Ta liste est vide. Touche un produit ci-dessous, cherche-le avec « Il me faut… », ou ajoute une recette depuis l’accueil."}</p>`}
+          :`<p class="hint box">${selected.length?"Tout est dans le chariot 🎉":"Ta liste est vide. Ajoute un produit avec « Il me faut… », ou une recette depuis l’accueil."}</p>`}
       </section>
       ${cur.meals.length?`<section class="recap">
         <h3>Repas planifiés <small class="muted">· ${cur.meals.length}</small></h3>
@@ -1959,8 +1933,7 @@ async function viewCourses(){
             <button type="button" class="x" data-rm aria-label="Retirer la recette">✕</button>
           </li>`}).join("")}</ul>
       </section>`:""}
-      <div id="cat"></div>`;
-    drawCat();
+`;
     window.scrollTo(0,y);
 
     cw.querySelectorAll("ul.pick li[data-slot]").forEach(li=>{
@@ -1976,9 +1949,7 @@ async function viewCourses(){
     });
   };
 
-  const bind=(ev,fn)=>{cw.addEventListener(ev,fn);sugg.addEventListener(ev,fn)};
-  // garde le clavier ouvert quand on touche une suggestion
-  sugg.addEventListener("mousedown",e=>e.preventDefault());
+  const bind=(ev,fn)=>cw.addEventListener(ev,fn);
   // --- appui long sur une tuile : options ---
   let lpTimer=null,lpFired=false;
   const dlg=$("#tiledlg");
@@ -2010,27 +1981,19 @@ async function viewCourses(){
   bind("click",e=>{
     const t=e.target.closest(".tile");if(!t)return;
     if(lpFired){lpFired=false;return}
+    if(!t.classList.contains("buy"))return;
     const snap=JSON.stringify(shop);
-    if(t.classList.contains("buy")){
-      const it=cur.items.find(i=>i.key===t.dataset.k);if(!it)return;
-      buyItem(shop,it,true);saveShop();draw();
-      toastUndo("Acheté : "+it.name,()=>restore(snap));
-      return;
-    }
-    const name=t.dataset.add||t.dataset.n;
-    addToList(shop,name,cur.derived);saveShop();
-    if(t.dataset.add)sq.value="";
-    draw();
-    toastUndo("Ajouté : "+name,()=>restore(snap));
+    const it=cur.items.find(i=>i.key===t.dataset.k);if(!it)return;
+    buyItem(shop,it,true);saveShop();draw();
+    toastUndo("Acheté : "+it.name,()=>restore(snap));
   });
 
   // --- barre « Il me faut… » ---
-  sq.addEventListener("input",drawCat);
   $("#sf").onsubmit=e=>{
     e.preventDefault();
     const t=sq.value.trim();if(!t)return;
     const key=nameKey(t);
-    if(cur.keys.has(key)){toast("Déjà dans la liste");sq.value="";drawCat();return}
+    if(cur.keys.has(key)){toast("Déjà dans la liste");sq.value="";return}
     const hit=buildCatalog(rs,shop,new Set(),t).results.find(x=>x.key===key);
     const snap=JSON.stringify(shop);
     const name=hit?hit.name:capFirst(t);
@@ -2860,7 +2823,7 @@ const CLICK_ID={
 const CLICK_FORM={f:"enregistrer la recette",sf:"ajouter un article",impr:"créer les recettes importées",impf:"analyser le texte (import)",
   authf:"se connecter",namef:"valider le pseudo",newlistf:"créer la liste"};
 const CLICK_BOX={sendopts:"choisir un ami (partage)",listopts:"choisir une liste (fiche)",icongrid:"choisir une icône",
-  picklist:"choisir une recette (planning)",sugg:"suggestion d'article",tsugg:"suggestion de tag",chips:"filtre catégorie",
+  picklist:"choisir une recette (planning)",tsugg:"suggestion de tag",chips:"filtre catégorie",
   tchips:"filtre tag",tpills:"retirer un tag (formulaire)",lmine:"choisir une liste"};
 const CLICK_CLS=[["cl","carte recette"],["cardcart","panier (carte)"],["tile","tuile du panier"],["pslot","créneau repas"],
   ["pt","recette du planning"],["pcart","voir le panier (planning)"],["lrow","choisir une liste"],["hsw","menu des listes (titre)"],["lmi","choisir une liste (menu du titre)"],["lmore","options de la liste"],
@@ -2875,7 +2838,6 @@ function clickName(el){
   if(el.matches("[data-unplan]"))return "retirer un repas";
   if(el.matches("[data-rm]"))return "retirer du panier (récap)";
   if(el.matches("[data-d]"))return el.dataset.d==="1"?"personnes +":"personnes −";
-  if(el.matches(".tile.add"))return "ajouter l'article tapé";
   if(el.matches("a.tag[data-l]"))return "liste de la fiche";
   for(const [c,n] of CLICK_CLS)if(el.classList.contains(c))return n;
   const box=el.parentElement&&el.parentElement.closest("[id]");
