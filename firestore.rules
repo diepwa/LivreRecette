@@ -14,6 +14,13 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/users/$(uid)/friends/$(request.auth.uid));
     }
 
+    // Listes : un ami peut LIRE ce seul document (noms des listes, exclusive, privée), pour que l'app ne lui montre
+    // jamais mes listes privées ni leurs recettes, et ouvre ma liste principale sans les recettes de mes listes exclusives.
+    match /users/{uid}/meta/lists {
+      allow get: if request.auth != null
+        && exists(/databases/$(database)/documents/users/$(uid)/friends/$(request.auth.uid));
+    }
+
     // Boîte aux lettres : autre exception, un autre compte peut y DÉPOSER un message (jamais lire ni modifier).
     // - une recette, seulement si le destinataire l'a dans ses amis ;
     // - une demande d'ami, avec le pseudo du destinataire (annuaire « pseudos ») ou un ancien code d'invitation valide.
