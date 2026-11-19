@@ -1428,13 +1428,14 @@ function buildCatalog(recipes,shop,onList,query){
 // lists = {id:{name,created,updated,deleted,exclusive}} ; une recette porte r.lists = [id…] (champ facultatif).
 // exclusive (facultatif, false par défaut) : une recette rangée dans une liste exclusive n'apparaît que dans cette liste
 // (ni dans Ma liste, Partagées, Toutes, ni dans les autres listes). Simple filtre d'affichage : la recette n'est pas modifiée.
+// private (facultatif, false par défaut) : liste privée, jamais montrée à mes amis (ni la liste, ni ses recettes dans ma liste vue par un ami).
 // Une liste supprimée garde une trace (deleted:true) pour que la fusion entre téléphones ne la fasse pas revenir.
 function normalizeLists(o){
   const out={};
   if(!o||typeof o!=="object"||Array.isArray(o))return out;
   for(const [id,v] of Object.entries(o)){
     if(!v||typeof v!=="object"||typeof v.name!=="string")continue;
-    out[id]={name:v.name,created:Number(v.created)||0,updated:Number(v.updated)||0,deleted:!!v.deleted,exclusive:v.exclusive===true};
+    out[id]={name:v.name,created:Number(v.created)||0,updated:Number(v.updated)||0,deleted:!!v.deleted,exclusive:v.exclusive===true,private:v.private===true};
   }
   return out;
 }
@@ -1444,13 +1445,15 @@ function mergeLists(a,b){
   for(const [id,v] of Object.entries(normalizeLists(b)))if(!out[id]||v.updated>out[id].updated)out[id]=v;
   return out;
 }
-const listsSig=o=>JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k].name,o[k].created,o[k].updated,o[k].deleted,o[k].exclusive]));
+const listsSig=o=>JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k].name,o[k].created,o[k].updated,o[k].deleted,o[k].exclusive,o[k].private]));
 const activeLists=ls=>Object.entries(ls||{}).filter(([,v])=>!v.deleted)
-  .map(([id,v])=>({id,name:v.name,created:v.created,exclusive:!!v.exclusive}))
+  .map(([id,v])=>({id,name:v.name,created:v.created,exclusive:!!v.exclusive,private:!!v.private}))
   .sort((a,b)=>a.created-b.created||a.name.localeCompare(b.name,"fr",{sensitivity:"base"}));
 const recipeLists=r=>Array.isArray(r&&r.lists)?r.lists.filter(x=>typeof x==="string"):[];
 // listes exclusives (actives) dans lesquelles la recette est rangée
 const exclusiveOf=(r,ls)=>recipeLists(r).filter(id=>ls&&ls[id]&&!ls[id].deleted&&ls[id].exclusive);
+// rangée dans au moins une liste privée (active) : cachée à mes amis
+const privateOf=(r,ls)=>recipeLists(r).some(id=>ls&&ls[id]&&!ls[id].deleted&&ls[id].private);
 function inList(r,list,ls){
   // rangée dans une liste exclusive : visible seulement dans celle(s)-ci (dans deux listes exclusives = dans les deux)
   const ex=exclusiveOf(r,ls);
@@ -2090,8 +2093,10 @@ function askName(title,value,ok){
 }
 async function openListSettings(id){
   const l=lists[id];if(!l)return;
-  const msg=l.exclusive?"Liste exclusive : ses recettes n’apparaissent que dans cette liste.":"Supprimer la liste ne supprime pas ses recettes.";
-  const r=await iosAlert({sheet:true,title:l.name,msg,actions:[{label:"Renommer la liste"},{label:l.exclusive?"Ne plus rendre exclusive":"Rendre exclusive"},{label:"Partager la liste"},{label:"Supprimer la liste",danger:true},{label:"Annuler",cancel:true}]});
+  const msg=[l.exclusive?"Liste exclusive : ses recettes n’apparaissent que dans cette liste.":"",
+    l.private?"Liste privée : tes amis ne voient ni cette liste ni ses recettes.":"",
+    !l.exclusive&&!l.private?"Supprimer la liste ne supprime pas ses recettes.":""].filter(Boolean).join(" ");
+  const r=await iosAlert({sheet:true,title:l.name,msg,actions:[{label:"Renommer la liste"},{label:l.exclusive?"Ne plus rendre exclusive":"Rendre exclusive"},{label:l.private?"Ne plus rendre privée":"Rendre privée"},{label:"Partager la liste"},{label:"Supprimer la liste",danger:true},{label:"Annuler",cancel:true}]});
   if(!r)return;
   if(r.i===0)askName("Renommer la liste",l.name,n=>{l.name=n.slice(0,40);l.updated=Date.now();saveLists();refreshView()});
   else if(r.i===1){
@@ -2100,11 +2105,16 @@ async function openListSettings(id){
     toastUndo((was?"Plus exclusive : ":"Exclusive : ")+l.name,()=>set(was));
   }
   else if(r.i===2){
+    const set=v=>{l.private=v;l.updated=Date.now();saveLists();refreshView()};
+    const was=!!l.private;set(!was);
+    toastUndo((was?"Plus privée : ":"Privée : ")+l.name,()=>set(was));
+  }
+  else if(r.i===3){
     const recipes=(await allRecipes()).filter(x=>recipeLists(x).includes(id));
     if(!recipes.length){toast("Cette liste est vide : ajoute-lui des recettes avant de la partager.");return}
     openSendDlg(null,{id,name:l.name,recipes});
   }
-  else if(r.i===3){
+  else if(r.i===4){
     l.deleted=true;l.updated=Date.now();saveLists();if(filter.list===id)filter.list="mine";refreshView();   // liste exclusive supprimée : ses recettes réapparaissent
     toastUndo("Liste supprimée : "+l.name,()=>{l.deleted=false;l.updated=Date.now();saveLists();refreshView()});
   }
@@ -2138,7 +2148,7 @@ async function viewLists(){
     </div>
     <h4 class="gh">Mes listes</h4>
     <div class="grp" id="lmine">
-      ${ls.map(l=>`<div class="lwrap">${row(l.id,l.name,LIST_ICONS.list,"",l.exclusive?"Exclusive":"")}<button type="button" class="lmore" data-set="${esc(l.id)}" aria-label="Réglages de la liste ${esc(l.name)}">${MORE_SVG}</button></div>`).join("")}
+      ${ls.map(l=>`<div class="lwrap">${row(l.id,l.name,LIST_ICONS.list,"",[l.private?"Privée":"",l.exclusive?"Exclusive":""].filter(Boolean).join(" · "))}<button type="button" class="lmore" data-set="${esc(l.id)}" aria-label="Réglages de la liste ${esc(l.name)}">${MORE_SVG}</button></div>`).join("")}
       <button type="button" class="gr act" id="newlistrow"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Nouvelle liste</span></button>
     </div>
     ${friends.length?`<h4 class="gh">Listes de mes amis</h4>
@@ -2495,7 +2505,9 @@ const fcGet=u=>fcDo("readonly",s=>s.get(u));
 const fcPut=c=>fcDo("readwrite",s=>s.put(c));
 const fcDel=u=>{friendCache.delete(u);return fcDo("readwrite",s=>s.delete(u))};
 const fcClear=()=>{friendCache.clear();return fcDo("readwrite",s=>s.clear())};
-const friendCache=new Map();   // uid -> {uid, full, checked, maxUpd, ids, rs} (copie mémoire de « livre-amis »)
+const friendCache=new Map();   // uid -> {uid, full, checked, maxUpd, ids, rs, ls} (copie mémoire de « livre-amis » ; ls = ses listes)
+// ce qu'un ami me montre : ses recettes sans celles rangées dans une de ses listes privées
+const friendShown=c=>c.rs.filter(r=>!privateOf(r,c.ls||{}));
 const friendKeep=r=>r&&!r.sharedFrom&&r.title!==undefined;
 const byTitle=(a,b)=>String(a.title||"").localeCompare(String(b.title||""),"fr",{sensitivity:"base"});
 async function friendCached(fu){
@@ -2537,7 +2549,11 @@ async function friendRefresh1(fu,force){
     if(err&&err.code==="denied")await fcDel(fu);   // plus dans ses amis : on oublie sa liste
     throw err;
   }
-  const c={uid:fu,full:full?now:old.full,checked:now,maxUpd,ids:[...ids],rs:changed?[...byId.values()].sort(byTitle):old.rs};
+  // ses listes (privées, exclusives) : sans la règle Firestore qui les rend lisibles, aucune liste (tout reste visible comme avant)
+  const oldLs=normalizeLists(old&&old.ls);let ls=oldLs;
+  try{ls=normalizeLists(await syncApi.friendLists(fu))}catch(err){if(err&&err.code==="denied")ls={}}
+  if(listsSig(ls)!==listsSig(oldLs))changed=true;
+  const c={uid:fu,full:full?now:old.full,checked:now,maxUpd,ids:[...ids],ls,rs:changed?[...byId.values()].sort(byTitle):old.rs};
   if(!signedIn())return {c,changed};   // déconnecté pendant la relecture : rien à garder
   friendCache.set(fu,c);
   fcPut(c);
@@ -2546,14 +2562,14 @@ async function friendRefresh1(fu,force){
 // recettes de l'ami : le cache s'il existe, sinon (première fois) on attend le serveur
 async function friendRecipesOf(fu){
   const c=await friendCached(fu);
-  if(c){friendRefresh(fu).catch(()=>{});return c.rs}
-  return (await friendRefresh(fu)).c.rs;
+  if(c){friendRefresh(fu).catch(()=>{});return friendShown(c)}
+  return friendShown((await friendRefresh(fu)).c);
 }
-let friendQ="",friendQFor="";
+let friendQ="",friendQFor="",friendL="mine";   // friendL : liste de l'ami affichée (« mine » = sa liste principale)
 async function viewFriendList(fu){
   const f=friends.find(x=>x.uid===fu)||{uid:fu,name:""};
   chrome({tab:"listes",title:esc(friendListTitle(f.name))});
-  if(friendQFor!==fu){friendQ="";friendQFor=fu}
+  if(friendQFor!==fu){friendQ="";friendQFor=fu;friendL="mine"}
   const here=location.hash;
   const removeBlock=friends.some(x=>x.uid===fu)?`<div class="grp" style="margin-top:28px"><button class="gr danger" type="button" id="rmfr">Retirer de mes amis</button></div>`:"";
   if(!signedIn()){
@@ -2576,21 +2592,34 @@ async function viewFriendList(fu){
     catch(err){if(location.hash===here)showErr(err);return}
     if(location.hash!==here)return;
   }
+  let fls={},all=[],tabs=[];
+  // jamais ses listes privées ni leurs recettes ; par défaut sa liste principale (sans les recettes de ses listes exclusives)
+  const compute=()=>{
+    fls=normalizeLists(c.ls);all=friendShown(c);
+    tabs=activeLists(fls).filter(l=>!l.private&&all.some(r=>inList(r,l.id,fls)));
+    if(friendL!=="mine"&&!tabs.some(l=>l.id===friendL))friendL="mine";
+    rs=all.filter(r=>inList(r,friendL,fls));
+    return JSON.stringify([!!all.length,friendL,tabs.map(l=>[l.id,l.name])]);
+  };
+  let shape="";
   const render=()=>{
-    rs=c.rs;
+    shape=compute();
     view.innerHTML=`
-    ${rs.length?`<input class="search" id="q" type="search" placeholder="Rechercher dans sa liste…" value="${esc(friendQ)}">`:""}
+    ${tabs.length?`<div class="chips" id="fchips">${[["mine","Principale"],...tabs.map(l=>[l.id,l.name])].map(([k,n])=>`<button type="button" class="chip flc ${friendL===k?"on":""}" data-l="${esc(k)}" aria-pressed="${friendL===k}">${esc(n)}</button>`).join("")}</div>`:""}
+    ${all.length?`<input class="search" id="q" type="search" placeholder="Rechercher dans sa liste…" value="${esc(friendQ)}">`:""}
     <div id="results"></div>${removeBlock}`;
     draw();
     if($("#q"))$("#q").oninput=e=>{friendQ=e.target.value;draw()};
+    if($("#fchips"))$("#fchips").onclick=e=>{const b=e.target.closest("button[data-l]");if(!b||b.dataset.l===friendL)return;friendL=b.dataset.l;render()};
     bindRemove(f);
   };
   const draw=()=>{
     const q=nrm(friendQ);
     const list=q?rs.filter(r=>nrm([r.title,r.category,r.ingredients,...recipeTags(r)].join(" ")).includes(q)):rs;
+    if(all.length&&!rs.length){$("#results").innerHTML=`<div class="empty"><div class="big">📑</div><p>Aucune recette dans cette liste.</p></div>`;return}
     if(!rs.length){$("#results").innerHTML=`<div class="empty"><div class="big">🍳</div><p><b>${esc(f.name||"Ton ami")} n’a pas encore de recette.</b></p></div>`;return}
     if(!list.length){$("#results").innerHTML=`<div class="empty"><div class="big">🔍</div><p>Aucune recette ne correspond.</p></div>`;return}
-    pagedGrid($("#results"),list,"friend",fu+"\n"+q,r=>`
+    pagedGrid($("#results"),list,"friend",fu+"\n"+friendL+"\n"+q,r=>`
       <div class="card">
         <a class="cl" href="${friendHref(fu)}/r/${encodeURIComponent(r.id)}">
           <div class="ph">${r.photos&&r.photos[0]?`<img src="${esc(r.photos[0])}" alt="" loading="lazy">`:EMOJI[r.category]||"🍴"}</div>
@@ -2602,8 +2631,8 @@ async function viewFriendList(fu){
   // en arrière-plan : on ne relit que ce qui a changé chez l'ami, et on redessine seulement si besoin
   friendRefresh(fu).then(({c:n,changed})=>{
     if(!changed||location.hash!==here||!$("#results"))return;
-    const hadAll=!!rs.length;c=n;
-    if(!!n.rs.length===hadAll&&$("#q")){rs=n.rs;draw()}else render();
+    c=n;
+    if(compute()===shape&&$("#q"))draw();else render();   // même onglets : on garde la recherche en cours
   },err=>{if(location.hash===here&&err&&err.code==="denied")showErr(err)});
 }
 function bindRemove(f){
@@ -2625,7 +2654,7 @@ async function viewFriendRecipe(fu,id){
   if(!signedIn()&&syncWaiting()){view.innerHTML=WAIT_HTML;return}
   let r;
   try{r=signedIn()?(await friendRecipesOf(fu)).find(x=>x.id===id):null}catch(e){r=null}
-  if(!r&&signedIn())try{r=(await friendRefresh(fu,true)).c.rs.find(x=>x.id===id)}catch(e){r=null}   // ajoutée depuis le dernier passage
+  if(!r&&signedIn())try{r=friendShown((await friendRefresh(fu,true)).c).find(x=>x.id===id)}catch(e){r=null}   // ajoutée depuis le dernier passage
   if(location.hash!==here)return;
   if(!r){location.hash=friendHref(fu);return}
   const ph=r.photos||[];
@@ -2639,10 +2668,34 @@ async function viewFriendRecipe(fu,id){
       ${recipeTags(r).map(t=>`<span class="tag">${showIcon(tagIcon(t,tagIcons))} ${esc(t)}</span>`).join("")}
       <a class="tag from" href="${friendHref(fu)}">📖 ${esc(friendListTitle(f.name))}</a>
     </div>
+    <div class="rbar" role="group" aria-label="Actions">${ricon("addto","Ajouter à une de mes listes",RI.lists)}</div>
     ${recipeSections(r)}
     <div class="rbar rfoot actions">${ricon("pdf","Télécharger en PDF",RI.pdf)}</div>`;
   view.querySelectorAll("ul.ing li").forEach(li=>li.onclick=e=>{if(!e.target.closest("a"))li.classList.toggle("done")});
   $("#pdf").onclick=()=>shareRecipePdf(r);
+  $("#addto").onclick=()=>addFriendRecipe(f,r);
+}
+// recette d'un ami → copie dans mon livre, rangée dans la liste choisie. Une seule copie par recette d'ami
+// (id tiré de l'ami et de la recette) : la rajouter à une autre liste complète les listes de cette copie.
+async function addFriendRecipe(f,src){
+  const ls=activeLists(lists);
+  const a=await iosAlert({sheet:true,title:"Ajouter à une liste",msg:"Une copie de la recette va dans ton livre, dans la liste choisie.",
+    actions:[...ls.map(l=>({label:l.name})),{label:"Nouvelle liste…"},{label:"Annuler",cancel:true}]});
+  if(!a||a.i>ls.length)return;
+  const lid=a.i<ls.length?ls[a.i].id:await new Promise(ok=>{askName("Nouvelle liste","",n=>ok(createList(n)));$("#namedlg").addEventListener("close",()=>setTimeout(()=>ok(null),0),{once:true})});
+  if(!lid||!lists[lid])return;
+  const name=lists[lid].name,now=Date.now();
+  const id="a-"+String(f.uid).replace(/[^A-Za-z0-9]/g,"").slice(0,40)+"-"+String(src.id).replace(/[^A-Za-z0-9_-]/g,"").slice(0,80);
+  let r=await getRecipe(id);
+  if(r){
+    if(recipeLists(r).includes(lid)){toast(`Déjà dans « ${name} »`);return}
+    r.lists=[...recipeLists(r),lid];touch(r);
+  }else{
+    r=sharedCopy(shareable(src),{id:"",from:f.uid,fromName:f.name,at:now},now);
+    r.id=id;r.sharedNew=false;r.lists=[lid];
+  }
+  await putRecipe(r);
+  toast(`Ajoutée à « ${name} »`);
 }
 // avatar rond : initiale du pseudo, recouverte par la photo s'il y en a une
 const firstLetter=n=>{n=String(n||"").trim();if(!n)return"?";try{return[...new Intl.Segmenter("fr",{granularity:"grapheme"}).segment(n)][0].segment.toUpperCase()}catch(e){return Array.from(n)[0].toUpperCase()}};
@@ -2891,7 +2944,7 @@ const CLICK_ID={
   sendfriends:"ajouter un ami (partage)",pdfdl:"télécharger le PDF",pdfshare:"partager le PDF",pdfclose:"fermer PDF",
   impgo:"créer les recettes importées",impback:"retour au texte (import)",impcancel:"annuler l'import",imppaste:"coller (import)",impl:"liste de l'import",
   tdbasic:"produit de base (tuile)",tdskip:"retirer sans compter (tuile)",tdclose:"fermer tuile",nameno:"annuler pseudo",
-  listclose:"fermer listes",pickclose:"fermer choix de recette",iconclose:"fermer icônes"
+  listclose:"fermer listes",addto:"ajouter à mes listes (recette d'ami)",pickclose:"fermer choix de recette",iconclose:"fermer icônes"
 };
 const CLICK_FORM={f:"enregistrer la recette",sf:"ajouter un article",impr:"créer les recettes importées",impf:"analyser le texte (import)",
   authf:"se connecter",namef:"valider le pseudo",newlistf:"créer la liste",iconf:"émoji tapé (icône de tag)"};
@@ -2899,7 +2952,7 @@ const CLICK_BOX={sendopts:"choisir un ami (partage)",listopts:"choisir une liste
   picklist:"choisir une recette (planning)",tsugg:"suggestion de tag",chips:"filtre catégorie",
   tchips:"filtre tag",tpills:"retirer un tag (formulaire)",lmine:"choisir une liste"};
 const CLICK_CLS=[["cl","carte recette"],["cardcart","panier (carte)"],["tile","tuile du panier"],["pslot","créneau repas"],
-  ["pt","recette du planning"],["pcart","voir le panier (planning)"],["lrow","choisir une liste"],["hsw","menu des listes (titre)"],["lmi","choisir une liste (menu du titre)"],["lmore","options de la liste"],
+  ["pt","recette du planning"],["pcart","voir le panier (planning)"],["lrow","choisir une liste"],["hsw","menu des listes (titre)"],["lmi","choisir une liste (menu du titre)"],["lmore","options de la liste"],["flc","choisir une liste (ami)"],
   ["fr","ami"],["impcta","importer des recettes"],["impcb","cocher une recette (import)"],["ic","icône de tag"],["rm","retirer un tag"],
   ["tag","tag de la fiche"],["ricon","modifier la recette"]];
 function clickName(el){

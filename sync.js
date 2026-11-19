@@ -449,6 +449,19 @@ export async function initSync(app) {
       }
       return snap.docs.map((d) => ({ ...d.data(), id: (d.data() && d.data().id) || d.id }));
     },
+    // listes d'un ami (meta/lists), pour cacher ses listes privées et ranger ses recettes comme lui
+    // (règle Firestore : lecture de ce seul document par un ami). {} s'il n'a aucune liste.
+    friendLists: async (f) => {
+      if (!uid) throw new Error("Connecte-toi d'abord.");
+      try {
+        const s = await getDocFromServer(doc(db, "users", f, "meta", "lists"));
+        return s.exists() ? (s.data() || {}).lists || {} : {};
+      } catch (e) {
+        const c = (e && e.code) || "";
+        if (c.includes("permission-denied")) { const err = new Error("denied"); err.code = "denied"; throw err; }
+        throw new Error("Chargement impossible : il faut du réseau.");
+      }
+    },
     // pour le cache de la liste d'un ami : sans since, toutes ses recettes ; avec since, seulement celles
     // modifiées depuis (updated > since) et le nombre total de documents (1 lecture par tranche de 1000)
     // pour repérer les suppressions. Toujours depuis le serveur : hors ligne, l'appelant garde son cache.
